@@ -3,9 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Redis } from '@upstash/redis'
 
 // Initialize Redis only if keys are present
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-const redis = (redisUrl && redisToken) ? new Redis({ url: redisUrl, token: redisToken }) : null;
+const rawRedisUrl = process.env.UPSTASH_REDIS_REST_URL?.replace(/["']/g, '');
+const rawRedisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.replace(/["']/g, '');
+const redis = (rawRedisUrl && rawRedisUrl.startsWith('http') && rawRedisToken) 
+  ? new Redis({ url: rawRedisUrl, token: rawRedisToken }) 
+  : null;
 
 // Rate limits — configurable via env vars, no redeployment needed
 const RATE_LIMIT_SEC = parseInt(process.env.RATE_LIMIT_WINDOW ?? '60', 10);
