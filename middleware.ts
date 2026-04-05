@@ -15,6 +15,7 @@ const MAX_REQUESTS_API = parseInt(process.env.RATE_LIMIT_REQUESTS ?? '60', 10);
 const MAX_REQUESTS_WEBHOOK = parseInt(process.env.RATE_LIMIT_WEBHOOK_REQUESTS ?? '10', 10);
 
 export async function middleware(request: NextRequest) {
+  try {
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
   // --- 1. RATE LIMITING (Edge Defense for API routes) ---
@@ -58,9 +59,12 @@ export async function middleware(request: NextRequest) {
 
   // We don't need to refresh Supabase cookies for standard background API routes
   if (!isApiRoute) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/["']/g, '') || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.replace(/["']/g, '') || '';
+
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseKey,
       {
         cookies: {
           get(name: string) { return request.cookies.get(name)?.value },
@@ -134,6 +138,12 @@ export async function middleware(request: NextRequest) {
   }
 
   return response
+  } catch (error: any) {
+    return new NextResponse(`[NexSchool Middleware Crash]\nError: ${error.message}\nStack: ${error.stack}`, { 
+      status: 500, 
+      headers: { 'content-type': 'text/plain' }
+    });
+  }
 }
 
 export const config = {
