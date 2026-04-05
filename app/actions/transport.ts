@@ -1,0 +1,257 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { revalidatePath } from 'next/cache';
+
+// ── Shared helper ─────────────────────────────────────────────────────────────
+async function getAdminClientAndTenant() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data: profile } = await supabaseAdmin
+    .from('profiles').select('tenant_id').eq('id', user.id).single();
+  if (!profile) throw new Error('Profile missing');
+
+  return { supabaseAdmin, tenantId: profile.tenant_id as string };
+}
+
+// ── READ ──────────────────────────────────────────────────────────────────────
+export async function getTransportRoutes() {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    const { data: routes, error } = await supabaseAdmin
+      .from('transport_routes')
+      .select('*, transport_stops(*)')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    const sorted = routes.map(r => ({
+      ...r,
+      transport_stops: (r.transport_stops ?? [])
+        .sort((a: any, b: any) => a.sequence_order - b.sequence_order),
+    }));
+
+    return { success: true, data: sorted };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+export async function getParentTransportRoute() {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    
+    // MVP: Grab first route to demonstrate parent live tracking tracking their child
+    const { data: routes, error } = await supabaseAdmin
+      .from('transport_routes')
+      .select('*, transport_stops(*)')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (error) throw error;
+    if (!routes || routes.length === 0) return { success: false, error: 'No route assigned.' };
+    
+    const route = routes[0];
+    route.transport_stops = (route.transport_stops ?? []).sort((a: any, b: any) => a.sequence_order - b.sequence_order);
+
+    return { success: true, data: route };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ── CREATE ────────────────────────────────────────────────────────────────────
+export async function addTransportRoute(payload: {
+  name: string;
+  driver_name: string;
+  bus_number: string;
+  capacity: number;
+  enrolled_students: number;
+  stops?: { stop_name: string; scheduled_time: string }[];
+}) {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    const { data: route, error } = await supabaseAdmin
+      .from('transport_routes')
+      .insert({
+        tenant_id: tenantId,
+        name: payload.name,
+        driver_name: payload.driver_name,
+        bus_number: payload.bus_number,
+        capacity: payload.capacity,
+        enrolled_students: payload.enrolled_students,
+        status: 'at-school',
+      })
+      .select().single();
+
+    if (error) throw error;
+
+    // Insert stops if provided
+    if (payload.stops && payload.stops.length > 0) {
+      const stopsPayload = payload.stops.map((s, idx) => ({
+        route_id: route.id,
+        tenant_id: tenantId,
+        stop_name: s.stop_name,
+        scheduled_time: s.scheduled_time,
+        status: idx === 0 ? 'upcoming' : 'upcoming',
+        sequence_order: idx + 1,
+      }));
+      await supabaseAdmin.from('transport_stops').insert(stopsPayload);
+    }
+
+    revalidatePath('/staff/transport');
+    return { success: true, data: route };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ── UPDATE ROUTE STATUS ───────────────────────────────────────────────────────
+export async function updateRouteStatus(routeId: string, status: 'on-route' | 'at-school' | 'delayed') {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    const { error } = await supabaseAdmin
+      .from('transport_routes')
+      .update({ status })
+      .eq('id', routeId)
+      .eq('tenant_id', tenantId); // Tenant safety guard
+
+    if (error) throw error;
+    revalidatePath('/staff/transport');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ── UPDATE STOP STATUS ────────────────────────────────────────────────────────
+export async function updateStopStatus(stopId: string, status: 'done' | 'current' | 'upcoming') {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    const { error } = await supabaseAdmin
+      .from('transport_stops')
+      .update({ status })
+      .eq('id', stopId)
+      .eq('tenant_id', tenantId);
+
+    if (error) throw error;
+    revalidatePath('/staff/transport');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ── UPDATE ENROLLED STUDENTS ──────────────────────────────────────────────────
+export async function updateEnrolledStudents(routeId: string, delta: number) {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    // Fetch current count first
+    const { data: current } = await supabaseAdmin
+      .from('transport_routes')
+      .select('enrolled_students, capacity')
+      .eq('id', routeId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (!current) throw new Error('Route not found');
+    const newCount = Math.max(0, Math.min(current.capacity, current.enrolled_students + delta));
+
+    const { error } = await supabaseAdmin
+      .from('transport_routes')
+      .update({ enrolled_students: newCount })
+      .eq('id', routeId)
+      .eq('tenant_id', tenantId);
+
+    if (error) throw error;
+    revalidatePath('/staff/transport');
+    return { success: true, newCount };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
+export async function deleteTransportRoute(routeId: string) {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    // Stops cascade delete via FK — just delete the route
+    const { error } = await supabaseAdmin
+      .from('transport_routes')
+      .delete()
+      .eq('id', routeId)
+      .eq('tenant_id', tenantId);
+
+    if (error) throw error;
+    revalidatePath('/staff/transport');
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+// ── SEED ──────────────────────────────────────────────────────────────────────
+export async function seedTransportDatabase() {
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    const { count } = await supabaseAdmin
+      .from('transport_routes')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId);
+
+    if (count && count > 0) return { success: true, msg: 'Already seeded' };
+
+    const routes = [
+      { tenant_id: tenantId, name: 'Route 1 – North Zone', driver_name: 'Ramesh Kumar', bus_number: 'DL-01-GA-2234', capacity: 45, enrolled_students: 42, status: 'on-route' },
+      { tenant_id: tenantId, name: 'Route 2 – South Zone', driver_name: 'Sunil Yadav',  bus_number: 'DL-01-GA-2198', capacity: 40, enrolled_students: 37, status: 'at-school' },
+      { tenant_id: tenantId, name: 'Route 3 – East Zone',  driver_name: 'Manoj Singh',  bus_number: 'DL-01-GA-1876', capacity: 50, enrolled_students: 48, status: 'on-route' },
+      { tenant_id: tenantId, name: 'Route 4 – West Zone',  driver_name: 'Prem Chand',   bus_number: 'DL-01-GA-3321', capacity: 38, enrolled_students: 29, status: 'delayed' },
+    ];
+
+    const { data: insertedRoutes, error } = await supabaseAdmin
+      .from('transport_routes').insert(routes).select();
+    if (error) throw error;
+
+    if (insertedRoutes && insertedRoutes.length > 0) {
+      const stops = [
+        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'School Gate',       scheduled_time: '08:05', status: 'done',     sequence_order: 1 },
+        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'Sector 14 Stop',    scheduled_time: '08:22', status: 'done',     sequence_order: 2 },
+        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'Rajpur Crossing',   scheduled_time: '08:38', status: 'current',  sequence_order: 3 },
+        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'Green Park Colony', scheduled_time: '08:51', status: 'upcoming', sequence_order: 4 },
+        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'MG Road Junction',  scheduled_time: '09:04', status: 'upcoming', sequence_order: 5 },
+
+        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'School Gate',     scheduled_time: '07:55', status: 'done',     sequence_order: 1 },
+        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'Saket Metro',     scheduled_time: '08:10', status: 'done',     sequence_order: 2 },
+        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'Malviya Nagar',   scheduled_time: '08:25', status: 'done',     sequence_order: 3 },
+        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'Hauz Khas',       scheduled_time: '08:40', status: 'upcoming', sequence_order: 4 },
+
+        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'School Gate',   scheduled_time: '08:00', status: 'done',     sequence_order: 1 },
+        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Patel Nagar',   scheduled_time: '08:20', status: 'done',     sequence_order: 2 },
+        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Tilak Nagar',   scheduled_time: '08:45', status: 'current',  sequence_order: 3 },
+        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Janakpuri Stn', scheduled_time: '09:05', status: 'upcoming', sequence_order: 4 },
+      ];
+      await supabaseAdmin.from('transport_stops').insert(stops);
+    }
+
+    revalidatePath('/staff/transport');
+    return { success: true, msg: 'Seeded' };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
