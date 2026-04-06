@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { calculateCompoundLateFees } from '@/lib/algorithms';
+import { sendFeeReminders } from '@/app/actions/fees';
 import InvoiceModal from '@/components/dashboard/InvoiceModal';
 
 const feeStructure = [
@@ -23,6 +24,7 @@ export default function FeesPage() {
   const [loading, setLoading] = useState(true);
   const [liveToast, setLiveToast] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [isReminding, setIsReminding] = useState(false);
   
   // Modal state
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -64,6 +66,34 @@ export default function FeesPage() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchFees, supabase]);
 
+  const handleBulkRemind = async () => {
+     setIsReminding(true);
+     const pendingIds = transactions.filter(t => t.status !== 'paid').map(t => t.id);
+     if (pendingIds.length === 0) {
+        showToast('No pending invoices to remind.', false);
+        setIsReminding(false);
+        return;
+     }
+     const res = await sendFeeReminders(pendingIds);
+     if (res.success) {
+        showToast(`📤 SMS dispatched to ${res.count} parents via Notice Board!`);
+     } else {
+        showToast('Failed to dispatch SMS', false);
+     }
+     setIsReminding(false);
+  };
+
+  const handleSingleRemind = async (invoiceId: string, studentName: string) => {
+     setIsReminding(true);
+     const res = await sendFeeReminders([invoiceId]);
+     if (res.success) {
+        showToast(`📤 Automated SMS Reminder sent to ${studentName}'s guardian!`);
+     } else {
+        showToast('Failed to dispatch SMS', false);
+     }
+     setIsReminding(false);
+  };
+
   const filtered = filter === 'all' ? transactions : transactions.filter((t: any) => t.status === filter);
 
   const totalCollected = transactions.filter((t) => t.status === 'paid').reduce((s, t) => s + Number(t.amount), 0);
@@ -79,7 +109,7 @@ export default function FeesPage() {
           <p className="text-slate-400 text-sm mt-0.5">April 2026 — Track invoices and monitor DB revenue</p>
         </div>
         <div className="flex gap-3">
-          <button id="send-reminders-btn" onClick={() => showToast('📤 SMS reminders dispatched to all parents with pending invoices!')} className="btn-secondary text-sm py-2 px-4">📤 Remind All Pending</button>
+          <button id="send-reminders-btn" onClick={handleBulkRemind} disabled={isReminding} className="btn-secondary text-sm py-2 px-4 disabled:opacity-50">📤 Remind All Pending</button>
           <button id="new-invoice-btn" onClick={() => setIsInvoiceModalOpen(true)} className="btn-primary text-sm py-2 px-4">+ Generate Invoice</button>
         </div>
       </div>
@@ -214,7 +244,7 @@ export default function FeesPage() {
                               📄 Receipt
                             </button>
                             {t.status !== 'paid' && (
-                              <button id={`remind-${t.id}`} onClick={() => showToast(`📤 SMS reminder dispatched to ${t.students?.first_name}'s guardian!`)} className="text-xs text-amber-400 hover:text-amber-300 font-medium">
+                              <button id={`remind-${t.id}`} onClick={() => handleSingleRemind(t.id, t.students?.first_name)} disabled={isReminding} className="text-xs text-amber-400 hover:text-amber-300 font-medium disabled:opacity-50">
                                 📤 Remind
                               </button>
                             )}

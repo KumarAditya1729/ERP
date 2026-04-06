@@ -25,6 +25,10 @@ export default function HRPage() {
     Object.fromEntries(leaveRequests.map((l) => [l.id, l.status]))
   );
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [showPayrollSimulator, setShowPayrollSimulator] = useState(false);
+  const [payrollStep, setPayrollStep] = useState(0);
+  const [payrollProgress, setPayrollProgress] = useState(0);
+  const [payrollComplete, setPayrollComplete] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const showToast = (msg: string, ok = true) => {
@@ -56,6 +60,32 @@ export default function HRPage() {
   const approve = (id: string) => setLeaveStatus((p) => ({ ...p, [id]: 'approved' }));
   const reject  = (id: string) => setLeaveStatus((p) => ({ ...p, [id]: 'rejected' }));
 
+  const runBulkPayroll = () => {
+    setShowPayrollSimulator(true);
+    setPayrollStep(0);
+    setPayrollProgress(0);
+    setPayrollComplete(false);
+    
+    // Simulate step 1
+    setTimeout(() => {
+      setPayrollStep(1);
+      // Simulate progress counting
+      let p = 0;
+      const interval = setInterval(() => {
+        p += 15;
+        if(p > 100) p = 100;
+        setPayrollProgress(p);
+        if (p === 100) {
+           clearInterval(interval);
+           setTimeout(() => {
+             setPayrollStep(2);
+             setTimeout(() => setPayrollComplete(true), 1500);
+           }, 800);
+        }
+      }, 300);
+    }, 1500);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -65,7 +95,7 @@ export default function HRPage() {
         </div>
         <div className="flex gap-3">
           <button id="add-staff-btn" onClick={() => setIsStaffModalOpen(true)} className="btn-secondary text-sm py-2 px-4">+ Add Staff</button>
-          <button id="run-payroll-btn" onClick={() => showToast("💸 Bulk bank transfers & payslips dispatched!")} className="btn-primary text-sm py-2 px-4">💸 Run Payroll</button>
+          <button id="run-payroll-btn" onClick={runBulkPayroll} className="btn-primary text-sm py-2 px-4">💸 Run Payroll</button>
         </div>
       </div>
 
@@ -207,6 +237,37 @@ export default function HRPage() {
       </div>
 
       <StaffModal isOpen={isStaffModalOpen} onClose={() => { setIsStaffModalOpen(false); window.location.reload(); }} />
+      
+      {/* Deep Mock Payroll Simulator */}
+      {showPayrollSimulator && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/90 backdrop-blur-md animate-fade-in">
+          <div className="glass border border-emerald-500/30 rounded-3xl p-8 max-w-sm w-full text-center relative overflow-hidden shadow-2xl shadow-emerald-900/20">
+            <div className={`absolute top-0 left-0 h-1 bg-emerald-500 transition-all duration-300`} style={{ width: `${payrollProgress}%` }} />
+            
+            <p className="text-5xl mb-4">{payrollComplete ? '🎉' : payrollStep === 0 ? '🏦' : '💸'}</p>
+            <h2 className="text-xl font-bold text-white mb-2">
+               {payrollComplete ? 'Payroll Dispatched!' : payrollStep === 0 ? 'Authenticating Gateway...' : 'Executing Bulk Transfers...'}
+            </h2>
+            
+            {!payrollComplete ? (
+              <div className="space-y-3 mt-5">
+                <p className="text-sm text-slate-400">Processing IMPS Node API securely.</p>
+                <div className="w-full bg-slate-800 rounded-full h-2 mb-2 overflow-hidden">
+                  <div className="bg-emerald-500 h-2 rounded-full transition-all duration-300" style={{ width: `${payrollProgress}%` }} />
+                </div>
+                <p className="text-xs text-emerald-400 font-mono">Transmitting... {payrollProgress}%</p>
+              </div>
+            ) : (
+              <div className="space-y-4 mt-5">
+                <p className="text-sm text-slate-300">Successfully dispersed salaries to <span className="font-bold text-white">{staffData.length}</span> employees.</p>
+                <p className="text-xs text-slate-500 border border-slate-700 bg-slate-800/50 p-2 rounded-lg font-mono">Txn: IMP{Math.random().toString().substring(2, 10).toUpperCase()}</p>
+                <button onClick={() => setShowPayrollSimulator(false)} className="btn-primary w-full py-3 mt-2 text-sm">Close Dashboard</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl text-sm font-semibold shadow-xl animate-fade-in ${toast.ok ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>

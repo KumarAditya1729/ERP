@@ -82,8 +82,8 @@ export default function Hero() {
         <div className="animate-slide-up">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 glass border border-violet-500/30 rounded-full px-4 py-1.5 mb-8">
-            <span className="text-sm">🚀</span>
-            <span className="text-xs font-semibold text-violet-300">Now with Live GPS Transport Tracking</span>
+            <span className="text-sm">✨</span>
+            <span className="text-xs font-semibold text-violet-300">Now with Voice AI Auto-Grading & Parent Vault</span>
           </div>
 
           <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-6">

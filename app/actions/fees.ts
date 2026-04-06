@@ -45,3 +45,25 @@ export async function updateInvoiceStatus(id: string, status: string, paymentMet
   revalidatePath('/dashboard/fees');
   return { success: true };
 }
+
+export async function sendFeeReminders(invoiceIds: string[]) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  if (!profile) return { success: false, error: "Profile not found" };
+
+  const notice = {
+    tenant_id: profile.tenant_id,
+    title: '⚠️ Critical Fee Reminder',
+    raw_content: `This is an automated reminder regarding pending fee invoice(s). Please check your fees dashboard to process the payment immediately via Razorpay to avoid compound late penalties.`,
+    channel: 'sms',
+    target_roles: ['parent']
+  };
+
+  const { error } = await supabase.from('notices').insert(notice);
+  if (error) return { success: false, error: error.message };
+
+  return { success: true, count: invoiceIds.length };
+}

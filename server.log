@@ -1,20 +1,108 @@
 
-> edusync-erp@0.1.0 start
-> next start
+> edusync-erp@0.1.0 dev
+> next dev
 
- ⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use :::3000
-    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
-    at listenInCluster (node:net:1997:12)
-    at Server.listen (node:net:2102:7)
-    at /Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/server/lib/start-server.js:280:16
-    at new Promise (<anonymous>)
-    at startServer (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/server/lib/start-server.js:191:11)
-    at Module.nextStart (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/cli/next-start.js:25:40)
-    at /Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/bin/next:105:856 {
-  code: 'EADDRINUSE',
-  errno: -48,
-  syscall: 'listen',
-  address: '::',
-  port: 3000
-}
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead.
+[@sentry/nextjs] DEPRECATION WARNING: automaticVercelMonitors is deprecated and will be removed in a future version. Use webpack.automaticVercelMonitors instead.
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead.
+[@sentry/nextjs] DEPRECATION WARNING: automaticVercelMonitors is deprecated and will be removed in a future version. Use webpack.automaticVercelMonitors instead.
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+  - Experiments (use with caution):
+    · instrumentationHook
+
+ ✓ Starting...
+[@sentry/nextjs] DEPRECATION WARNING: It is recommended renaming your `sentry.client.config.ts` file, or moving its content to `instrumentation-client.ts`. When using Turbopack `sentry.client.config.ts` will no longer work. Read more about the `instrumentation-client.ts` file: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 1768ms (1133 modules)
+ ✓ Ready in 3.5s
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 624ms (810 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 5.2s (3118 modules)
+ GET / 200 in 5719ms
+ ✓ Compiled in 559ms (630 modules)
+ GET / 200 in 26ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ GET / 200 in 32ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.4s (3265 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 1406ms (4075 modules)
+ GET /login?_rsc=v3pub 200 in 20ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 420ms (810 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 163ms (810 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ GET / 200 in 211ms
+ GET / 200 in 19ms
+ ✓ Compiled in 785ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 1872ms (3279 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+   Reload env: .env.local
+ ✓ Compiled in 1567ms (4075 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 657ms (635 modules)
+ ✓ Compiled in 143ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 861ms (635 modules)
+ ✓ Compiled in 152ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 2.3s (4075 modules)
+ ✓ Compiled in 126ms (635 modules)
+ ✓ Compiled in 616ms (4075 modules)
+ ✓ Compiled in 133ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 940ms (635 modules)
+ ✓ Compiled in 254ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 855ms (635 modules)
+ ✓ Compiled in 140ms (635 modules)
+ ✓ Compiled in 109ms (635 modules)
+ ✓ Compiled in 120ms (635 modules)
+ ✓ Compiled in 117ms (635 modules)
+ ✓ Compiled in 174ms (635 modules)
+ ✓ Compiled in 148ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 1860ms (3279 modules)
+ ✓ Compiled in 456ms (3279 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 896ms (635 modules)
+ ✓ Compiled in 200ms (635 modules)
+ ✓ Compiled in 1236ms (4075 modules)
+ ✓ Compiled in 126ms (635 modules)
+ ✓ Compiled in 595ms (4075 modules)
+ ✓ Compiled in 126ms (635 modules)
+ ✓ Compiled in 125ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 157ms (635 modules)
+ ✓ Compiled in 1435ms (4075 modules)
+ ✓ Compiled in 256ms (635 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled in 791ms (635 modules)
+ ✓ Compiled in 138ms (635 modules)
+ ✓ Compiled in 132ms (635 modules)
+ ✓ Compiled in 1232ms (4075 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies

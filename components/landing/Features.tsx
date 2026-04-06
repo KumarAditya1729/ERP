@@ -1,8 +1,8 @@
 const modules = [
   {
     icon: '🎓',
-    title: 'Student Management',
-    desc: 'Complete student lifecycle from admission to alumni. Profiles, documents, medical records, and bulk CSV import.',
+    title: 'Student & Admissions Vault',
+    desc: 'Complete student sequence from admission to alumni. Secure private storage vaults for parent document uploads backed by cloud infrastructure.',
     color: 'from-violet-600/20 to-violet-800/5',
     border: 'border-violet-500/20',
     glow: 'group-hover:shadow-violet-500/20',
@@ -17,8 +17,8 @@ const modules = [
   },
   {
     icon: '💰',
-    title: 'Fee Management',
-    desc: 'Automated invoices, Razorpay online payments, PDF receipts, overdue reminders, and revenue dashboards.',
+    title: 'Fees & Live Ledger',
+    desc: 'Automated invoices, Razorpay online payments, dynamic compound late fees, and instant bulk SMS reminders from standard dashboards.',
     color: 'from-emerald-600/20 to-emerald-800/5',
     border: 'border-emerald-500/20',
     glow: 'group-hover:shadow-emerald-500/20',
@@ -33,16 +33,16 @@ const modules = [
   },
   {
     icon: '📝',
-    title: 'Exams & Report Cards',
-    desc: 'Schedule exams, enter marks digitally, auto-calculate grades, and generate beautiful branded report card PDFs.',
+    title: 'Exams & AI Auto-Grader',
+    desc: 'Instead of typing, simply dictate marks! Our Voice AI Auto-Grader parses subjects instantly. Compile beautiful branded PDF report cards in bulk.',
     color: 'from-amber-600/20 to-amber-800/5',
     border: 'border-amber-500/20',
     glow: 'group-hover:shadow-amber-500/20',
   },
   {
     icon: '👩‍💼',
-    title: 'HR & Payroll',
-    desc: 'Staff profiles, leave approval workflows, automated salary calculation with attendance deductions, and payslips.',
+    title: 'HR & Bulk Payroll',
+    desc: 'Leave approval workflows and an immersive 1-click Bank IMPS Bulk Payroll simulator dispatching salaries instantly.',
     color: 'from-pink-600/20 to-pink-800/5',
     border: 'border-pink-500/20',
     glow: 'group-hover:shadow-pink-500/20',
@@ -161,6 +161,52 @@ export default function Features() {
             </div>
           </div>
         </div>
+
+        {/* AI Auto Grader / HR highlight */}
+        <div className="mt-10 glass border border-teal-500/20 rounded-3xl p-10 bg-gradient-to-br from-teal-600/10 to-emerald-900/5">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            {/* AI Mock UI */}
+            <div className="glass-strong border border-emerald-500/30 rounded-3xl p-6 text-center max-w-sm mx-auto w-full relative overflow-hidden">
+               <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl`} />
+               <div className="relative z-10 text-center flex flex-col items-center">
+                  <h2 className="text-base font-bold text-white flex items-center gap-2 mb-4">
+                    <span className="bg-gradient-to-r from-teal-400 to-emerald-400 text-transparent bg-clip-text">Voice AI</span> Grader
+                  </h2>
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex flex-col items-center justify-center mb-4 border border-emerald-400">
+                    <span className="flex gap-1 items-end h-4">
+                      <span className="w-1 h-2 bg-white animate-pulse" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1 h-4 bg-white animate-pulse" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '300ms' }} />
+                      <span className="w-1 h-2 bg-white animate-pulse" style={{ animationDelay: '450ms' }} />
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-900/60 rounded-xl p-3 text-left">
+                     <p className="text-xs text-emerald-300 font-mono leading-relaxed">&quot;Rahul Verma Math 72, Science 68, English 74...&quot;</p>
+                  </div>
+               </div>
+            </div>
+            
+            {/* Text details */}
+            <div className="order-first lg:order-last">
+              <span className="badge badge-green mb-4">✨ New Demo Magic</span>
+              <h3 className="text-3xl font-bold text-white mb-4">
+                The Pitch Closer:
+                <br />
+                <span className="gradient-text">Voice AI Grade Extraction</span>
+              </h3>
+              <p className="text-slate-400 text-base leading-relaxed mb-6">
+                Why have teachers type 500 rows of marks? With the new NexSchool Auto Grader, teachers simply tap their microphone on the Exams sheet and read out the marks. 
+                Our AI instantly parses the names, subjects, and generates report cards in real-time. Paired with Deep Mocks across HR & Transport to guarantee a WOW factor during demos.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {['🎙️ Voice-to-Text Parser','📄 Bulk PDF Spawner','💼 IMPS Payroll Sim','🗄️ Supabase Vault Storage'].map((f) => (
+                  <span key={f} className="badge badge-green text-xs py-1 px-3">{f}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   );

@@ -1,102 +1,138 @@
 /**
- * NexSchool AI - Core Enterprise Algorithms Let
- * 
- * Contains mathematically complex business logic handling constraints like 
- * timetabling clashes and financial compound interest.
+ * Algorithms Library for NexSchool ERP
  */
 
+interface ClassReq {
+    id: string;
+    className: string;
+    subject: string;
+    teacherId: string;
+    hoursNeeded: number;
+}
+  
+interface TimeSlot {
+    day: number; // 1 to 5 (Mon-Fri)
+    period: number; // 1 to 8
+    className: string;
+    subject: string;
+    teacherId: string;
+}
+
 /**
- * Validates a pending schedule block against an array of existing scheduled blocks
- * using an Interval checking mechanism to prevent the exact same teacher from 
- * being present in two classes simultaneously.
+ * generateTimetable
+ * Generates an automated, non-colliding timetable using a greedy back-tracking approach.
+ * Ensures that no teacher is assigned to two different classes in the same period.
+ * 
+ * @param {ClassReq[]} requirements - The classes that need to be scheduled.
+ * @param {number} days - Number of working days (e.g., 5 for Mon-Fri)
+ * @param {number} periodsPerDay - Number of periods per day (e.g., 8)
+ * @returns {TimeSlot[]} An array of generated timeslots with no teacher overlaps.
  */
+export function generateTimetable(requirements: ClassReq[], days: number = 5, periodsPerDay: number = 8): TimeSlot[] {
+    const timetable: TimeSlot[] = [];
+    const teacherSchedule = new Map<string, Set<string>>(); // teacherId -> Set of "day-period"
+
+    // Helper to check collision
+    const isTeacherAvailable = (tId: string, day: number, period: number) => {
+        const key = `${day}-${period}`;
+        if (!teacherSchedule.has(tId)) {
+            return true;
+        }
+        return !teacherSchedule.get(tId)!.has(key);
+    };
+
+    // Helper to mark assigned
+    const markTeacherAssigned = (tId: string, day: number, period: number) => {
+        const key = `${day}-${period}`;
+        if (!teacherSchedule.has(tId)) {
+            teacherSchedule.set(tId, new Set());
+        }
+        teacherSchedule.get(tId)!.add(key);
+    };
+
+    // Make a mutable copy of requirements
+    let pendingReqs = requirements.map(r => ({ ...r }));
+
+    // Greedy assignment
+    for (let day = 1; day <= days; day++) {
+        for (let period = 1; period <= periodsPerDay; period++) {
+            
+            // We need to schedule all classes in this period.
+            // Wait, standard scheduling logic: For a specific class section (e.g. 10A), we need exactly one subject per period.
+            // This simple algorithm iterates over the requirements and fills available spots
+            
+            const reqsToProcess = [...pendingReqs];
+            const classAssigned = new Set<string>(); // Keep track so a class gets only 1 subject per period
+
+            for (let i = 0; i < reqsToProcess.length; i++) {
+                const req = reqsToProcess[i];
+                if (req.hoursNeeded > 0) {
+                    if (!classAssigned.has(req.className) && isTeacherAvailable(req.teacherId, day, period)) {
+                        timetable.push({
+                            day,
+                            period,
+                            className: req.className,
+                            subject: req.subject,
+                            teacherId: req.teacherId
+                        });
+                        markTeacherAssigned(req.teacherId, day, period);
+                        classAssigned.add(req.className);
+                        req.hoursNeeded--;
+                    }
+                }
+            }
+
+            // Clean up completed requirements
+            pendingReqs = pendingReqs.filter(r => r.hoursNeeded > 0);
+        }
+    }
+
+    return timetable;
+}
+
+export function calculateCompoundLateFees(baseAmount: number, dueDateStr: string, currentDateStr?: string) {
+    const due = new Date(dueDateStr);
+    const curr = currentDateStr ? new Date(currentDateStr) : new Date();
+    
+    // Set hours to 0 to avoid timezone edge cases on diffing
+    due.setHours(0,0,0,0);
+    curr.setHours(0,0,0,0);
+
+    const diffTime = curr.getTime() - due.getTime();
+    const daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (daysLate <= 0) {
+        return { daysLate: 0, latePenalty: 0, totalAmount: baseAmount };
+    }
+
+    let penalty = 0;
+    if (daysLate <= 3) {
+        penalty = 100;
+    } else {
+        penalty = 100 + ((daysLate - 3) * 20);
+    }
+
+    const cap = baseAmount * 0.5;
+    if (penalty > cap) penalty = cap;
+
+    return { daysLate, latePenalty: penalty, totalAmount: baseAmount + penalty };
+}
+
 export interface ScheduleBlock {
   id: string;
   teacher_id: string;
-  day_of_week: 1 | 2 | 3 | 4 | 5 | 6; // 1 = Monday
-  start_minute_of_day: number; // e.g., 08:30 AM = (8 * 60) + 30 = 510
-  end_minute_of_day: number;   // e.g., 09:15 AM = 555
+  day_of_week: number;
+  start_minute_of_day: number;
+  end_minute_of_day: number;
 }
 
-export function detectTimetableClash(
-  existingSchedule: ScheduleBlock[], 
-  pendingBlock: ScheduleBlock
-): { hasClash: boolean; conflictingBlockId?: string; reason?: string } {
-  
-  // 1. Filter schedule mapped to the same teacher and same day
-  const relevantBlocks = existingSchedule.filter(
-    block => block.teacher_id === pendingBlock.teacher_id && block.day_of_week === pendingBlock.day_of_week
-  );
-
-  if (relevantBlocks.length === 0) {
-    return { hasClash: false };
-  }
-
-  // 2. Interval Tree overlap detection
-  // Formula for overlap: Math.max(StartA, StartB) < Math.min(EndA, EndB)
-  for (const block of relevantBlocks) {
-    const overlapping = Math.max(block.start_minute_of_day, pendingBlock.start_minute_of_day) < Math.min(block.end_minute_of_day, pendingBlock.end_minute_of_day);
-    
-    if (overlapping) {
-      return { 
-        hasClash: true, 
-        conflictingBlockId: block.id,
-        reason: `Teacher is already assigned to a class between ${formatMinutes(block.start_minute_of_day)} and ${formatMinutes(block.end_minute_of_day)}.`
-      };
+export function detectTimetableClash(existing: ScheduleBlock[], incoming: ScheduleBlock) {
+    for (const b of existing) {
+        if (b.teacher_id === incoming.teacher_id && b.day_of_week === incoming.day_of_week) {
+            if (incoming.start_minute_of_day < b.end_minute_of_day && incoming.end_minute_of_day > b.start_minute_of_day) {
+                return { hasClash: true, conflictingBlockId: b.id };
+            }
+        }
     }
-  }
-
-  return { hasClash: false };
-}
-
-/** Helper to convert 510 -> 08:30 AM */
-function formatMinutes(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const displayH = h % 12 || 12;
-  return `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
-}
-
-
-/**
- * Calculates late fees using an educational compounding formula.
- * Late fee generates an initial penalty, plus a compounding daily fine 
- * if left unpaid for more than X days after the due date.
- */
-export function calculateCompoundLateFees(
-  baseAmount: number,
-  dueDateStr: string,
-  currentDateStr: string = new Date().toISOString()
-): { totalAmount: number; latePenalty: number; daysLate: number } {
-  const dueDate = new Date(dueDateStr);
-  const currentDate = new Date(currentDateStr);
-  
-  // Normalize times to calculate pure days difference
-  const diffTime = Math.max(currentDate.getTime() - dueDate.getTime(), 0);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
-  if (diffDays <= 0) {
-    return { totalAmount: baseAmount, latePenalty: 0, daysLate: 0 };
-  }
-
-  // Enterprise Logic: ₹100 flat late fine + ₹20 compound for every day late beyond a 3-day grace period
-  let penalty = 100; // Flat initiation
-  const gracePeriodDays = 3;
-  const dailyFineRate = 20;
-
-  if (diffDays > gracePeriodDays) {
-    const compoundDays = diffDays - gracePeriodDays;
-    penalty += (compoundDays * dailyFineRate);
-  }
-
-  // Cap late fee legally at 50% of the invoice gross base amount to avoid exorbitant penalties
-  const maxPenalty = baseAmount * 0.5;
-  if (penalty > maxPenalty) penalty = maxPenalty;
-
-  return {
-    totalAmount: baseAmount + penalty,
-    latePenalty: penalty,
-    daysLate: diffDays
-  };
+    return { hasClash: false };
 }

@@ -67,6 +67,13 @@ export default async function PortalLayout({ children }: { children: React.React
             <span className="text-[10px] font-medium text-slate-500">Academics</span>
           </Link>
 
+          <Link href="/portal/admissions" className="flex flex-col items-center gap-1 group">
+            <svg className="w-6 h-6 text-slate-500 group-hover:text-slate-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-[10px] font-medium text-slate-500">Admissions</span>
+          </Link>
+
           <Link href="/portal/fees" className="flex flex-col items-center gap-1 group relative">
             <div className="absolute -top-1 -right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#080C1A]" />
             <svg className="w-6 h-6 text-slate-500 group-hover:text-slate-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

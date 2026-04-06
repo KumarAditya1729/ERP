@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { createApplication, advanceStage as advanceStageAction, updateDocs } from '@/app/actions/admissions';
 
@@ -25,6 +25,7 @@ interface Application {
   previous_grade: string | null;
   stage: string;
   docs_status: DocsStatus;
+  document_files?: Record<string, string>;
   applied_date: string;
   interview_date: string | null;
   notes: string | null;
@@ -60,6 +61,9 @@ export default function AdmissionsPage() {
   const [filter, setFilter] = useState('All');
   const [selected, setSelected] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTarget, setUploadTarget] = useState<{appId: string, docKey: string} | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -178,6 +182,44 @@ export default function AdmissionsPage() {
     }
   };
 
+  // ─── Document Upload/View Handlers ────────────────────────────────────────
+  const handleUploadClick = (appId: string, docKey: string) => {
+    setUploadTarget({ appId, docKey });
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !uploadTarget) return;
+    setIsUploading(true);
+    const { appId, docKey } = uploadTarget;
+    try {
+       const fileExt = file.name.split('.').pop();
+       const fileName = `${appId}/${docKey}_${Date.now()}.${fileExt}`;
+       const { error: uploadErr } = await supabase.storage.from('admissions').upload(fileName, file);
+       if (uploadErr) throw uploadErr;
+       
+       const { updateDocFile } = await import('@/app/actions/admissions');
+       const res = await updateDocFile(appId, docKey, fileName);
+       if (!res.success) throw new Error(res.error);
+       
+       showToast(`✅ ${docKey} uploaded securely!`);
+       fetchApplications();
+    } catch(err: any) {
+       showToast(`Upload failed: ${err.message}`, 'error');
+    } finally {
+       setIsUploading(false);
+       setUploadTarget(null);
+       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleViewFile = async (filePath: string) => {
+    const { data, error } = await supabase.storage.from('admissions').createSignedUrl(filePath, 60);
+    if (error) showToast('Failed to load file: ' + error.message, 'error');
+    else if (data) window.open(data.signedUrl, '_blank');
+  };
+
   // ─── Derived ──────────────────────────────────────────────────────────────
   const filtered = filter === 'All' ? applications : applications.filter(a => a.stage === filter);
   const selectedApp = applications.find(a => a.id === selected);
@@ -191,6 +233,9 @@ export default function AdmissionsPage() {
           {toast.msg}
         </div>
       )}
+
+      {/* Hidden File Input */}
+      <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,image/*" onChange={handleFileUpload} />
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -352,7 +397,7 @@ export default function AdmissionsPage() {
 
                 {/* Live Document Checklist (clickable) */}
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Document Checklist <span className="text-violet-400 font-normal normal-case">(click to toggle)</span></p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Document Vault <span className="text-violet-400 font-normal normal-case">{isUploading ? '(Uploading...)' : '(Secure Docs)'}</span></p>
                   <div className="grid grid-cols-2 gap-2">
                     {([
                       { key: 'birth' as const,    label: 'Birth Certificate' },
@@ -362,12 +407,21 @@ export default function AdmissionsPage() {
                       { key: 'aadhar' as const,   label: 'Aadhar Card' },
                     ]).map(doc => {
                       const received = selectedApp.docs_status[doc.key];
+                      const filePath = selectedApp.document_files?.[doc.key];
+                      
                       return (
-                        <button key={doc.key} id={`doc-${doc.key}`}
-                          onClick={() => toggleDoc(selectedApp.id, doc.key, received)}
-                          className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${received ? 'border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10' : 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10'}`}>
-                          <span className={`text-sm ${received ? 'text-emerald-400' : 'text-red-400'}`}>{received ? '✅' : '❌'}</span>
-                          <span className="text-xs text-slate-300">{doc.label}</span>
+                        <button key={doc.key} id={`doc-${doc.key}`} disabled={isUploading}
+                          onClick={() => filePath ? handleViewFile(filePath) : handleUploadClick(selectedApp.id, doc.key)}
+                          className={`flex items-center justify-between gap-2 p-2.5 rounded-xl border text-left transition-all ${filePath ? 'border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10' : 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10'}`}>
+                          <div className="flex items-center gap-2">
+                             <span className={`text-sm ${filePath ? 'text-emerald-400' : 'text-red-400'}`}>{filePath ? '✅' : '❌'}</span>
+                             <span className="text-xs text-slate-300 truncate max-w-[100px]">{doc.label}</span>
+                          </div>
+                          {filePath ? (
+                            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider underline">View</span>
+                          ) : (
+                            <span className="text-[9px] font-bold text-violet-400 uppercase tracking-wider cursor-pointer">Upload</span>
+                          )}
                         </button>
                       );
                     })}

@@ -44,7 +44,7 @@ export default function HostelPage() {
 
   const [block, setBlock] = useState('All');
   const [selected, setSelected] = useState<string | null>(null);
-  const [tab, setTab] = useState<'rooms' | 'wardens' | 'fees'>('rooms');
+  const [tab, setTab] = useState<'rooms' | 'wardens' | 'fees' | 'gatepass'>('rooms');
 
   // Allocation Form State
   const [allocatingBed, setAllocatingBed] = useState<number | null>(null);
@@ -184,10 +184,10 @@ export default function HostelPage() {
           {/* Tabs */}
           <div className="glass border border-white/[0.08] rounded-2xl overflow-hidden">
             <div className="flex border-b border-white/[0.08]">
-              {(['rooms', 'wardens', 'fees'] as const).map(t => (
+              {(['rooms', 'wardens', 'gatepass', 'fees'] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)} id={`hostel-tab-${t}`}
                   className={`flex-1 py-3.5 text-sm font-semibold capitalize transition-colors ${tab === t ? 'text-violet-400 border-b-2 border-violet-500 bg-violet-500/5' : 'text-slate-400 hover:text-white'}`}>
-                  {t === 'rooms' ? '🏨 Rooms' : t === 'wardens' ? '👮 Wardens' : '💰 Hostel Fees'}
+                  {t === 'rooms' ? '🏨 Rooms' : t === 'wardens' ? '👮 Wardens' : t === 'gatepass' ? '🎟️ Gate Pass' : '💰 Hostel Fees'}
                 </button>
               ))}
             </div>
@@ -287,7 +287,7 @@ export default function HostelPage() {
               </div>
             )}
 
-            {tab === 'wardens' && (
+             {tab === 'wardens' && (
               <div className="p-6 space-y-4">
                 <div className="grid md:grid-cols-3 gap-4">
                   {wardens.map((w, i) => (
@@ -307,6 +307,45 @@ export default function HostelPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {tab === 'gatepass' && (
+               <div className="p-6">
+                 <div className="flex justify-between items-center mb-6">
+                    <div>
+                       <h3 className="text-lg font-bold text-white">Digital Gate Pass Control</h3>
+                       <p className="text-sm text-slate-400">Generate secure OTP-verified exit passes for weekend outings and medical leaves.</p>
+                    </div>
+                    <button onClick={() => showToast('Issue Pass Modal Simulated.')} className="btn-primary text-sm">+ Issue New Pass</button>
+                 </div>
+                 <div className="grid lg:grid-cols-3 gap-4">
+                    {/* Simulator mock data */}
+                    <div className="glass border border-violet-500/30 bg-violet-500/5 rounded-2xl p-5">
+                       <div className="flex justify-between items-start mb-2">
+                          <span className="badge badge-purple uppercase tracking-widest text-[9px]">Active (Out)</span>
+                          <span className="text-xs text-slate-400 font-mono">GP-883A</span>
+                       </div>
+                       <p className="text-white font-bold">Arjun Patel (A-102)</p>
+                       <p className="text-xs text-slate-400 mt-1">Medical Leave — Dental Appointment</p>
+                       <div className="border-t border-white/10 mt-3 pt-3 flex justify-between items-center">
+                          <p className="text-xs text-slate-300">Exp. Return: Today 6 PM</p>
+                          <button onClick={() => showToast('Student marked returned.')} className="text-xs text-violet-400 hover:text-violet-300 font-bold bg-white/5 py-1 px-3 rounded">Mark In</button>
+                       </div>
+                    </div>
+                    <div className="glass border border-amber-500/30 bg-amber-500/5 rounded-2xl p-5 border-dashed">
+                       <div className="flex justify-between items-start mb-2">
+                          <span className="badge badge-yellow uppercase tracking-widest text-[9px]">Pending Approval</span>
+                          <span className="text-xs text-slate-400 font-mono">GP-884B</span>
+                       </div>
+                       <p className="text-white font-bold">Ravi Kumar (B-201)</p>
+                       <p className="text-xs text-slate-400 mt-1">Weekend Home Visit</p>
+                       <div className="border-t border-white/10 mt-3 pt-3 flex justify-between items-center gap-2">
+                          <button onClick={() => showToast('Gate Pass Denied.', 'error')} className="flex-1 text-[10px] text-slate-400 hover:text-white bg-white/5 py-1.5 rounded">Deny</button>
+                          <button onClick={() => showToast('OTP Pass Generated & Sent to Parent.')} className="flex-1 text-[10px] text-amber-400 hover:text-amber-300 font-bold bg-amber-500/10 py-1.5 rounded">Approve</button>
+                       </div>
+                    </div>
+                 </div>
+               </div>
             )}
 
             {tab === 'fees' && (

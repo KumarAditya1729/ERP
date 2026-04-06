@@ -25,7 +25,7 @@ export default function TeacherDashboard() {
         <p className="text-slate-400">Welcome back, {profile?.first_name || 'Teacher'}. Access your assigned classes, attendance logs, and grading modules here.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Link href="/teacher/students" className="glass border border-white/[0.08] rounded-2xl p-6 hover:border-violet-500/30 transition-colors group block">
           <div className="text-4xl mb-4 group-hover:scale-110 transition-transform origin-left">📚</div>
           <h2 className="text-xl font-semibold text-white mb-2">My Classes</h2>
@@ -45,6 +45,12 @@ export default function TeacherDashboard() {
           <h2 className="text-xl font-semibold text-white mb-2">Mark Attendance</h2>
           <p className="text-sm text-slate-400 mb-4">Record daily attendance for your designated section.</p>
           <div className="btn-secondary w-full text-center text-sm inline-block py-2">Open Register</div>
+        </Link>
+        <Link href="/teacher/payslips" className="glass border border-white/[0.08] rounded-2xl p-6 hover:border-pink-500/30 transition-colors group block">
+          <div className="text-4xl mb-4 group-hover:scale-110 transition-transform origin-left">💸</div>
+          <h2 className="text-xl font-semibold text-white mb-2">My Payslips</h2>
+          <p className="text-sm text-slate-400 mb-4">View and download your monthly salary slips securely.</p>
+          <div className="btn-secondary w-full text-center text-sm inline-block py-2">View Payslips</div>
         </Link>
       </div>
     </div>

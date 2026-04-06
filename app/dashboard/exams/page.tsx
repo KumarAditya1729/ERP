@@ -31,6 +31,10 @@ export default function ExamsPage() {
   const [selectedExam, setSelectedExam] = useState('E2');
   const [marksData, setMarksData] = useState<any[]>(initialMarksPattern);
   const [loadingDb, setLoadingDb] = useState(true);
+  const [showScheduleMock, setShowScheduleMock] = useState(false);
+  const [showPDFMock, setShowPDFMock] = useState(false);
+  const [mockProgress, setMockProgress] = useState(0);
+  const [mockComplete, setMockComplete] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const showToast = (msg: string, ok = true) => {
@@ -82,6 +86,36 @@ export default function ExamsPage() {
     }
     fetchMarks();
   }, [selectedExam]);
+
+  const handleScheduleExam = () => {
+     setShowScheduleMock(true);
+     setMockProgress(0);
+     setMockComplete(false);
+     let p = 0;
+     const interval = setInterval(() => {
+        p += 20;
+        setMockProgress(p);
+        if (p >= 100) {
+           clearInterval(interval);
+           setTimeout(() => setMockComplete(true), 500);
+        }
+     }, 400);
+  };
+
+  const handleGeneratePDF = () => {
+     setShowPDFMock(true);
+     setMockProgress(0);
+     setMockComplete(false);
+     let p = 0;
+     const interval = setInterval(() => {
+        p += 10;
+        setMockProgress(p);
+        if (p >= 100) {
+           clearInterval(interval);
+           setTimeout(() => setMockComplete(true), 1000);
+        }
+     }, 200);
+  };
 
   // AI Grader State
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -163,8 +197,8 @@ export default function ExamsPage() {
           <p className="text-slate-400 text-sm mt-0.5">Exam scheduling, mark entry, grades and report card generation</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => showToast('Exam schedule draft initiated.')} className="btn-secondary text-sm py-2 px-4">📅 Schedule Exam</button>
-          <button onClick={() => showToast('Report Cards compiled! PDFs generating in background.')} className="btn-primary text-sm py-2 px-4">📄 Generate Report Cards</button>
+          <button onClick={handleScheduleExam} className="btn-secondary text-sm py-2 px-4">📅 Schedule Exam</button>
+          <button onClick={handleGeneratePDF} className="btn-primary text-sm py-2 px-4">📄 Generate Report Cards</button>
         </div>
       </div>
 
@@ -320,6 +354,55 @@ export default function ExamsPage() {
                 </div>
              </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Deep Mock: Exam Schedule */}
+      {showScheduleMock && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/90 backdrop-blur-md animate-fade-in">
+          <div className="glass border border-violet-500/30 rounded-3xl p-8 max-w-sm w-full text-center relative overflow-hidden">
+            <h2 className="text-xl font-bold text-white mb-2">{mockComplete ? 'Draft Initialized!' : 'Generating Schedule...'}</h2>
+            {!mockComplete ? (
+              <div className="space-y-3 mt-4">
+                <p className="text-sm text-slate-400">Verifying teacher availability and optimizing subjects for Class 9-12.</p>
+                <div className="w-full bg-slate-800 rounded-full h-2 mb-2">
+                  <div className="bg-violet-500 h-2 rounded-full transition-all duration-300" style={{ width: `${mockProgress}%` }} />
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <p className="text-sm text-slate-300 mb-4">A preliminary schedule draft has been sent to Admin for review.</p>
+                <button onClick={() => setShowScheduleMock(false)} className="btn-primary w-full py-2 text-sm">Close Draft</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Deep Mock: Report Card PDF Generation */}
+      {showPDFMock && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/90 backdrop-blur-md animate-fade-in">
+          <div className="glass border border-emerald-500/30 rounded-3xl p-8 max-w-sm w-full text-center relative overflow-hidden">
+             <div className={`absolute top-0 left-0 h-1 bg-emerald-500 transition-all duration-300`} style={{ width: `${mockProgress}%` }} />
+            <h2 className="text-xl font-bold text-white mb-2">{mockComplete ? 'PDFs Compiled!' : 'Compiling Report Cards...'}</h2>
+            {!mockComplete ? (
+              <div className="space-y-3 mt-4">
+                <p className="text-sm text-slate-400">Rendering HTML to PDF template. Calculating aggregates and grade thresholds.</p>
+                <div className="w-full bg-slate-800 rounded-full h-2 mb-2">
+                  <div className="bg-emerald-500 h-2 rounded-full transition-all duration-300" style={{ width: `${mockProgress}%` }} />
+                </div>
+                <p className="text-xs text-emerald-400 font-mono">Generating card {(mockProgress / 10).toFixed(0)} / 10</p>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <p className="text-sm text-slate-300 mb-4">Extracted PDF batch. Digital signatures affixed.</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowPDFMock(false)} className="btn-primary flex-1 py-2 text-sm">Download ZIP</button>
+                  <button onClick={() => setShowPDFMock(false)} className="btn-secondary flex-1 py-2 text-sm">Close</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
