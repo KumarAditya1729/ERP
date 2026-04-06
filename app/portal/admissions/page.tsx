@@ -89,7 +89,7 @@ export default function PortalAdmissionsTracker() {
         <div className="glass border border-white/[0.08] rounded-2xl p-8 text-center mt-5">
            <p className="text-4xl mb-4">📝</p>
            <h2 className="text-white font-bold text-lg">No Applications Found</h2>
-           <p className="text-slate-400 text-xs mt-2">We couldn't find any admission forms linked to your email address.</p>
+           <p className="text-slate-400 text-xs mt-2">We could not find any admission forms linked to your email address.</p>
         </div>
       ) : (
         <div className="space-y-5">
