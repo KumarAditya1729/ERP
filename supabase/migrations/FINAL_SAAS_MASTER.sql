@@ -728,17 +728,14 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 2. Restrict Bucket Access (RLS over Storage)
 -- Allow authenticated staff/admins to select/insert files
-DROP POLICY IF EXISTS "Admissions files accessible by authenticated users" ON storage.objects;
 CREATE POLICY "Admissions files accessible by authenticated users" 
 ON storage.objects FOR SELECT 
 USING (bucket_id = 'admissions' AND auth.uid() IS NOT NULL);
 
-DROP POLICY IF EXISTS "Admissions files insertable by authenticated users" ON storage.objects;
 CREATE POLICY "Admissions files insertable by authenticated users" 
 ON storage.objects FOR INSERT 
 WITH CHECK (bucket_id = 'admissions' AND auth.uid() IS NOT NULL);
 
-DROP POLICY IF EXISTS "Admissions files deletable by authenticated users" ON storage.objects;
 CREATE POLICY "Admissions files deletable by authenticated users" 
 ON storage.objects FOR DELETE 
 USING (bucket_id = 'admissions' AND auth.uid() IS NOT NULL);
