@@ -132,22 +132,12 @@ export default function Pricing() {
                 ))}
               </ul>
 
-              {plan.name === 'Growth Plan' ? (
-                 <RazorpayCheckout 
-                    planId={plan.name.toLowerCase()}
-                    planName={plan.name}
-                    amount={plan.price}
-                    buttonClass={plan.highlight ? 'btn-primary justify-center w-full' : 'btn-secondary justify-center w-full'}
-                 />
-              ) : (
                 <Link
-                  href="/login"
-                  id={`pricing-cta-${plan.name.toLowerCase()}`}
+                  href={plan.price === 0 ? 'mailto:sales@nexschool.ai' : `/register?tier=${plan.name.split(' ')[0].toLowerCase()}`}
                   className={plan.highlight ? 'btn-primary justify-center w-full text-center' : 'btn-secondary justify-center w-full text-center'}
                 >
                   {plan.cta}
                 </Link>
-              )}
             </div>
           ))}
         </div>

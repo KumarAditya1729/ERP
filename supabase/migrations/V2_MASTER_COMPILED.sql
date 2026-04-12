@@ -61,7 +61,28 @@ ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Tenant isolation for students" ON public.students
     FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
 
+-- ==============================================================================
+-- SECTION 2.5: PARENT - STUDENT LINKS
+-- ==============================================================================
 
+CREATE TABLE IF NOT EXISTS public.parent_links (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT parent_links_parent_student_unique UNIQUE (parent_id, student_id)
+);
+
+ALTER TABLE public.parent_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Parent Links readable by Admins or actual Parent" ON public.parent_links FOR SELECT
+USING (
+    tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id')
+    AND (
+        (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+        OR parent_id = auth.uid()
+    )
+);
 -- ==============================================================================
 -- SECTION 3: ATTENDANCE
 -- ==============================================================================
@@ -520,25 +541,7 @@ CREATE POLICY "tenant_isolation_student_placements" ON public.student_placements
 -- SECTION 13: RBAC — PARENT-STUDENT LINKS & AUTH TRIGGER
 -- ==============================================================================
 
--- 13.1 Parent → Student relationship table (many-to-many)
-CREATE TABLE IF NOT EXISTS public.parent_links (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    parent_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
-    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    CONSTRAINT parent_links_parent_student_unique UNIQUE (parent_id, student_id)
-);
-
-ALTER TABLE public.parent_links ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Parent Links readable by Admins or actual Parent" ON public.parent_links FOR SELECT
-USING (
-    tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id')
-    AND (
-        (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-        OR parent_id = auth.uid()
-    )
-);
+-- 13.1 Parent → Student relationship table (MOVED TO SECTION 2.5 TO FIX DEPENDENCIES)
 
 -- 13.2 Role-based attendance access
 DROP POLICY IF EXISTS "Strict isolated attendance" ON public.attendance;
@@ -659,3 +662,235 @@ VALUES
     ('550e8400-e29b-41d4-a716-446655440000', 'Weekly Test', 'Science', 'Grade 6', '2026-04-10', 50, 'upcoming'),
     ('550e8400-e29b-41d4-a716-446655440000', 'Final Exam', 'English', 'Grade 8', '2026-12-10', 100, 'upcoming')
 ON CONFLICT DO NOTHING;
+-- ==============================================================================
+-- MIGRATION 2: FLEET MANAGEMENT (Fuel, Maintenance, Safety Incidents)
+-- ==============================================================================
+
+-- 1. Fuel Tracking Logs
+CREATE TABLE IF NOT EXISTS public.transport_fuel_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    route_id UUID NOT NULL REFERENCES public.transport_routes(id) ON DELETE CASCADE,
+    fuel_volume_liters DECIMAL(10,2) NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL,
+    odometer_reading INTEGER NOT NULL,
+    receipt_url TEXT,
+    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.transport_fuel_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for fuel logs" ON public.transport_fuel_logs
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+
+-- 2. Maintenance Logs
+CREATE TABLE IF NOT EXISTS public.transport_maintenance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    route_id UUID NOT NULL REFERENCES public.transport_routes(id) ON DELETE CASCADE,
+    service_type TEXT NOT NULL CHECK (service_type IN ('Oil Change', 'PUC Certificate', 'Insurance Renewal', 'Tire Replacement', 'General Service')),
+    cost DECIMAL(10,2) DEFAULT 0,
+    next_due_date DATE NOT NULL,
+    notes TEXT,
+    performed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.transport_maintenance ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for maintenance" ON public.transport_maintenance
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+
+-- 3. Safety Incidents
+CREATE TABLE IF NOT EXISTS public.transport_incidents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    route_id UUID NOT NULL REFERENCES public.transport_routes(id) ON DELETE CASCADE,
+    incident_type TEXT NOT NULL CHECK (incident_type IN ('Harsh Braking', 'Overspeed Warning', 'Route Deviation', 'SOS Activated', 'Traffic Delay')),
+    severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+    description TEXT NOT NULL,
+    reported_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.transport_incidents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for incidents" ON public.transport_incidents
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+
+-- Performance indexes
+CREATE INDEX IF NOT EXISTS idx_fuel_logs_route ON public.transport_fuel_logs(route_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_route ON public.transport_maintenance(route_id);
+CREATE INDEX IF NOT EXISTS idx_incidents_route_severity ON public.transport_incidents(route_id, severity);
+-- ==============================================================================
+-- MIGRATION 3: ADMISSIONS STORAGE (Digital Document Vault)
+-- ==============================================================================
+
+-- 1. Create secure private Storage Bucket 'admissions'
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('admissions', 'admissions', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Restrict Bucket Access (RLS over Storage)
+-- Allow authenticated staff/admins to select/insert files
+DROP POLICY IF EXISTS "Admissions files accessible by authenticated users" ON storage.objects;
+CREATE POLICY "Admissions files accessible by authenticated users" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'admissions' AND auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "Admissions files insertable by authenticated users" ON storage.objects;
+CREATE POLICY "Admissions files insertable by authenticated users" 
+ON storage.objects FOR INSERT 
+WITH CHECK (bucket_id = 'admissions' AND auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "Admissions files deletable by authenticated users" ON storage.objects;
+CREATE POLICY "Admissions files deletable by authenticated users" 
+ON storage.objects FOR DELETE 
+USING (bucket_id = 'admissions' AND auth.uid() IS NOT NULL);
+
+-- 3. Database Schema Alteration
+-- Add new JSONB column to track file paths
+ALTER TABLE public.admission_applications 
+ADD COLUMN IF NOT EXISTS document_files JSONB DEFAULT '{}'::jsonb;
+
+-- Ensure an index on JSONB isn't strictly necessary for typical lookups on ID, 
+-- but it prepares the schema for storing actual file keys.
+-- ==============================================================================
+-- 🏫 NEXSCHOOL ERP — MIGRATION 4: PRODUCTION MODULES
+-- Library, Gate Passes, and Academic Timetable
+-- ==============================================================================
+
+-- ==============================================================================
+-- SECTION 1: LIBRARY MANAGEMENT
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.library_books (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    author TEXT,
+    isbn TEXT,
+    category TEXT,
+    total_copies INTEGER DEFAULT 1,
+    available_copies INTEGER DEFAULT 1,
+    location_rack TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.library_books ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for library books" ON public.library_books
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+
+CREATE TABLE IF NOT EXISTS public.library_issues (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    book_id UUID NOT NULL REFERENCES public.library_books(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    issue_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    due_date DATE NOT NULL,
+    return_date DATE,
+    status TEXT DEFAULT 'issued' CHECK (status IN ('issued', 'returned', 'overdue', 'lost')),
+    fine_amount DECIMAL(10,2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.library_issues ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for library issues" ON public.library_issues
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+
+-- ==============================================================================
+-- SECTION 2: HOSTEL GATE PASSES
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.hostel_gate_passes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    student_name TEXT NOT NULL,
+    room_id UUID REFERENCES public.hostel_rooms(id) ON DELETE CASCADE,
+    reason TEXT NOT NULL,
+    out_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    expected_in_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    actual_in_time TIMESTAMP WITH TIME ZONE,
+    approved_by TEXT,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'active', 'returned', 'rejected')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.hostel_gate_passes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for gate passes" ON public.hostel_gate_passes
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+
+-- ==============================================================================
+-- SECTION 3: ACADEMICS TIMETABLE
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.timetable_slots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    class_name TEXT NOT NULL,
+    section TEXT NOT NULL,
+    day_of_week INTEGER CHECK (day_of_week >= 0 AND day_of_week <= 6), -- 0=Sun, 1=Mon...
+    period_number INTEGER NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    subject TEXT NOT NULL,
+    teacher_id UUID REFERENCES public.profiles(id),
+    room_number TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Constraint to prevent a teacher from being assigned to two classes at the same time period on the same day
+ALTER TABLE public.timetable_slots
+ADD CONSTRAINT unique_teacher_period_day UNIQUE (tenant_id, teacher_id, day_of_week, period_number);
+
+ALTER TABLE public.timetable_slots ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Tenant isolation for timetable" ON public.timetable_slots
+    FOR ALL USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'));
+-- TENANTS TABLE (Idempotent Create)
+CREATE TABLE IF NOT EXISTS tenants (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  subdomain text UNIQUE NOT NULL,
+  created_at timestamp DEFAULT now()
+);
+
+-- Safely add columns if they don't exist in backend
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS subdomain text;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS features jsonb;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS subscription_status text;
+
+-- ADD tenant_id to existing profile tables
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS tenant_id uuid;
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS tenant_id uuid;
+
+-- DEFAULT TENANT (NO DATA LOSS)
+INSERT INTO tenants (id, name, subdomain)
+VALUES ('550e8400-e29b-41d4-a716-446655440000', 'DPS School', 'dps')
+ON CONFLICT DO NOTHING;
+
+-- MAP OLD DATA
+UPDATE profiles SET tenant_id = '550e8400-e29b-41d4-a716-446655440000';
+UPDATE admission_applications SET tenant_id = '550e8400-e29b-41d4-a716-446655440000';
+
+-- MAKE REQUIRED
+ALTER TABLE profiles ALTER COLUMN tenant_id SET NOT NULL;
+ALTER TABLE admission_applications ALTER COLUMN tenant_id SET NOT NULL;
+
+-- ENABLE RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admission_applications ENABLE ROW LEVEL SECURITY;
+
+-- POLICY
+DROP POLICY IF EXISTS "Tenant Isolation Users" ON profiles;
+CREATE POLICY "Tenant Isolation Users"
+ON profiles
+FOR ALL
+USING (tenant_id::text = auth.jwt() ->> 'tenant_id');
+
+DROP POLICY IF EXISTS "Tenant Isolation Students" ON admission_applications;
+CREATE POLICY "Tenant Isolation Students"
+ON admission_applications
+FOR ALL
+USING (tenant_id::text = auth.jwt() ->> 'tenant_id');
+CREATE TABLE invoices (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id uuid,
+  amount numeric,
+  status text,
+  created_at timestamp DEFAULT now()
+);

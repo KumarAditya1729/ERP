@@ -38,7 +38,8 @@ const TIERS = [
 function RegisterForm() {
   const searchParams = useSearchParams()
   const errorMsg = searchParams?.get('error')
-  const [tier, setTier] = useState('growth')
+  const initialTier = searchParams?.get('tier') || 'growth'
+  const [tier, setTier] = useState(initialTier)
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<1 | 2>(1)
 
