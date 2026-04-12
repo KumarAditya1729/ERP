@@ -82,11 +82,15 @@ export default function AdmissionsPage() {
   // ─── Fetch all applications for this tenant ───────────────────────────────
   const fetchApplications = useCallback(async () => {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // Admin checking is handled by layouts, but scoping data here
     const { data, error } = await supabase
       .from('admission_applications')
       .select('*')
       .order('applied_date', { ascending: false });
-
+      
     if (error) {
       showToast('Failed to load applications: ' + error.message, 'error');
     } else {

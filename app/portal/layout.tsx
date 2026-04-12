@@ -9,12 +9,12 @@ export default async function PortalLayout({ children }: { children: React.React
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
-
   // Rely on the JWT natively injected by the Auth Trigger and verified by Middleware
-  const role = user.app_metadata?.role || 'parent';
+  const role = user?.app_metadata?.role || 'parent';
+
+  if (!user || (role !== 'student' && role !== 'parent')) {
+    redirect('/unauthorized');
+  }
 
   return (
     <div className="min-h-screen bg-[#080C1A] text-slate-300 relative flex flex-col font-sans">

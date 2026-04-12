@@ -8,34 +8,22 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  // Report React render errors to Sentry automatically
   Sentry.captureException(error);
 
   return (
     <html>
-      <body style={{ background: '#080C1A', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚨</div>
-          <h2 style={{ color: '#ffffff', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-            Something went wrong
-          </h2>
-          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-            Our team has been automatically notified. Please try again.
+      <body className="flex items-center justify-center h-screen bg-[#080C1A] text-slate-300 font-sans">
+        <div className="glass-strong border border-red-500/20 rounded-3xl p-10 max-w-lg w-full text-center float space-y-4">
+          <div className="text-6xl mb-4">🚨</div>
+          <h1 className="text-2xl font-bold text-white">Critical System Exception</h1>
+          <p className="text-sm text-slate-400">
+            {error?.message || "An edge runtime error occurred. Our engineering team has been notified via Sentry."}
           </p>
           <button
             onClick={reset}
-            style={{
-              background: 'linear-gradient(135deg, #7C3AED, #5B21B6)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '0.75rem',
-              padding: '0.6rem 1.5rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '600',
-            }}
+            className="mt-6 px-6 py-2.5 bg-red-600/20 hover:bg-red-600/40 text-red-300 font-semibold rounded-xl border border-red-500/30 transition-colors"
           >
-            Try Again
+            Re-initialize System
           </button>
         </div>
       </body>

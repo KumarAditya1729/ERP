@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 import { logout } from '@/app/actions/auth';
 import AICopilot from '@/components/AI_Copilot';
 
@@ -32,14 +32,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [tenant, setTenant] = useState<any>(null);
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
     async function loadUser() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
+      if (!user || user.app_metadata?.role !== 'admin') {
+        router.push('/unauthorized');
         return;
       }
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
