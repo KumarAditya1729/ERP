@@ -2,6 +2,9 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig = {
+  // Lint and type errors are caught by CI — don't block the build on Vercel
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'api.dicebear.com' },
