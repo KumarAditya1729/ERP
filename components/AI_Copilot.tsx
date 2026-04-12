@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
 
 export default function AICopilot({ role = 'admin' }: { role?: string }) {
   const [open, setOpen] = useState(false);
