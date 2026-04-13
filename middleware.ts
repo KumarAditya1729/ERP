@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 // ⚠️ EDGE SAFE (NO nodejs imports)
-// Subdomain parsing and RBAC blocking
+// Subdomain parsing, Session refresh, and RBAC blocking
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  let res = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  })
   
   // 🔥 PHASE 3: SUBDOMAIN HANDLER
   const host = req.headers.get('host') || ''
@@ -21,8 +25,34 @@ export async function middleware(req: NextRequest) {
   // We can inject Tenant resolution directly in Server Components using headers
   res.headers.set('x-tenant-subdomain', tenantSubdomain)
 
-  // Initialize Supabase Auth for the request
-  const supabase = createMiddlewareClient({ req, res })
+  // Initialize Supabase Auth for the request using @supabase/ssr (compatible with server actions)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          req.cookies.set({ name, value, ...options })
+          res = NextResponse.next({
+            request: { headers: req.headers },
+          })
+          res.headers.set('x-tenant-subdomain', tenantSubdomain)
+          res.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          req.cookies.set({ name, value: '', ...options })
+          res = NextResponse.next({
+            request: { headers: req.headers },
+          })
+          res.headers.set('x-tenant-subdomain', tenantSubdomain)
+          res.cookies.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
 
   const {
     data: { user },
