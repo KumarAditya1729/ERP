@@ -14,7 +14,6 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: '📊' },
   { href: '/dashboard/students', label: 'Students', icon: '🎓' },
   { href: '/dashboard/admissions', label: 'Admissions', icon: '📋' },
-  { href: '/dashboard/attendance', label: 'Attendance', icon: '📅' },
   { href: '/dashboard/fees', label: 'Fee Management', icon: '💰' },
   { href: '/dashboard/communication', label: 'Communication', icon: '📣' },
   { href: '/dashboard/transport', label: 'Transport', icon: '🚌', comingSoon: !FEATURE_TRANSPORT_GPS },
