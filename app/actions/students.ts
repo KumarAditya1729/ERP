@@ -33,34 +33,49 @@ export async function getTeacherStudents(classGrade: string) {
   }
 }
 
+import { studentSchema } from '@/lib/validations/schemas';
+
 export async function addStudent(formData: FormData) {
   const supabase = createClient()
   
   // Get current user and tenant
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-  
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
-  if (!profile) throw new Error("Profile not found");
+  if (!user) return { success: false, error: 'Unauthorized' };
 
-  const parseResult = StudentSchema.safeParse({
-    first_name: formData.get('first_name'),
-    last_name: formData.get('last_name'),
-    class_grade: formData.get('class_grade'),
-    section: formData.get('section'),
-    roll_number: formData.get('roll_number') || undefined,
-    guardian_name: formData.get('guardian_name') || undefined,
-    guardian_phone: formData.get('guardian_phone') || undefined,
-  });
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .single();
 
-  if (!parseResult.success) {
-    return { success: false, error: parseResult.error.errors[0].message };
+  if (!profile) return { success: false, error: 'Profile not found' };
+
+  const rawData = {
+    first_name: formData.get('first_name') as string,
+    last_name: formData.get('last_name') as string,
+    class_grade: formData.get('class_grade') as string,
+    section: formData.get('section') as string,
+    roll_number: formData.get('roll_number') as string,
+    guardian_name: formData.get('guardian_name') as string,
+    guardian_phone: formData.get('guardian_phone') as string,
+    dob: formData.get('dob') as string,
+  };
+
+  const validationResult = studentSchema.safeParse(rawData);
+  if (!validationResult.success) {
+    return { 
+      success: false, 
+      error: 'Validation failed: ' + validationResult.error.errors.map(e => e.message).join(', ') 
+    };
   }
 
   const newStudent = {
+    ...validationResult.data,
     tenant_id: profile.tenant_id,
-    ...parseResult.data,
-    status: formData.get('status') || 'active'
+    guardian_email: (formData.get('guardian_email') as string) || null,
+    address: (formData.get('address') as string) || null,
+    blood_group: (formData.get('blood_group') as string) || null,
+    status: 'active',
   };
 
   const { error } = await supabase.from('students').insert(newStudent);

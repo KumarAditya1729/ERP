@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { submitExamGrades } from '@/app/actions/academics';
+import BulkUploader from '@/components/BulkUploader';
+import { generateReportCardPDF } from '@/lib/pdfGenerator';
 
 const supabase = createClient();
 
@@ -165,7 +167,7 @@ export default function ExamsPage() {
             📅 Schedule Exam
           </button>
           <button
-            onClick={() => showToast('PDF generation requires a report card template. Coming soon.', false)}
+            onClick={() => showToast('Select an exam and switch to Mark Sheet Evaluator to print individual report cards.', false)}
             className="btn-primary text-sm py-2 px-4"
           >
             📄 Generate Report Cards
@@ -282,6 +284,7 @@ export default function ExamsPage() {
                       <th>Total /500</th>
                       <th>%</th>
                       <th>Grade</th>
+                      <th>PDF</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -306,6 +309,28 @@ export default function ExamsPage() {
                           <td className="font-bold text-emerald-400">{s.total || '-'}</td>
                           <td className="font-semibold text-violet-300">{s.pct > 0 ? `${s.pct}%` : '-'}</td>
                           <td><span className={`badge ${g.badge}`}>{g.label}</span></td>
+                          <td>
+                            <button
+                              onClick={() => {
+                                const marksArray = [
+                                  { subject: 'Math', max_marks: 100, marks_obtained: s.math || 0 },
+                                  { subject: 'Science', max_marks: 100, marks_obtained: s.science || 0 },
+                                  { subject: 'English', max_marks: 100, marks_obtained: s.english || 0 },
+                                  { subject: 'Hindi', max_marks: 100, marks_obtained: s.hindi || 0 },
+                                  { subject: 'Social Studies', max_marks: 100, marks_obtained: s.social || 0 }
+                                ];
+                                generateReportCardPDF(
+                                  { first_name: s.name.split(' ')[0] || '', last_name: s.name.split(' ').slice(1).join(' '), class_grade: s.class.split('-')[0], section: s.class.split('-')[1] || 'A', id: s.student_id, roll_number: '' },
+                                  selectedExamObj?.name || 'Exam',
+                                  marksArray,
+                                  'NexSchool ERP'
+                                );
+                              }}
+                              className="text-xs text-slate-400 hover:text-white font-semibold"
+                            >
+                              ⬇️ Print
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}

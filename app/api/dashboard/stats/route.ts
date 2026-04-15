@@ -45,16 +45,16 @@ export async function GET(req: Request) {
     }
 
     // 2. Real DB queries — all scoped to tenant
-    const [studentsResult, feesResult, staffResult] = await Promise.all([
+    const [studentsResult, viewResult, staffResult] = await Promise.all([
       supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'active'),
-      supabaseAdmin.from('fees').select('amount, status').eq('tenant_id', tenantId),
+      supabaseAdmin.from('tenant_fee_summary_view').select('collected, pending').eq('tenant_id', tenantId).single(),
       supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('role', ['staff', 'teacher', 'admin']),
     ]);
 
     const totalStudents = studentsResult.count || 0;
     const totalStaff = staffResult.count || 0;
-    const feesCollected = (feesResult.data || []).filter(f => f.status === 'paid').reduce((s, f) => s + Number(f.amount), 0);
-    const feesPending = (feesResult.data || []).filter(f => f.status === 'pending').reduce((s, f) => s + Number(f.amount), 0);
+    const feesCollected = Number(viewResult.data?.collected || 0);
+    const feesPending = Number(viewResult.data?.pending || 0);
 
     const payload = {
       kpis: [

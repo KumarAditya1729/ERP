@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import StaffModal from '@/components/dashboard/StaffModal';
+import { generatePayslipPDF } from '@/lib/pdfGenerator';
 
 const supabase = createClient();
 
@@ -220,7 +221,7 @@ export default function HRPage() {
                       <td>
                         <div className="flex gap-2">
                           <button id={`view-staff-${s.id}`} className="text-xs text-violet-400 hover:text-violet-300 font-medium">View</button>
-                          <button id={`payslip-${s.id}`} className="text-xs text-slate-400 hover:text-white">Payslip</button>
+                          <button id={`payslip-${s.id}`} onClick={() => generatePayslipPDF({ first_name: s.name.split(' ')[0] || '', last_name: s.name.split(' ').slice(1).join(' '), id: s.id, role: s.role, department: s.dept, email: s.email, salary: s.salary }, 'NexSchool ERP')} className="text-xs text-slate-400 hover:text-white">Payslip</button>
                         </div>
                       </td>
                     </tr>
@@ -308,7 +309,7 @@ export default function HRPage() {
                           <td className="text-amber-400">{hasSalary ? `-₹${pf.toLocaleString('en-IN')}` : '—'}</td>
                           <td className="font-bold text-white">{hasSalary ? `₹${net.toLocaleString('en-IN')}` : '—'}</td>
                           <td><span className={`badge ${hasSalary ? 'badge-green' : 'badge-yellow'}`}>{hasSalary ? '✓ Ready' : '⚠ Incomplete'}</span></td>
-                          <td><button id={`payslip-pay-${i}`} className="text-xs text-violet-400 hover:text-violet-300 font-medium">📄 Payslip</button></td>
+                          <td><button id={`payslip-pay-${i}`} onClick={() => generatePayslipPDF({ first_name: s.name.split(' ')[0] || '', last_name: s.name.split(' ').slice(1).join(' '), id: s.id, role: s.role, department: s.dept, email: s.email, salary: s.salary }, 'NexSchool ERP')} className="text-xs text-violet-400 hover:text-violet-300 font-medium">📄 Payslip</button></td>
                         </tr>
                       );
                     })}

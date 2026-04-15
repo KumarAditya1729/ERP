@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache'
 import { sendSMS } from '@/lib/services/twilio'
-import { unstable_after as after } from 'next/server'
+import { Client } from "@upstash/qstash";
 
 type AttendanceRecord = {
   student_id: string;
@@ -40,23 +40,20 @@ export async function saveAttendance(dateStr: string, records: AttendanceRecord[
     const absentIds = records.filter(r => r.status === 'absent').map(r => r.student_id);
     
     if (absentIds.length > 0) {
-      const { data: absentStudents } = await supabaseAdmin
-        .from('students')
-        .select('first_name, last_name, guardian_name, guardian_phone')
-        .in('id', absentIds);
-      
-      if (absentStudents && absentStudents.length > 0) {
-        // Enqueue background processing safely in Next.js Serverless environments
-        after(() => {
-          Promise.all(
-            absentStudents
-              .filter((s: any) => s.guardian_phone && s.guardian_phone.length >= 10)
-              .map((s: any) => sendSMS({
-                to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[- ]/g, '')}`,
-                message: `Dear ${s.guardian_name}, your child ${s.first_name} ${s.last_name} was marked ABSENT today (${dateStr}). Please contact the school for information. — NexSchool`
-              }))
-          ).catch(err => console.error('[Attendance SMS] Batch SMS failed:', err));
+      if (process.env.QSTASH_TOKEN) {
+        const qstashClient = new Client({ token: process.env.QSTASH_TOKEN });
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+        
+        await qstashClient.publishJSON({
+          url: `${baseUrl}/api/jobs/send-attendance-sms`,
+          body: {
+            absentIds,
+            dateStr,
+            tenantId: profile.tenant_id
+          }
         });
+      } else {
+        console.warn('QSTASH_TOKEN missing. SMS queue bypassed.');
       }
     }
 
