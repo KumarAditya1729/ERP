@@ -52,5 +52,10 @@ async function handler(req: Request) {
   }
 }
 
-// Wrap the export in QStash's verifier
-export const POST = verifySignatureAppRouter(handler);
+// Wrap the export in QStash's verifier conditionally so Vercel builds don't crash without ENV variables
+export const POST = process.env.QSTASH_CURRENT_SIGNING_KEY
+  ? verifySignatureAppRouter(handler, {
+      currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY,
+      nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || process.env.QSTASH_CURRENT_SIGNING_KEY,
+    })
+  : handler;
