@@ -1,7 +1,7 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 
 // ── Shared helper ─────────────────────────────────────────────────────────────
@@ -10,15 +10,11 @@ async function getAdminClientAndTenant() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
   const { data: profile } = await supabaseAdmin
     .from('profiles').select('tenant_id').eq('id', user.id).single();
   if (!profile) throw new Error('Profile missing');
 
-  return { supabaseAdmin, tenantId: profile.tenant_id as string };
+  return { supabaseAdmin, tenantId: profile.tenant_id as string, userId: user.id };
 }
 
 // ── READ ──────────────────────────────────────────────────────────────────────
@@ -48,15 +44,39 @@ export async function getTransportRoutes() {
 
 export async function getParentTransportRoute() {
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const { supabaseAdmin, tenantId, userId } = await getAdminClientAndTenant();
     
-    // MVP: Grab first route to demonstrate parent live tracking tracking their child
+    // Actually find the student linked to this parent, then find their route.
+    // For now, if no student links are formalised for routes, we query a mock junction or return nothing.
+    // Assuming a parent_student_routes table or just students table has a route_id.
+    // For this ERP currently, there is no direct route_id on student, so we return a safer mock or
+    // simply look up the first child's route if it existed.
+    // Here we will just look for the first route where the child goes, or fail safely if not setup yet.
+    
+    const { data: parentLinks } = await supabaseAdmin.from('parent_links').select('student_id').eq('parent_id', userId);
+    
+    if (!parentLinks || parentLinks.length === 0) {
+      return { success: false, error: 'No children linked to your account.' };
+    }
+
+    // Since we don't have a reliable connection between student and route yet in schema,
+    // we'll return nothing instead of broadcasting random routes.
+    // In Phase 3 we can add `route_id` to students or `student_routes` junction.
+    // For now we will return an error to prevent cross-tenant data leak if they aren't assigned.
+    return { success: false, error: 'Transport route not yet assigned to your child.' };
+    
+    // (If route_id existed on student, we'd do):
+    /*
+    const childStudentId = parentLinks[0].student_id;
+    const { data: studentData } = await supabaseAdmin.from('students').select('route_id').eq('id', childStudentId).single();
+    if (!studentData?.route_id) return { success: false, error: 'No route assigned.' };
+    
     const { data: routes, error } = await supabaseAdmin
       .from('transport_routes')
       .select('*, transport_stops(*)')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: true })
-      .limit(1);
+      .eq('id', studentData.route_id)
+      .eq('tenant_id', tenantId);
+    */
 
     if (error) throw error;
     if (!routes || routes.length === 0) return { success: false, error: 'No route assigned.' };
@@ -110,7 +130,7 @@ export async function addTransportRoute(payload: {
       await supabaseAdmin.from('transport_stops').insert(stopsPayload);
     }
 
-    revalidatePath('/staff/transport');
+    revalidatePath('/', 'layout');
     return { success: true, data: route };
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -129,7 +149,7 @@ export async function updateRouteStatus(routeId: string, status: 'on-route' | 'a
       .eq('tenant_id', tenantId); // Tenant safety guard
 
     if (error) throw error;
-    revalidatePath('/staff/transport');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -148,7 +168,7 @@ export async function updateStopStatus(stopId: string, status: 'done' | 'current
       .eq('tenant_id', tenantId);
 
     if (error) throw error;
-    revalidatePath('/staff/transport');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -178,7 +198,7 @@ export async function updateEnrolledStudents(routeId: string, delta: number) {
       .eq('tenant_id', tenantId);
 
     if (error) throw error;
-    revalidatePath('/staff/transport');
+    revalidatePath('/', 'layout');
     return { success: true, newCount };
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -198,7 +218,7 @@ export async function deleteTransportRoute(routeId: string) {
       .eq('tenant_id', tenantId);
 
     if (error) throw error;
-    revalidatePath('/staff/transport');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -249,7 +269,7 @@ export async function seedTransportDatabase() {
       await supabaseAdmin.from('transport_stops').insert(stops);
     }
 
-    revalidatePath('/staff/transport');
+    revalidatePath('/', 'layout');
     return { success: true, msg: 'Seeded' };
   } catch (e: any) {
     return { success: false, error: e.message };
@@ -281,22 +301,14 @@ export async function getFleetAnalytics() {
       .eq('tenant_id', tenantId)
       .order('next_due_date', { ascending: true });
 
-    // Fallback to strict UI mock data if DB isn't seeded/migrated yet for the pitch
-    const safeIncidents = (incidents && incidents.length > 0) ? incidents : [
-      { id: '1', incident_type: 'Harsh Braking', severity: 'medium', description: 'Driver braked hard near MG Road crossing.', reported_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), transport_routes: { name: 'Route 1', bus_number: 'DL-01-GA-2234' } },
-      { id: '2', incident_type: 'Overspeed Warning', severity: 'high', description: 'Vechicle exceeded 60km/h on school limit zone.', reported_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(), transport_routes: { name: 'Route 3', bus_number: 'DL-01-GA-1876' } }
-    ];
-
-    const safeMaintenance = (maintenance && maintenance.length > 0) ? maintenance : [
-      { id: '1', service_type: 'PUC Certificate', next_due_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5).toISOString(), transport_routes: { name: 'Route 2', bus_number: 'DL-01-GA-2198' } },
-      { id: '2', service_type: 'Insurance Renewal', next_due_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 12).toISOString(), transport_routes: { name: 'Route 4', bus_number: 'DL-01-GA-3321' } }
-    ];
+    const safeIncidents = incidents || [];
+    const safeMaintenance = maintenance || [];
 
     return { 
       success: true, 
       data: {
-        totalFuelSpent: fuelLogs?.reduce((a, b) => a + b.total_cost, 0) || 45200,
-        averageKMPL: 4.8,
+        totalFuelSpent: fuelLogs?.reduce((a, b) => a + b.total_cost, 0) || 0,
+        averageKMPL: 4.8, // In real app, calculate from odometer and fuel_volume_liters
         activeAlerts: safeIncidents.length + safeMaintenance.length,
         incidents: safeIncidents,
         maintenance: safeMaintenance
@@ -318,7 +330,7 @@ export async function broadcastTransportAlert(message: string) {
     });
 
     if (error) throw error;
-    revalidatePath('/dashboard');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e.message };

@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache'
 import { sendSMS } from '@/lib/services/twilio'
+import { unstable_after as after } from 'next/server'
 
 type AttendanceRecord = {
   student_id: string;
@@ -16,11 +17,6 @@ export async function saveAttendance(dateStr: string, records: AttendanceRecord[
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
-    
-    const supabaseAdmin = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
     
     const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
     if (!profile) return { success: false, error: 'Profile not found' };
@@ -50,20 +46,22 @@ export async function saveAttendance(dateStr: string, records: AttendanceRecord[
         .in('id', absentIds);
       
       if (absentStudents && absentStudents.length > 0) {
-        // Fire-and-forget — do NOT await, so the save response is instant
-        Promise.all(
-          absentStudents
-            .filter((s: any) => s.guardian_phone && s.guardian_phone.length >= 10)
-            .map((s: any) => sendSMS({
-              to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[- ]/g, '')}`,
-              message: `Dear ${s.guardian_name}, your child ${s.first_name} ${s.last_name} was marked ABSENT today (${dateStr}). Please contact the school for information. — NexSchool`
-            }))
-        ).catch(err => console.error('[Attendance SMS] Batch SMS failed:', err));
+        // Enqueue background processing safely in Next.js Serverless environments
+        after(() => {
+          Promise.all(
+            absentStudents
+              .filter((s: any) => s.guardian_phone && s.guardian_phone.length >= 10)
+              .map((s: any) => sendSMS({
+                to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[- ]/g, '')}`,
+                message: `Dear ${s.guardian_name}, your child ${s.first_name} ${s.last_name} was marked ABSENT today (${dateStr}). Please contact the school for information. — NexSchool`
+              }))
+          ).catch(err => console.error('[Attendance SMS] Batch SMS failed:', err));
+        });
       }
     }
 
-    revalidatePath('/dashboard/attendance');
-    revalidatePath('/teacher/attendance');
+    revalidatePath('/', 'layout');
+    revalidatePath('/', 'layout');
     return { success: true, absentCount: absentIds.length };
 
   } catch (err: any) {

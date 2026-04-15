@@ -1,19 +1,15 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache'
+import { StudentSchema } from '@/lib/validation';
 
 export async function getTeacherStudents(classGrade: string) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Unauthorized' };
   
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
   const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
   if (!profile) return { success: false, error: 'Profile not found' };
 
@@ -47,15 +43,23 @@ export async function addStudent(formData: FormData) {
   const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
   if (!profile) throw new Error("Profile not found");
 
-  const newStudent = {
-    tenant_id: profile.tenant_id,
+  const parseResult = StudentSchema.safeParse({
     first_name: formData.get('first_name'),
     last_name: formData.get('last_name'),
     class_grade: formData.get('class_grade'),
     section: formData.get('section'),
-    roll_number: formData.get('roll_number') || null,
-    guardian_name: formData.get('guardian_name'),
-    guardian_phone: formData.get('guardian_phone'),
+    roll_number: formData.get('roll_number') || undefined,
+    guardian_name: formData.get('guardian_name') || undefined,
+    guardian_phone: formData.get('guardian_phone') || undefined,
+  });
+
+  if (!parseResult.success) {
+    return { success: false, error: parseResult.error.errors[0].message };
+  }
+
+  const newStudent = {
+    tenant_id: profile.tenant_id,
+    ...parseResult.data,
     status: formData.get('status') || 'active'
   };
 
@@ -66,7 +70,7 @@ export async function addStudent(formData: FormData) {
     return { success: false, error: error.message };
   }
 
-  revalidatePath('/dashboard/students');
+  revalidatePath('/', 'layout');
   return { success: true };
 }
 
@@ -85,14 +89,22 @@ export async function updateStudent(id: string, formData: FormData) {
     return { success: false, error: 'Forbidden: student not found in your organization' };
   }
   
-  const updates = {
+  const parseResult = StudentSchema.safeParse({
     first_name: formData.get('first_name'),
     last_name: formData.get('last_name'),
     class_grade: formData.get('class_grade'),
     section: formData.get('section'),
-    roll_number: formData.get('roll_number') || null,
-    guardian_name: formData.get('guardian_name'),
-    guardian_phone: formData.get('guardian_phone'),
+    roll_number: formData.get('roll_number') || undefined,
+    guardian_name: formData.get('guardian_name') || undefined,
+    guardian_phone: formData.get('guardian_phone') || undefined,
+  });
+
+  if (!parseResult.success) {
+    return { success: false, error: parseResult.error.errors[0].message };
+  }
+
+  const updates = {
+    ...parseResult.data,
     status: formData.get('status')
   };
 
@@ -103,16 +115,22 @@ export async function updateStudent(id: string, formData: FormData) {
     return { success: false, error: error.message };
   }
 
-  revalidatePath('/dashboard/students');
+  revalidatePath('/', 'layout');
   return { success: true };
 }
 
 export async function deleteStudent(id: string) {
   const supabase = createClient();
-  const { error } = await supabase.from('students').delete().eq('id', id);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  if (!profile) return { success: false, error: 'Profile not found' };
+
+  const { error } = await supabase.from('students').delete().eq('id', id).eq('tenant_id', profile.tenant_id);
   if (error) {
     return { success: false, error: error.message };
   }
-  revalidatePath('/dashboard/students');
+  revalidatePath('/', 'layout');
   return { success: true };
 }

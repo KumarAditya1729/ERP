@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.hostel_allocations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     room_id UUID NOT NULL REFERENCES public.hostel_rooms(id) ON DELETE CASCADE,
-    student_name TEXT NOT NULL,
+    student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
     bed_number INTEGER NOT NULL,
     allocated_date DATE NOT NULL DEFAULT CURRENT_DATE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -115,3 +115,21 @@ CREATE INDEX IF NOT EXISTS idx_transport_stops_route ON public.transport_stops(r
 CREATE INDEX IF NOT EXISTS idx_fuel_logs_route ON public.transport_fuel_logs(route_id);
 CREATE INDEX IF NOT EXISTS idx_maintenance_route ON public.transport_maintenance(route_id);
 CREATE INDEX IF NOT EXISTS idx_incidents_route_severity ON public.transport_incidents(route_id, severity);
+
+-- Atomic function to update enrolled students and prevent race conditions (Overbooking)
+CREATE OR REPLACE FUNCTION public.update_enrolled_students(
+  p_route_id UUID,
+  p_tenant_id UUID,
+  p_delta INTEGER
+) RETURNS INTEGER AS $$
+DECLARE
+  v_new_count INTEGER;
+BEGIN
+  UPDATE public.transport_routes
+  SET enrolled_students = LEAST(capacity, GREATEST(0, enrolled_students + p_delta))
+  WHERE id = p_route_id AND tenant_id = p_tenant_id
+  RETURNING enrolled_students INTO v_new_count;
+  
+  RETURN coalesce(v_new_count, -1);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

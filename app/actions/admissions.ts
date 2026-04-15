@@ -34,30 +34,47 @@ export async function createApplication(formData: FormData, docsStatus: any) {
     return { success: false, error: error.message };
   }
 
-  revalidatePath('/dashboard/admissions');
+  revalidatePath('/', 'layout');
   return { success: true };
 }
 
 export async function advanceStage(appId: string, nextStage: string) {
   const supabase = createClient();
-  const { error } = await supabase.from('admission_applications').update({ stage: nextStage }).eq('id', appId);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+  
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  if (!profile) return { success: false, error: 'Profile not found' };
+
+  const { error } = await supabase.from('admission_applications').update({ stage: nextStage }).eq('id', appId).eq('tenant_id', profile.tenant_id);
   if (error) return { success: false, error: error.message };
-  revalidatePath('/dashboard/admissions');
+  revalidatePath('/', 'layout');
   return { success: true };
 }
 
 export async function updateDocs(appId: string, docsStatus: any) {
   const supabase = createClient();
-  const { error } = await supabase.from('admission_applications').update({ docs_status: docsStatus }).eq('id', appId);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
+  
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  if (!profile) return { success: false, error: 'Profile not found' };
+
+  const { error } = await supabase.from('admission_applications').update({ docs_status: docsStatus }).eq('id', appId).eq('tenant_id', profile.tenant_id);
   if (error) return { success: false, error: error.message };
-  revalidatePath('/dashboard/admissions');
+  revalidatePath('/', 'layout');
   return { success: true };
 }
 
 export async function updateDocFile(appId: string, docKey: string, filePath: string) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthorized' };
   
-  const { data: app, error: fetchErr } = await supabase.from('admission_applications').select('docs_status, document_files').eq('id', appId).single();
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  if (!profile) return { success: false, error: 'Profile not found' };
+  
+  const { data: app, error: fetchErr } = await supabase.from('admission_applications').select('docs_status, document_files').eq('id', appId).eq('tenant_id', profile.tenant_id).single();
   if (fetchErr || !app) return { success: false, error: fetchErr?.message || 'App not found' };
 
   const updatedDocsStatus = { ...(app.docs_status || {}), [docKey]: true };
@@ -66,9 +83,9 @@ export async function updateDocFile(appId: string, docKey: string, filePath: str
   const { error } = await supabase.from('admission_applications').update({ 
     docs_status: updatedDocsStatus,
     document_files: updatedDocFiles
-  }).eq('id', appId);
+  }).eq('id', appId).eq('tenant_id', profile.tenant_id);
   
   if (error) return { success: false, error: error.message };
-  revalidatePath('/dashboard/admissions');
+  revalidatePath('/', 'layout');
   return { success: true };
 }

@@ -50,6 +50,6 @@ export async function addStaff(formData: FormData) {
     return { success: false, error: profileError.message };
   }
 
-  revalidatePath('/dashboard/hr');
+  revalidatePath('/', 'layout');
   return { success: true };
 }

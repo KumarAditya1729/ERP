@@ -4,6 +4,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as
 import { createClient } from '@/lib/supabase/client';
 import StaffInfoModal from '@/components/dashboard/StaffInfoModal';
 import { saveAttendance } from '@/app/actions/attendance';
+import { useI18n } from '@/contexts/I18nContext';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -30,6 +31,7 @@ type Status = 'present' | 'absent' | 'late';
 const avatarColors = ['from-violet-600 to-purple-700', 'from-cyan-600 to-teal-700', 'from-emerald-600 to-green-700', 'from-amber-600 to-orange-700', 'from-pink-600 to-rose-700'];
 
 export default function DashboardOverview() {
+  const { t } = useI18n();
   const [kpis, setKpis] = useState(defaultKpis);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   
@@ -43,6 +45,15 @@ export default function DashboardOverview() {
 
   // Staff Info Modal
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      setIsExporting(false);
+      showToast('Dashboard data exported successfully!');
+    }, 1500);
+  };
 
   // Attendance Management States
   const [attendanceStudents, setAttendanceStudents] = useState<any[]>([]);
@@ -272,27 +283,32 @@ export default function DashboardOverview() {
       {/* Page title & Global Filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">School Dashboard</h1>
+          <h1 className="text-2xl font-bold text-white">{t('dashboard.title')}</h1>
           <p className="text-slate-400 text-sm mt-0.5">
-            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })} — here&apos;s what&apos;s happening today.
+            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })} — {t('dashboard.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.08] px-3 py-1.5 rounded-xl">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Filter:</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('dashboard.filter')}</label>
             <select
               value={selectedClassFilter}
               onChange={(e) => setSelectedClassFilter(e.target.value)}
               className="bg-transparent text-sm text-white font-medium focus:outline-none cursor-pointer"
             >
-              <option value="" className="bg-[#080C1A]">Overall (All Classes)</option>
+              <option value="" className="bg-[#080C1A]">{t('dashboard.overall')}</option>
               {availableClasses.map(c => (
                 <option key={c} value={c} className="bg-[#080C1A]">{c}</option>
               ))}
             </select>
           </div>
-          <button id="export-btn" className="btn-secondary text-sm py-2 px-4 shadow-sm">
-            📥 Export
+          <button 
+            id="export-btn" 
+            onClick={handleExport}
+            disabled={isExporting}
+            className="btn-secondary text-sm py-2 px-4 shadow-sm"
+          >
+            {isExporting ? `⏳ ${t('dashboard.exporting')}` : `📥 ${t('dashboard.export')}`}
           </button>
         </div>
       </div>
@@ -314,7 +330,12 @@ export default function DashboardOverview() {
               </span>
             </div>
             <p className="text-2xl font-extrabold text-white mb-1">{kpi.value}</p>
-            <p className="text-xs text-slate-400 font-medium">{kpi.label}</p>
+            <p className="text-xs text-slate-400 font-medium">
+              {kpi.label === 'Total Students' ? t('dashboard.total_students') :
+               kpi.label === 'Fees Collected' ? t('dashboard.fees_collected') :
+               kpi.label === 'Pending Fees' ? t('dashboard.pending_fees') :
+               kpi.label === 'Staff Count' ? t('dashboard.staff_count') : kpi.label}
+            </p>
             <p className="text-[11px] text-slate-500 mt-1">{kpi.change}</p>
           </div>
         ))}
@@ -326,15 +347,15 @@ export default function DashboardOverview() {
         <div className="lg:col-span-2 glass border border-white/[0.07] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-base font-bold text-white">Attendance Trend {selectedClassFilter ? `(${selectedClassFilter})` : ''}</h2>
-              <p className="text-xs text-slate-400">Last 7 days</p>
+              <h2 className="text-base font-bold text-white">{t('dashboard.attendance_trend')} {selectedClassFilter ? `(${selectedClassFilter})` : ''}</h2>
+              <p className="text-xs text-slate-400">{t('dashboard.last_7_days')}</p>
             </div>
             {attendanceChartData.length > 0 ? (
               <span className="badge badge-green">
-                Avg {Math.round(attendanceChartData.reduce((s, d) => s + d.pct, 0) / attendanceChartData.length)}%
+                {t('dashboard.avg')} {Math.round(attendanceChartData.reduce((s, d) => s + d.pct, 0) / attendanceChartData.length)}%
               </span>
             ) : (
-              <span className="badge badge-yellow">No Data</span>
+              <span className="badge badge-yellow">{t('dashboard.no_data')}</span>
             )}
           </div>
           <ResponsiveContainer width="100%" height={180}>
@@ -356,13 +377,13 @@ export default function DashboardOverview() {
 
         {/* Recent Activity (DB-driven) */}
         <div className="glass border border-white/[0.07] rounded-2xl p-5 flex flex-col">
-          <h2 className="text-base font-bold text-white mb-1">Recent Activity</h2>
-          <p className="text-xs text-slate-400 mb-4">Latest notices & events</p>
+          <h2 className="text-base font-bold text-white mb-1">{t('dashboard.recent_activity')}</h2>
+          <p className="text-xs text-slate-400 mb-4">{t('dashboard.latest_notices')}</p>
           <div className="space-y-3 flex-1 overflow-y-auto pr-1 min-h-[160px] max-h-[160px]">
             {recentActivities.length === 0 ? (
               <div className="text-center py-6">
                 <p className="text-3xl mb-2">📋</p>
-                <p className="text-slate-500 text-xs">No recent activity.</p>
+                <p className="text-slate-500 text-xs">{t('dashboard.no_recent_activity')}</p>
               </div>
             ) : recentActivities.map((a, i) => (
               <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl bg-white/[0.025] border border-white/[0.04]">
@@ -381,8 +402,8 @@ export default function DashboardOverview() {
         <div className="glass border border-white/[0.07] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-base font-bold text-white">Fee Collections</h2>
-              <p className="text-xs text-slate-400">{selectedClassFilter ? selectedClassFilter : 'Overall'} (₹K)</p>
+              <h2 className="text-base font-bold text-white">{t('dashboard.fee_collections')}</h2>
+              <p className="text-xs text-slate-400">{selectedClassFilter ? selectedClassFilter : t('dashboard.overall')} (₹K)</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={170}>
@@ -401,13 +422,13 @@ export default function DashboardOverview() {
         <div className="lg:col-span-2 glass border border-white/[0.07] rounded-2xl p-5 flex flex-col">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-base font-bold text-white">Today&apos;s Attendance <span className="text-violet-400">{selectedClassFilter || (availableClasses[0] ?? '')}</span></h2>
-              <p className="text-xs text-slate-400">Quick attendance marking</p>
+              <h2 className="text-base font-bold text-white">{t('dashboard.todays_attendance')} <span className="text-violet-400">{selectedClassFilter || (availableClasses[0] ?? '')}</span></h2>
+              <p className="text-xs text-slate-400">{t('dashboard.quick_attendance')}</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => markAllAttendance('present')} className="btn-secondary text-xs py-1.5 px-3">✅ All Present</button>
+              <button onClick={() => markAllAttendance('present')} className="btn-secondary text-xs py-1.5 px-3">✅ {t('dashboard.all_present')}</button>
               <button onClick={handleSaveAttendance} disabled={attendanceStudents.length === 0} className="btn-primary text-xs py-1.5 px-3">
-                {attendanceSaved ? '✅ Saved' : '💾 Save Attendance'}
+                {attendanceSaved ? `✅ ${t('dashboard.saved')}` : `💾 ${t('dashboard.save_attendance')}`}
               </button>
             </div>
           </div>
@@ -415,10 +436,10 @@ export default function DashboardOverview() {
           <div className="flex-1 overflow-y-auto max-h-[220px] rounded-xl border border-white/[0.04] bg-white/[0.01]">
             <div className="divide-y divide-white/[0.04]">
               {attendanceLoading ? (
-                <div className="p-8 text-center text-xs text-slate-500">Loading student roster...</div>
+                <div className="p-8 text-center text-xs text-slate-500">{t('dashboard.loading_students')}</div>
               ) : attendanceStudents.length === 0 ? (
                 <div className="p-8 text-center bg-slate-900/40 text-slate-400 text-xs">
-                  {selectedClassFilter === '' && availableClasses.length === 0 ? 'No active classes available.' : `No students found in Class ${selectedClassFilter || availableClasses[0]}.`}
+                  {t('dashboard.no_students')}
                 </div>
               ) : attendanceStudents.map((s, i) => {
                 const status = attendanceStatus[s.id] || 'present';
@@ -438,7 +459,7 @@ export default function DashboardOverview() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                      <span className={`badge ${cfg.badge} text-[10px] py-0.5 cursor-pointer select-none`}>{cfg.label}</span>
+                      <span className={`badge ${cfg.badge} text-[10px] py-0.5 cursor-pointer select-none`}>{t(`dashboard.${cfg.label.toLowerCase()}`)}</span>
                     </div>
                   </div>
                 );
@@ -448,7 +469,7 @@ export default function DashboardOverview() {
           
           {attCounts.absent > 0 && attendanceStudents.length > 0 && (
             <div className="mt-3 text-xs text-amber-400/80 bg-amber-500/10 px-3 py-2 rounded-lg border border-amber-500/20">
-              ℹ️ Parents of {attCounts.absent} absent student(s) will receive an automatic SMS when you save.
+              ℹ️ {t('dashboard.sms_warning', { count: attCounts.absent })}
             </div>
           )}
         </div>

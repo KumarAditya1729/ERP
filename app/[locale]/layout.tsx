@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import './globals.css';
+import '../globals.css';
 
 export const metadata: Metadata = {
   title: 'NexSchool AI – The School Management Platform Built for Tomorrow',
@@ -13,11 +13,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params: { locale }
 }: {
   children: React.ReactNode;
+  params: { locale: string };
 }) {
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

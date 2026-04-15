@@ -61,8 +61,8 @@ export async function seedHostelDatabase() {
     const { error } = await supabaseAdmin.from('hostel_rooms').insert(demoRooms);
     if (error) throw error;
     
-    revalidatePath('/dashboard/hostel');
-    revalidatePath('/staff/hostel');
+    revalidatePath('/', 'layout');
+    revalidatePath('/', 'layout');
     return { success: true, message: 'Seeded successfully' };
   } catch (err: any) {
     return { success: false, error: err.message };

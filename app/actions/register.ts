@@ -2,12 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
-
-const getAdminClient = () => createSupabaseAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase/admin'
+import { RegistrationSchema } from '@/lib/validation'
 
 /**
  * Register a brand-new school (tenant) and its first admin user.
@@ -21,33 +17,31 @@ const getAdminClient = () => createSupabaseAdminClient(
  *  4. Redirect to "check your email" page
  */
 export async function registerSchool(formData: FormData) {
-  const schoolName = (formData.get('school_name') as string)?.trim()
-  const city       = (formData.get('city') as string)?.trim()
-  const tier       = (formData.get('tier') as string) || 'starter'
-  const firstName  = (formData.get('first_name') as string)?.trim()
-  const lastName   = (formData.get('last_name') as string)?.trim()
-  const email      = (formData.get('email') as string)?.trim()
-  const password   = (formData.get('password') as string)
+  const parseResult = RegistrationSchema.safeParse({
+    school_name: formData.get('school_name'),
+    city: formData.get('city'),
+    tier: formData.get('tier') || 'starter',
+    first_name: formData.get('first_name'),
+    last_name: formData.get('last_name'),
+    email: formData.get('email'),
+    password: formData.get('password'),
+  });
 
-  // Basic server-side validation
-  if (!schoolName || !city || !firstName || !lastName || !email || !password) {
-    return redirect('/register?error=All fields are required')
-  }
-  if (password.length < 8) {
-    return redirect('/register?error=Password must be at least 8 characters')
+  if (!parseResult.success) {
+    return redirect(`/register?error=${encodeURIComponent(parseResult.error.errors[0].message)}`)
   }
 
-  const adminClient = getAdminClient()
+  const { school_name, city, tier, first_name, last_name, email, password } = parseResult.data;
 
   // 1. Generate a fresh UUID for this school's tenant
   const newTenantId = crypto.randomUUID()
 
   // 2. Create the tenant row first (the trigger will FK reference this)
-  const { error: tenantError } = await adminClient
+  const { error: tenantError } = await supabaseAdmin
     .from('tenants')
     .insert({
       id: newTenantId,
-      name: schoolName,
+      name: school_name,
       city: city,
       subscription_tier: tier,
     })
@@ -67,8 +61,8 @@ export async function registerSchool(formData: FormData) {
       data: {
         role: 'admin',
         tenant_id: newTenantId,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: first_name,
+        last_name: last_name,
       },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     },
@@ -76,11 +70,11 @@ export async function registerSchool(formData: FormData) {
 
   if (signUpError) {
     // Roll back: delete the tenant we just created so we don't leave orphans
-    await adminClient.from('tenants').delete().eq('id', newTenantId)
+    await supabaseAdmin.from('tenants').delete().eq('id', newTenantId)
     console.error('Signup error:', signUpError)
     return redirect('/register?error=' + signUpError.message)
   }
 
   // 4. Redirect to check-your-email page with school context for personalization
-  return redirect(`/register/verify?school=${encodeURIComponent(schoolName)}&email=${encodeURIComponent(email)}`)
+  return redirect(`/register/verify?school=${encodeURIComponent(school_name)}&email=${encodeURIComponent(email)}`)
 }

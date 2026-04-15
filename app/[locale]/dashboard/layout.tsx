@@ -5,33 +5,38 @@ import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { logout } from '@/app/actions/auth';
 import AICopilot from '@/components/AI_Copilot';
+import { I18nProvider, useI18n } from '@/contexts/I18nContext';
+import LanguageSwitcher from '@/components/dashboard/LanguageSwitcher';
 
 // Feature flags — driven by env vars, no redeployment needed
 const FEATURE_TRANSPORT_GPS = process.env.NEXT_PUBLIC_FEATURE_TRANSPORT_GPS === 'true';
 const FEATURE_HOSTEL = process.env.NEXT_PUBLIC_FEATURE_HOSTEL === 'true';
 
 const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: '📊' },
-  { href: '/dashboard/students', label: 'Students', icon: '🎓' },
-  { href: '/dashboard/admissions', label: 'Admissions', icon: '📋' },
-  { href: '/dashboard/fees', label: 'Fee Management', icon: '💰' },
-  { href: '/dashboard/communication', label: 'Communication', icon: '📣' },
-  { href: '/dashboard/transport', label: 'Transport', icon: '🚌', comingSoon: !FEATURE_TRANSPORT_GPS },
-  { href: '/dashboard/exams', label: 'Examinations', icon: '📝' },
-  { href: '/dashboard/academics', label: 'Academics & Timetable', icon: '⏰' },
-  { href: '/dashboard/homework', label: 'Homework', icon: '✍️' },
-  { href: '/dashboard/library', label: 'Library', icon: '📚' },
-  { href: '/dashboard/hostel', label: 'Hostel', icon: '🏨', comingSoon: !FEATURE_HOSTEL },
-  { href: '/dashboard/hr', label: 'HR & Payroll', icon: '👩‍💼' },
-  { href: '/dashboard/reports', label: 'Reports', icon: '📈' },
+  { href: '/dashboard', label: 'Overview', icon: '📊', i18nKey: 'overview' },
+  { href: '/dashboard/students', label: 'Students', icon: '🎓', i18nKey: 'students' },
+  { href: '/dashboard/admissions', label: 'Admissions', icon: '📋', i18nKey: 'admissions' },
+  { href: '/dashboard/fees', label: 'Fee Management', icon: '💰', i18nKey: 'fees' },
+  { href: '/dashboard/communication', label: 'Communication', icon: '📣', i18nKey: 'communication' },
+  { href: '/dashboard/transport', label: 'Transport', icon: '🚌', comingSoon: !FEATURE_TRANSPORT_GPS, i18nKey: 'transport' },
+  { href: '/dashboard/exams', label: 'Examinations', icon: '📝', i18nKey: 'exams' },
+  { href: '/dashboard/academics', label: 'Academics & Timetable', icon: '⏰', i18nKey: 'academics' },
+  { href: '/dashboard/homework', label: 'Homework', icon: '✍️', i18nKey: 'homework' },
+  { href: '/dashboard/library', label: 'Library', icon: '📚', i18nKey: 'library' },
+  { href: '/dashboard/hostel', label: 'Hostel', icon: '🏨', comingSoon: !FEATURE_HOSTEL, i18nKey: 'hostel' },
+  { href: '/dashboard/hr', label: 'HR & Payroll', icon: '👩‍💼', i18nKey: 'hr' },
+  { href: '/dashboard/reports', label: 'Reports', icon: '📈', i18nKey: 'reports' },
+  { href: '/dashboard/logs', label: 'Audit Logs', icon: '🖥️', i18nKey: 'logs', adminOnly: true },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [tenant, setTenant] = useState<any>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     async function loadUser() {
@@ -68,22 +73,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* School Badge */}
         <div className="mx-4 my-4 p-3 glass-strong rounded-xl border border-violet-500/20">
-          <p className="text-xs text-slate-400 font-medium">Current School</p>
+          <p className="text-xs text-slate-400 font-medium">{t('layout.current_school')}</p>
           <p className="text-sm font-bold text-white truncate">
-            {tenant ? tenant.name : 'Loading School...'}
+            {tenant ? tenant.name : t('layout.loading_school')}
           </p>
           {tenant && <span className="badge badge-green text-[10px] mt-1">{tenant.subscription_tier}</span>}
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-1">
-          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-3 py-2 mt-2">Main Menu</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-3 py-2 mt-2">{t('layout.main_menu')}</p>
           {navItems.slice(0, 6).map((item) => (
             item.comingSoon ? (
               <div key={item.href} className="sidebar-link opacity-40 cursor-not-allowed select-none flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-base leading-none">{item.icon}</span>
-                  {item.label}
+                  {t(`nav.${item.i18nKey}`)}
                 </div>
                 <span className="text-[9px] font-bold bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded-full border border-violet-500/30">SOON</span>
               </div>
@@ -95,18 +100,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setSidebarOpen(false)}
               >
                 <span className="text-base leading-none">{item.icon}</span>
-                {item.label}
+                {t(`nav.${item.i18nKey}`)}
               </Link>
             )
           ))}
 
-          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-3 py-2 mt-4">Advanced</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest px-3 py-2 mt-4">{t('layout.advanced')}</p>
           {navItems.slice(6).map((item) => (
             item.comingSoon ? (
               <div key={item.href} className="sidebar-link opacity-40 cursor-not-allowed select-none flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-base leading-none">{item.icon}</span>
-                  {item.label}
+                  {t(`nav.${item.i18nKey}`)}
                 </div>
                 <span className="text-[9px] font-bold bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded-full border border-violet-500/30">SOON</span>
               </div>
@@ -118,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setSidebarOpen(false)}
               >
                 <span className="text-base leading-none">{item.icon}</span>
-                {item.label}
+                {t(`nav.${item.i18nKey}`)}
               </Link>
             )
           ))}
@@ -182,13 +187,67 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
             {/* Notification bell */}
-            <button id="notifications-btn" className="relative w-9 h-9 glass border border-white/[0.08] rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
-            </button>
+            <div className="relative">
+              <button 
+                id="notifications-btn" 
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative w-9 h-9 glass border border-white/[0.08] rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                aria-label="Toggle notifications"
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+              </button>
+
+              {notificationsOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-80 glass-strong border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
+                    <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-white">Notifications</h3>
+                      <button className="text-[10px] text-violet-400 hover:text-violet-300 font-medium">Mark all as read</button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      <div className="p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer">
+                        <div className="flex gap-3">
+                          <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 text-lg">💰</div>
+                          <div>
+                            <p className="text-sm text-white font-medium">Fee Payment Received</p>
+                            <p className="text-xs text-slate-400 mt-0.5">₹4,500 received from John Doe (Class 10-A)</p>
+                            <p className="text-[10px] text-slate-500 mt-1.5">10 minutes ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer">
+                        <div className="flex gap-3">
+                          <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 text-lg">🚌</div>
+                          <div>
+                            <p className="text-sm text-white font-medium">Bus Delayed</p>
+                            <p className="text-xs text-slate-400 mt-0.5">Route #4 is running 15 mins late due to traffic.</p>
+                            <p className="text-[10px] text-slate-500 mt-1.5">1 hour ago</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 hover:bg-white/[0.02] transition-colors cursor-pointer">
+                        <div className="flex gap-3">
+                          <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0 text-lg">📋</div>
+                          <div>
+                            <p className="text-sm text-white font-medium">New Admission Lead</p>
+                            <p className="text-xs text-slate-400 mt-0.5">A new inquiry was submitted via the portal.</p>
+                            <p className="text-[10px] text-slate-500 mt-1.5">Yesterday</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Date */}
             <div className="hidden md:flex items-center gap-2 glass border border-white/[0.08] rounded-xl px-3 h-9">
@@ -211,5 +270,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* AI Copilot Widget */}
       <AICopilot role={profile?.role || 'admin'} />
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <I18nProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </I18nProvider>
   );
 }

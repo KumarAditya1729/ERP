@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export async function getDashboardAnalytics() {
   const supabase = createClient()
@@ -9,29 +9,18 @@ export async function getDashboardAnalytics() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  
   const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
   if (!profile) throw new Error("Profile not found");
 
   const tenant = profile.tenant_id;
 
-  // 1. Fee Analytics (Revenue)
-  const { data: fees } = await supabase.from('fees').select('amount, status').eq('tenant_id', tenant);
-  let totalCollected = 0;
-  let totalPending = 0;
-  if (fees) {
-    fees.forEach(f => {
-      if (f.status === 'paid') totalCollected += f.amount;
-      else totalPending += f.amount;
-    });
-  }
+  // 1. Fee Analytics (Revenue) using materialized view
+  const { data: feesSummary } = await supabaseAdmin.from('tenant_fee_summary').select('collected, pending').eq('tenant_id', tenant).single();
+  let totalCollected = feesSummary?.collected || 0;
+  let totalPending = feesSummary?.pending || 0;
 
   // 2. Admissions Pipeline
-  const { data: admissions } = await supabase.from('admission_applications').select('stage').eq('tenant_id', tenant);
+  const { data: admissions } = await supabaseAdmin.from('admission_applications').select('stage').eq('tenant_id', tenant);
   const admissionsFunnel = { Applied: 0, Verified: 0, Interviewed: 0, Offered: 0, Enrolled: 0, Rejected: 0 };
   if (admissions) {
     admissions.forEach(a => {

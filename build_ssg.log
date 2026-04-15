@@ -1,0 +1,572 @@
+
+> edusync-erp@0.1.0 build
+> next build
+
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead.
+[@sentry/nextjs] DEPRECATION WARNING: automaticVercelMonitors is deprecated and will be removed in a future version. Use webpack.automaticVercelMonitors instead.
+  ▲ Next.js 14.2.5
+  - Environments: .env.local
+  - Experiments (use with caution):
+    · instrumentationHook
+
+   Creating an optimized production build ...
+[@sentry/nextjs] DEPRECATION WARNING: It is recommended renaming your `sentry.client.config.ts` file, or moving its content to `instrumentation-client.ts`. When using Turbopack `sentry.client.config.ts` will no longer work. Read more about the `instrumentation-client.ts` file: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Unable to snapshot resolve dependencies
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/50) ...
+   Generating static pages (12/50) 
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:18308)
+    at l (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:4867)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '125545053'
+}
+
+Error occurred prerendering page "/billing". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:18308)
+    at l (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:4867)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:9067)
+    at c (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/admissions/page.js:1:3620)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '1118516063'
+}
+
+Error occurred prerendering page "/dashboard/admissions". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:9067)
+    at c (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/admissions/page.js:1:3620)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:13038)
+    at d (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:3382)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '2444000313'
+}
+
+Error occurred prerendering page "/dashboard/attendance". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:13038)
+    at d (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:3382)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/fees/page.js:1:20975)
+    at h (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/fees/page.js:1:7031)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '2843369786'
+}
+
+Error occurred prerendering page "/dashboard/fees". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/fees/page.js:1:20975)
+    at h (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/fees/page.js:1:7031)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/library/page.js:1:12693)
+    at o (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/library/page.js:1:3161)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '4069124859'
+}
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:13038)
+    at c (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/homework/page.js:1:3348)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '2587308561'
+}
+
+Error occurred prerendering page "/dashboard/homework". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:13038)
+    at c (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/homework/page.js:1:3348)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:9067)
+    at l (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/communication/page.js:1:3402)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '333372776'
+}
+
+Error occurred prerendering page "/dashboard/communication". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:9067)
+    at l (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/communication/page.js:1:3402)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:18308)
+    at d (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/hostel/page.js:1:3606)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '3055116210'
+}
+
+Error occurred prerendering page "/dashboard/hostel". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:18308)
+    at d (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/hostel/page.js:1:3606)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+
+Error occurred prerendering page "/dashboard/library". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/library/page.js:1:12693)
+    at o (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/library/page.js:1:3161)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+   Generating static pages (24/50) 
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:13038)
+    at c (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/students/page.js:1:13387)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '2079187479'
+}
+
+Error occurred prerendering page "/dashboard/students". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/attendance/page.js:1:13038)
+    at c (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/students/page.js:1:13387)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/saas/page.js:1:22559)
+    at d (/Users/adityashrivastava/Desktop/ERP/.next/server/app/saas/page.js:1:4019)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nB (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:67538)
+    at nD (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:66680)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64853) {
+  digest: '4176481557'
+}
+
+Error occurred prerendering page "/saas". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/saas/page.js:1:22559)
+    at d (/Users/adityashrivastava/Desktop/ERP/.next/server/app/saas/page.js:1:4019)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nB (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:67538)
+    at nD (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:66680)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64853)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/staff/page.js:1:7536)
+    at o (/Users/adityashrivastava/Desktop/ERP/.next/server/app/staff/page.js:1:3058)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '2733146120'
+}
+   Generating static pages (37/50) 
+
+Error occurred prerendering page "/staff". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/staff/page.js:1:7536)
+    at o (/Users/adityashrivastava/Desktop/ERP/.next/server/app/staff/page.js:1:3058)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:9067)
+    at n (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:3066)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '1274334123'
+}
+
+Error occurred prerendering page "/teacher". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:9067)
+    at n (/Users/adityashrivastava/Desktop/ERP/.next/server/app/teacher/page.js:1:3066)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/library/page.js:1:12693)
+    at 35721 (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/hr/page.js:1:6199)
+    at Object.t [as require] (/Users/adityashrivastava/Desktop/ERP/.next/server/webpack-runtime.js:1:526)
+    at require (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18490)
+    at I (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at /Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:96668
+    at F._fromJSON (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:97106)
+    at JSON.parse (<anonymous>)
+    at O (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94083) {
+  digest: '501338957'
+}
+
+Error occurred prerendering page "/dashboard/hr". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/library/page.js:1:12693)
+    at 35721 (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/hr/page.js:1:6199)
+    at Object.t [as require] (/Users/adityashrivastava/Desktop/ERP/.next/server/webpack-runtime.js:1:526)
+    at require (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18490)
+    at I (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at /Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:96668
+    at F._fromJSON (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:97106)
+    at JSON.parse (<anonymous>)
+    at O (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94083)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/saas/page.js:1:22559)
+    at 37458 (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/exams/page.js:1:3020)
+    at Object.t [as require] (/Users/adityashrivastava/Desktop/ERP/.next/server/webpack-runtime.js:1:526)
+    at require (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18490)
+    at I (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at /Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:96668
+    at F._fromJSON (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:97106)
+    at JSON.parse (<anonymous>)
+    at O (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94083) {
+  digest: '370532078'
+}
+
+Error occurred prerendering page "/dashboard/exams". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/saas/page.js:1:22559)
+    at 37458 (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/exams/page.js:1:3020)
+    at Object.t [as require] (/Users/adityashrivastava/Desktop/ERP/.next/server/webpack-runtime.js:1:526)
+    at require (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18490)
+    at I (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at /Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:96668
+    at F._fromJSON (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:97106)
+    at JSON.parse (<anonymous>)
+    at O (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94083)
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:18308)
+    at dB (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/page.js:1:352000)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '51031537'
+}
+
+Error occurred prerendering page "/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+
+Check your Supabase project's API settings to find these values
+
+https://supabase.com/dashboard/project/_/settings/api
+    at rY (/Users/adityashrivastava/Desktop/ERP/.next/server/chunks/1630.js:37:55975)
+    at a (/Users/adityashrivastava/Desktop/ERP/.next/server/app/billing/page.js:1:18308)
+    at dB (/Users/adityashrivastava/Desktop/ERP/.next/server/app/dashboard/page.js:1:352000)
+    at nj (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nM (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61546)
+    at nN (/Users/adityashrivastava/Desktop/ERP/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+ ✓ Generating static pages (50/50)
+
+> Export encountered errors on following paths:
+	/billing/page: /billing
+	/dashboard/admissions/page: /dashboard/admissions
+	/dashboard/attendance/page: /dashboard/attendance
+	/dashboard/communication/page: /dashboard/communication
+	/dashboard/exams/page: /dashboard/exams
+	/dashboard/fees/page: /dashboard/fees
+	/dashboard/homework/page: /dashboard/homework
+	/dashboard/hostel/page: /dashboard/hostel
+	/dashboard/hr/page: /dashboard/hr
+	/dashboard/library/page: /dashboard/library
+	/dashboard/page: /dashboard
+	/dashboard/students/page: /dashboard/students
+	/saas/page: /saas
+	/staff/page: /staff
+	/teacher/page: /teacher
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice

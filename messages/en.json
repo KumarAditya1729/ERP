@@ -1,0 +1,32 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "teachers": "Teachers",
+    "staff": "Staff",
+    "academics": "Academics",
+    "attendance": "Attendance",
+    "fees": "Fee Collection",
+    "communication": "Communication",
+    "transport": "Transport",
+    "hostel": "Hostel",
+    "expenses": "Expenses",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "activeStudents": "Active Students",
+    "totalRevenue": "Total Revenue",
+    "presentToday": "Present Today",
+    "pendingFees": "Pending Fees",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions"
+  },
+  "auth": {
+    "login": "Login to your account",
+    "email": "Email Address",
+    "password": "Password",
+    "signIn": "Sign In"
+  }
+}

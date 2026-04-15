@@ -3,13 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
-
-// Admin client — uses service role key, runs only on server, never in browser
-const getAdminClient = () => createSupabaseAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 function getRouteForRole(role: string): string {
   if (role === 'admin') return '/dashboard'
@@ -38,10 +32,6 @@ export async function login(formData: FormData) {
 
     // Fallback: if JWT doesn't have role yet (older users), read from DB authoritatively
     if (!role) {
-      const supabaseAdmin = createSupabaseAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
       const { data: profile } = await supabaseAdmin
         .from('profiles')
         .select('role')
@@ -103,16 +93,10 @@ export async function signup(formData: FormData) {
     )
   }
 
-  // Use service role to bypass email confirmation & rate limits for demo signups
-  const supabaseAdmin = getAdminClient()
-
-  // ENSURE Mock Tenant Exists to prevent Foreign Key Violation during Trigger!
-  await supabaseAdmin.from('tenants').upsert({
-    id: '550e8400-e29b-41d4-a716-446655440000',
-    name: 'Delhi Public School',
-    city: 'New Delhi',
-    subscription_tier: 'growth'
-  });
+  const tenant_id = formData.get('tenant_id') as string;
+  if (!tenant_id) {
+    return redirect('/login?error=School (Tenant ID) must be specified for user registration. Or register a new school.')
+  }
 
   const { error: adminError } = await supabaseAdmin.auth.admin.createUser({
     email,
@@ -120,9 +104,9 @@ export async function signup(formData: FormData) {
     email_confirm: true,
     user_metadata: {
       role: role || 'admin',
-      tenant_id: '550e8400-e29b-41d4-a716-446655440000',
-      first_name: 'Test',
-      last_name: 'User'
+      tenant_id: tenant_id,
+      first_name: formData.get('first_name') || 'New',
+      last_name: formData.get('last_name') || 'User'
     }
   })
 

@@ -3,6 +3,7 @@ import { streamText } from 'ai';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+export const runtime = 'edge';
 
 export async function POST(req: Request) {
   // Extract messages and contextual role from the request body
@@ -25,5 +26,5 @@ Do NOT reveal sensitive system architecture. Do not hallucinate financial number
   });
 
   // Respond with the streaming format
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }

@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS public.tenants (
     logo_url TEXT,
     city TEXT,
     subscription_tier TEXT DEFAULT 'starter' CHECK (subscription_tier IN ('starter', 'growth', 'enterprise')),
+    subdomain TEXT UNIQUE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'trial')),
+    max_students INTEGER DEFAULT 1000,
+    billing_email TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -25,7 +29,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     last_name TEXT NOT NULL,
     email TEXT,
     phone TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(tenant_id, email)
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -52,13 +57,8 @@ BEGIN
     extracted_role := coalesce(new.raw_user_meta_data ->> 'role', 'student');
 
     IF extracted_tenant_id IS NULL THEN
-        extracted_tenant_id := '550e8400-e29b-41d4-a716-446655440000'::uuid;
+        RAISE EXCEPTION 'tenant_id is required in user metadata';
     END IF;
-
-    -- Idempotent Upsert for Tenant constraints
-    INSERT INTO public.tenants (id, name, city, subscription_tier)
-    VALUES (extracted_tenant_id, 'Delhi Public School', 'New Delhi', 'growth')
-    ON CONFLICT (id) DO NOTHING;
 
     -- Profile creation
     INSERT INTO public.profiles (id, tenant_id, role, first_name, last_name, email)

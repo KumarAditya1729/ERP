@@ -39,3 +39,6 @@ USING (
         OR parent_id = auth.uid()
     )
 );
+
+CREATE INDEX IF NOT EXISTS idx_students_tenant_class ON public.students(tenant_id, class_grade, section);
+CREATE INDEX IF NOT EXISTS idx_students_tenant_status ON public.students(tenant_id, status);

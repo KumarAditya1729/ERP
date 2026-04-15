@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache'
 
 async function getAdminClientAndTenant() {
@@ -9,11 +9,6 @@ async function getAdminClientAndTenant() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  
   const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', user.id).single();
   if (!profile) throw new Error('Profile not found');
 
@@ -57,20 +52,11 @@ export async function createHomeworkAssignment(formData: any) {
 
     if (error) throw error;
 
-    // Auto generate mock submissions for demo purposes if it is an MVP
-    const mockStudents = ['Aarav Patel', 'Priya Sharma', 'Riya Mehta', 'Karan Singh', 'Sneha Gupta'];
-    const mockSubs = mockStudents.map(name => ({
-      tenant_id: tenantId,
-      assignment_id: data.id,
-      student_name: name,
-      class_name: class_name,
-      status: Math.random() > 0.5 ? 'missing' : 'pending',
-      submitted_at: Math.random() > 0.5 ? new Date().toISOString() : null
-    }));
-    await supabaseAdmin.from('homework_submissions').insert(mockSubs);
+    // Removed mock data insertion for production safety
+    // In production, real students would be fetched and submissions initialized directly or populated lazily.
 
-    revalidatePath('/dashboard/homework');
-    revalidatePath('/teacher/homework');
+    revalidatePath('/', 'layout');
+    revalidatePath('/', 'layout');
     return { success: true, data };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -87,8 +73,8 @@ export async function gradeSubmission(submissionId: string, score: string) {
       .eq('tenant_id', tenantId);
       
     if (error) throw error;
-    revalidatePath('/dashboard/homework');
-    revalidatePath('/teacher/homework');
+    revalidatePath('/', 'layout');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -105,8 +91,8 @@ export async function updateAssignmentStatus(assignmentId: string, status: strin
       .eq('tenant_id', tenantId);
       
     if (error) throw error;
-    revalidatePath('/dashboard/homework');
-    revalidatePath('/teacher/homework');
+    revalidatePath('/', 'layout');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -141,8 +127,8 @@ export async function submitExamGrades(gradesData: any[]) {
     const { error } = await supabaseAdmin.from('exams_data').insert(tenantGrades);
     if (error) throw error;
     
-    revalidatePath('/dashboard/exams');
-    revalidatePath('/teacher/exams');
+    revalidatePath('/', 'layout');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };

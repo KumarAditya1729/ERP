@@ -1,20 +1,17 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache'
 import { sendBulkSMS } from '@/lib/services/twilio'
+import { unstable_after as after } from 'next/server'
+import { CommunicationNoticeSchema } from '@/lib/validation'
 
 async function getAdminClientAndTenant() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Unauthorized');
 
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  
   const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', user.id).single();
   if (!profile) throw new Error('Profile not found');
 
@@ -49,16 +46,19 @@ export async function sendNotice(formData: {
   try {
     const { supabaseAdmin, user, tenantId } = await getAdminClientAndTenant();
 
-    if (!formData.title.trim() || !formData.body.trim()) {
-      return { success: false, error: 'Title and message body are required.' };
+    const parseResult = CommunicationNoticeSchema.safeParse(formData);
+    if (!parseResult.success) {
+      return { success: false, error: parseResult.error.errors[0].message };
     }
+
+    const validData = parseResult.data;
 
     // Get real recipient count from DB
     let recipientCount = 0;
-    if (formData.target === 'all-parents' || formData.target === 'all-students') {
+    if (validData.target === 'all-parents' || validData.target === 'all-students') {
       const { count } = await supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'active');
       recipientCount = count || 0;
-    } else if (formData.target === 'all-staff') {
+    } else if (validData.target === 'all-staff') {
       const { count } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('role', ['staff', 'teacher', 'admin']);
       recipientCount = count || 0;
     } else {
@@ -67,10 +67,10 @@ export async function sendNotice(formData: {
 
     const { error: insertError } = await supabaseAdmin.from('notices').insert([{
       tenant_id: tenantId,
-      title: formData.title.trim(),
-      raw_content: formData.body.trim(),
-      audience_segment: formData.target,
-      channels: formData.channels,
+      title: validData.title.trim(),
+      raw_content: validData.body.trim(),
+      audience_segment: validData.target,
+      channels: validData.channels,
       target_count: recipientCount,
       created_by: user.id
     }]);
@@ -81,28 +81,35 @@ export async function sendNotice(formData: {
     }
 
     // If SMS channel selected — dispatch real SMS via Twilio
-    if (formData.channels.includes('SMS')) {
-      const { data: students } = await supabaseAdmin
-        .from('students')
-        .select('guardian_phone, guardian_name')
-        .eq('tenant_id', tenantId)
-        .eq('status', 'active')
-        .limit(200); // cap at 200 per bulk send for MVP
+      if (validData.channels.includes('SMS')) {
+        const { data: students } = await supabaseAdmin
+          .from('students')
+          .select('guardian_phone, guardian_name')
+          .eq('tenant_id', tenantId)
+          .eq('status', 'active');
 
-      if (students && students.length > 0) {
-        const smsPayloads = students
-          .filter(s => s.guardian_phone && s.guardian_phone.length >= 10)
-          .map(s => ({
-            to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[^\d]/g, '')}`,
-            message: `[${formData.title}] ${formData.body.substring(0, 120)} — NexSchool`
-          }));
+        if (students && students.length > 0) {
+          after(async () => {
+            const smsPayloads = students
+              .filter(s => s.guardian_phone && s.guardian_phone.length >= 10)
+              .map(s => ({
+                to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[^\d]/g, '')}`,
+                message: `[${validData.title}] ${validData.body.substring(0, 120)} — NexSchool`
+              }));
 
-        // Fire-and-forget bulk SMS 
-        sendBulkSMS(smsPayloads).catch(err => console.error('[Notice SMS] Bulk SMS error:', err));
+            // Send in chunks of 100
+            const chunkSize = 100;
+            for (let i = 0; i < smsPayloads.length; i += chunkSize) {
+              const chunk = smsPayloads.slice(i, i + chunkSize);
+              await sendBulkSMS(chunk).catch(err => console.error('[Notice SMS] Bulk SMS chunk error:', err));
+              // Prevent Twilio API rate limiting
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          });
+        }
       }
-    }
 
-    revalidatePath('/dashboard/communication');
+    revalidatePath('/', 'layout');
     return { success: true, recipientCount };
 
   } catch (err: any) {

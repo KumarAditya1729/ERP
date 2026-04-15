@@ -13,8 +13,27 @@ CREATE TABLE IF NOT EXISTS public.fees (
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'overdue')),
     payment_method TEXT,
     paid_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE OR REPLACE FUNCTION public.set_paid_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'paid' AND OLD.status != 'paid' THEN
+        NEW.paid_at = NOW();
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER fees_paid_at_trigger
+    BEFORE UPDATE ON public.fees
+    FOR EACH ROW EXECUTE FUNCTION public.set_paid_at();
+
+CREATE TRIGGER fees_updated_at_trigger
+    BEFORE UPDATE ON public.fees
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 ALTER TABLE public.fees ENABLE ROW LEVEL SECURITY;
 
@@ -36,3 +55,18 @@ USING (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fees_tenant_status ON public.fees(tenant_id, status);
+
+CREATE MATERIALIZED VIEW public.tenant_fee_summary AS
+SELECT tenant_id, 
+  SUM(CASE WHEN status='paid' THEN amount ELSE 0 END) as collected,
+  SUM(CASE WHEN status!='paid' THEN amount ELSE 0 END) as pending
+FROM public.fees GROUP BY tenant_id;
+
+CREATE UNIQUE INDEX idx_tenant_fee_summary ON public.tenant_fee_summary(tenant_id);
+
+CREATE OR REPLACE FUNCTION public.refresh_fee_summary()
+RETURNS void AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY public.tenant_fee_summary;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

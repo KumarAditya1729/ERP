@@ -1,0 +1,32 @@
+{
+  "navigation": {
+    "dashboard": "डैशबोर्ड",
+    "students": "छात्र",
+    "teachers": "शिक्षक",
+    "staff": "स्टाफ",
+    "academics": "अकादमिक",
+    "attendance": "उपस्थिति",
+    "fees": "शुल्क संग्रह",
+    "communication": "संचार",
+    "transport": "परिवहन",
+    "hostel": "छात्रावास",
+    "expenses": "व्यय",
+    "reports": "रिपोर्ट",
+    "settings": "सेटिंग्स"
+  },
+  "dashboard": {
+    "welcome": "वापसी पर स्वागत है",
+    "activeStudents": "सक्रिय छात्र",
+    "totalRevenue": "कुल राजस्व",
+    "presentToday": "आज उपस्थित",
+    "pendingFees": "लंबित शुल्क",
+    "recentActivity": "हाल की गतिविधि",
+    "quickActions": "त्वरित कार्रवाइयां"
+  },
+  "auth": {
+    "login": "अपने खाते में लॉगिन करें",
+    "email": "ईमेल पता",
+    "password": "पासवर्ड",
+    "signIn": "साइन इन करें"
+  }
+}
