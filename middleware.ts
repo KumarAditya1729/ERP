@@ -124,16 +124,13 @@ export async function middleware(req: NextRequest) {
   }
 
   // ── RBAC guards (locale-aware) ────────────────────────────────────────────
-  if (path.includes('/dashboard') && role !== 'admin') {
+  if (path.startsWith(`/${locale}/dashboard`) && role !== 'admin') {
     return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
   }
-  if (path.includes('/teacher') && role !== 'teacher') {
+  if (path.startsWith(`/${locale}/teacher`) && role !== 'teacher') {
     return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
   }
-  if (path.includes('/student') && role !== 'student') {
-    return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
-  }
-  if (path.includes('/staff') && role !== 'staff') {
+  if (path.startsWith(`/${locale}/staff`) && role !== 'staff') {
     return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
   }
 
