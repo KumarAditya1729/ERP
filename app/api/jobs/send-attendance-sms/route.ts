@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from '@upstash/qstash/dist/nextjs';
 import { createClient } from '@supabase/supabase-js';
+import { sendSMS } from '@/lib/services/twilio';
 
 // Setup Supabase Admin
 const supabaseAdmin = createClient(
@@ -28,20 +29,23 @@ async function handler(req: Request) {
       return NextResponse.json({ success: true, delivered: 0 });
     }
 
-    // 2. Here we would batch-execute SMS via Twilio/SNS or similar provider. 
-    // Because it's running via QStash, Vercel gives this process plenty of time
-    // and if it fails, QStash automatically retries it with exponential backoff!
-    const dispatchedLogs = [];
-
-    for (const student of students) {
-      if (student.guardian_phone) {
-        // [TWILIO API CALL HERE]
-        const message = `NexSchool Alert: ${student.first_name} was marked absent today (${dateStr}). Contact admin for details.`;
+    // 2. Execute parallel SMS dispatch via Twilio (wrapped in QStash to avoid client-side timeouts)
+    const smsPromises = students
+      .filter(s => s.guardian_phone && s.guardian_phone.length >= 10)
+      .map(async (student) => {
+        const message = `NexSchool Alert: ${student.first_name} was marked absent today (${dateStr}). Contact the school office for more info.`;
+        const to = student.guardian_phone.startsWith('+') ? student.guardian_phone : `+91${student.guardian_phone.replace(/[- ]/g, '')}`;
         
-        console.log(`[QSTASH WORKER] Simulating SMS to ${student.guardian_phone}: ${message}`);
-        dispatchedLogs.push({ phone: student.guardian_phone, student: student.id, status: 'sent' });
-      }
-    }
+        try {
+          await sendSMS({ to, message });
+          return { phone: to, student: student.id, status: 'sent' };
+        } catch (err) {
+          console.error(`[QSTASH WORKER] SMS Failed for ${student.id}:`, err);
+          return { phone: to, student: student.id, status: 'failed' };
+        }
+      });
+
+    const dispatchedLogs = await Promise.all(smsPromises);
 
     // 3. Log the successful batch processing
     return NextResponse.json({ success: true, delivered: dispatchedLogs.length, logs: dispatchedLogs });
