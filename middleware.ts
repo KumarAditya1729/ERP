@@ -123,14 +123,54 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
   }
 
-  // ── RBAC guards (locale-aware) ────────────────────────────────────────────
-  if (path.startsWith(`/${locale}/dashboard`) && role !== 'admin') {
-    return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
-  }
-  if (path.startsWith(`/${locale}/teacher`) && role !== 'teacher') {
-    return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
-  }
-  if (path.startsWith(`/${locale}/staff`) && role !== 'staff') {
+  // ── RBAC guards (allowlist-based, locale-aware) ─────────────────────────────
+  // Define route access by role (allowlist approach)
+  const roleRoutes: Record<string, string[]> = {
+    admin: [
+      `/${locale}/dashboard`,
+      `/${locale}/teacher`,
+      `/${locale}/staff`,
+      `/${locale}/students`,
+      `/${locale}/fees`,
+      `/${locale}/reports`,
+      `/${locale}/settings`,
+      `/${locale}/admissions`,
+      `/${locale}/attendance`,
+      `/${locale}/academics`,
+      `/${locale}/hostel`,
+      `/${locale}/transport`,
+      `/${locale}/hr`,
+      `/${locale}/communication`,
+    ],
+    teacher: [
+      `/${locale}/teacher`,
+      `/${locale}/students`,
+      `/${locale}/attendance`,
+      `/${locale}/academics`,
+      `/${locale}/reports`,
+    ],
+    staff: [
+      `/${locale}/staff`,
+      `/${locale}/students`,
+      `/${locale}/fees`,
+      `/${locale}/attendance`,
+      `/${locale}/reports`,
+    ],
+    parent: [
+      `/${locale}/portal`,
+      `/${locale}/students`,
+      `/${locale}/fees`,
+      `/${locale}/attendance`,
+      `/${locale}/reports`,
+    ],
+  };
+
+  // Check if user has access to the requested path
+  const allowedRoutes = roleRoutes[role] || [];
+  const hasAccess = allowedRoutes.some(route => path.startsWith(route));
+
+  if (!hasAccess) {
+    console.log(`RBAC: User with role '${role}' denied access to path '${path}'`);
     return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
   }
 

@@ -23,7 +23,14 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    return redirect('/login?error=' + error.message)
+    // Map raw Supabase errors to safe, user-friendly messages
+    const safeErrorMap: Record<string, string> = {
+      'Invalid login credentials': 'Invalid email or password',
+      'Email not confirmed': 'Please verify your email before logging in',
+      'Too many requests': 'Too many login attempts. Please try again later',
+    }
+    const safeMessage = safeErrorMap[error.message] || 'Login failed. Please try again.'
+    return redirect('/login?error=' + encodeURIComponent(safeMessage))
   }
 
   if (authData.user) {
@@ -82,8 +89,11 @@ async function checkPasswordPwned(password: string): Promise<number> {
 export async function signup(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const role = formData.get('role') as string
+  const requestedRole = formData.get('role') as string
   const supabase = createClient()
+
+  // SECURITY: Block admin role self-assignment from public forms
+  const role = requestedRole === 'admin' ? 'parent' : requestedRole || 'parent'
 
   // ── Leaked Password Protection (replaces Supabase Pro Plan HIBP feature) ──
   const pwnedCount = await checkPasswordPwned(password)
@@ -112,14 +122,28 @@ export async function signup(formData: FormData) {
 
   if (adminError) {
     console.error("Supabase Admin Create User Error:", adminError);
-    return redirect('/login?error=' + adminError.message)
+    // Map raw Supabase errors to safe, user-friendly messages
+    const safeErrorMap: Record<string, string> = {
+      'User already registered': 'An account with this email already exists',
+      'Password should be at least 6 characters': 'Password must be at least 6 characters long',
+      'Invalid email': 'Please enter a valid email address',
+    }
+    const safeMessage = safeErrorMap[adminError.message] || 'Registration failed. Please try again.'
+    return redirect('/login?error=' + encodeURIComponent(safeMessage))
   }
 
   // Log them in so session cookies are securely set
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    return redirect('/login?error=' + error.message)
+    // Map raw Supabase errors to safe, user-friendly messages
+    const safeErrorMap: Record<string, string> = {
+      'Invalid login credentials': 'Invalid email or password',
+      'Email not confirmed': 'Please verify your email before logging in',
+      'Too many requests': 'Too many login attempts. Please try again later',
+    }
+    const safeMessage = safeErrorMap[error.message] || 'Login failed. Please try again.'
+    return redirect('/login?error=' + encodeURIComponent(safeMessage))
   }
 
   // Profile insertion handled by Postgres trigger `on_auth_user_created`
