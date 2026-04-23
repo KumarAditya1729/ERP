@@ -782,17 +782,23 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_tenant_id UUID;
   v_resource_label TEXT;
+  v_new_json JSONB;
+  v_old_json JSONB;
 BEGIN
+  -- Convert RECORDs to JSONB for safe key extraction
+  v_new_json := CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN row_to_json(NEW)::jsonb ELSE '{}'::jsonb END;
+  v_old_json := CASE WHEN TG_OP IN ('DELETE', 'UPDATE') THEN row_to_json(OLD)::jsonb ELSE '{}'::jsonb END;
+
   -- Extract tenant_id from the row being changed
-  v_tenant_id := COALESCE(NEW.tenant_id, OLD.tenant_id);
+  v_tenant_id := COALESCE((v_new_json->>'tenant_id')::UUID, (v_old_json->>'tenant_id')::UUID);
 
   -- Best-effort human label from common columns
   v_resource_label := COALESCE(
-    (NEW ->> 'first_name') || ' ' || COALESCE((NEW ->> 'last_name'), ''),
-    NEW ->> 'name',
-    NEW ->> 'invoice_number',
-    NEW ->> 'room_number',
-    OLD ->> 'first_name',
+    (v_new_json ->> 'first_name') || ' ' || COALESCE((v_new_json ->> 'last_name'), ''),
+    v_new_json ->> 'name',
+    v_new_json ->> 'invoice_number',
+    v_new_json ->> 'room_number',
+    v_old_json ->> 'first_name',
     '—'
   );
 
@@ -802,7 +808,7 @@ BEGIN
     'System',
     TG_OP,
     TG_TABLE_NAME,
-    COALESCE(NEW.id, OLD.id),
+    COALESCE((v_new_json->>'id')::UUID, (v_old_json->>'id')::UUID),
     TRIM(v_resource_label),
     CASE TG_OP WHEN 'DELETE' THEN 'warn' ELSE 'info' END,
     jsonb_build_object('table', TG_TABLE_NAME, 'op', TG_OP)
