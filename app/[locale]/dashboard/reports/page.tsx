@@ -26,9 +26,19 @@ export default function ReportsPage() {
     );
   }
 
-  // Calculate percentages for the funnel map
-  const funnel = data?.admissions || {};
-  const maxAdmissions = Math.max(funnel.Applied || 1, 1); // Avoid div by zero
+  // Check if DB is completely empty for demo purposes
+  const isEmptyDB = (data?.totalStudents || 0) === 0 && (data?.fees?.collected || 0) === 0;
+
+  // Provide impressive demo data if DB is empty
+  const displayData = isEmptyDB ? {
+    fees: { collected: 4500000, pending: 850000 },
+    totalStudents: 1245,
+    admissions: { Applied: 450, Verified: 380, Interviewed: 290, Offered: 210, Enrolled: 185 },
+    attendanceTrend: [92, 94, 91, 95, 96, 93, 95]
+  } : data;
+
+  const funnel = displayData?.admissions || {};
+  const maxAdmissions = Math.max(funnel.Applied || 1, 1);
 
   const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
@@ -40,9 +50,14 @@ export default function ReportsPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400 glow-text drop-shadow-sm">
-            Analytics & BI
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400 glow-text drop-shadow-sm">
+              Analytics & BI
+            </h1>
+            {isEmptyDB && (
+              <span className="px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Demo Mode</span>
+            )}
+          </div>
           <p className="text-slate-400 text-sm mt-1">Real-time institutional performance metrics</p>
         </div>
         <button 
@@ -63,7 +78,7 @@ export default function ReportsPage() {
         <div className="glass border border-emerald-500/30 rounded-3xl p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
           <p className="text-sm text-slate-400 font-semibold mb-2 flex items-center gap-2"><span className="text-lg">💰</span> Total Revenue Collected</p>
-          <p className="text-4xl font-black text-emerald-400 tracking-tight">{formatter.format(data?.fees?.collected || 0)}</p>
+          <p className="text-4xl font-black text-emerald-400 tracking-tight">{formatter.format(displayData?.fees?.collected || 0)}</p>
           <div className="mt-4 flex items-center gap-2 text-xs">
             <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">+12%</span>
             <span className="text-slate-500">vs last quarter</span>
@@ -73,17 +88,17 @@ export default function ReportsPage() {
         <div className="glass border border-amber-500/30 rounded-3xl p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
           <p className="text-sm text-slate-400 font-semibold mb-2 flex items-center gap-2"><span className="text-lg">⏳</span> Pending Receivables</p>
-          <p className="text-4xl font-black text-amber-400 tracking-tight">{formatter.format(data?.fees?.pending || 0)}</p>
+          <p className="text-4xl font-black text-amber-400 tracking-tight">{formatter.format(displayData?.fees?.pending || 0)}</p>
           <div className="mt-4 flex items-center gap-2 text-xs">
             <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">Needs Action</span>
-            <span className="text-slate-500">across {Math.floor((data?.fees?.pending || 0) / 10000)} invoices</span>
+            <span className="text-slate-500">across {Math.floor((displayData?.fees?.pending || 0) / 10000)} invoices</span>
           </div>
         </div>
 
         <div className="glass border border-cyan-500/30 rounded-3xl p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all"></div>
           <p className="text-sm text-slate-400 font-semibold mb-2 flex items-center gap-2"><span className="text-lg">👩‍🎓</span> Active Students</p>
-          <p className="text-4xl font-black text-cyan-400 tracking-tight">{data?.totalStudents || 0}</p>
+          <p className="text-4xl font-black text-cyan-400 tracking-tight">{displayData?.totalStudents || 0}</p>
           <div className="mt-4 flex items-center gap-2 text-xs">
             <span className="bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full font-bold">Stable</span>
             <span className="text-slate-500">Current active roster size</span>
@@ -115,7 +130,7 @@ export default function ReportsPage() {
                 <div key={stage} className="relative">
                   <div className="flex justify-between text-xs font-semibold mb-1">
                     <span className="text-slate-300 uppercase tracking-wider">{stage}</span>
-                    <span className="text-white bg-slate-800 rounded px-2 py-0.5">{val}</span>
+                    <span className="text-white bg-slate-800 rounded px-2 py-0.5 shadow-sm">{val}</span>
                   </div>
                   <div className="w-full bg-slate-900/50 rounded-full h-4 overflow-hidden border border-white/5">
                     <div 
@@ -129,7 +144,7 @@ export default function ReportsPage() {
           </div>
           <div className="mt-6 pt-4 border-t border-white/5 text-center">
             <p className="text-xs text-slate-500">Conversion Rate (Applied → Enrolled)</p>
-            <p className="text-xl font-bold text-violet-400 mt-1">
+            <p className="text-2xl font-bold text-violet-400 mt-1 drop-shadow-sm">
               {maxAdmissions > 0 && funnel.Applied > 0 ? Math.round(((funnel.Enrolled || 0) / funnel.Applied) * 100) : 0}%
             </p>
           </div>
@@ -143,18 +158,18 @@ export default function ReportsPage() {
               <span className="badge badge-green text-xs">Healthy</span>
             </div>
             
-            <div className="flex items-end gap-2 h-48 mt-4">
-              {(data?.attendanceTrend || [0, 0, 0, 0, 0, 0, 0]).map((rate: number, i: number) => (
-                <div key={i} className="flex-1 flex flex-col items-center group relative">
+            <div className="flex items-end gap-2 h-56 mt-4 pb-2 border-b border-white/[0.05]">
+              {(displayData?.attendanceTrend || [0, 0, 0, 0, 0, 0, 0]).map((rate: number, i: number) => (
+                <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
                   {/* Tooltip */}
-                  <div className="absolute -top-8 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10">
+                  <div className="absolute -top-10 px-2 py-1 bg-slate-800 text-white font-bold text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10 z-10">
                     {rate}%
                   </div>
                   <div 
-                    className="w-full bg-gradient-to-t from-violet-600 to-cyan-400 rounded-t-md opacity-70 group-hover:opacity-100 group-hover:shadow-[0_0_15px_var(--tw-shadow-color)] shadow-cyan-500/50 transition-all duration-500 delay-100"
+                    className="w-full max-w-[40px] mx-auto bg-gradient-to-t from-violet-600/50 to-cyan-400/80 rounded-t-md opacity-80 group-hover:opacity-100 group-hover:shadow-[0_0_20px_var(--tw-shadow-color)] shadow-cyan-500/50 transition-all duration-500 delay-75"
                     style={{ height: `${Math.max(rate, 5)}%` }}
                   ></div>
-                  <span className="text-[10px] text-slate-500 mt-2">D-{7 - i}</span>
+                  <span className="text-[10px] text-slate-500 mt-3 font-medium">Day {i + 1}</span>
                 </div>
               ))}
             </div>
