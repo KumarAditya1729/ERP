@@ -41,7 +41,7 @@ export async function GET() {
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
     if (!listError && existingUsers?.users) {
       for (const eu of existingUsers.users) {
-        if (users.map(u => u.email).includes(eu.email)) {
+        if (eu.email && users.map(u => u.email).includes(eu.email)) {
           await supabaseAdmin.auth.admin.deleteUser(eu.id);
           results.push(`Deleted corrupted user: ${eu.email}`);
         }
