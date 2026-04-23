@@ -2,9 +2,11 @@
 -- 02_ATTENDANCE MODULE
 -- ==============================================================================
 
-CREATE EXTENSION IF NOT EXISTS pg_partman WITH SCHEMA public;
+CREATE SCHEMA IF NOT EXISTS partman;
+CREATE EXTENSION IF NOT EXISTS pg_partman WITH SCHEMA partman;
 
 -- Partitioned attendance table
+DROP TABLE IF EXISTS public.attendance CASCADE;
 CREATE TABLE IF NOT EXISTS public.attendance (
     id UUID DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
@@ -42,7 +44,6 @@ CREATE INDEX IF NOT EXISTS idx_attendance_student_date ON public.attendance(stud
 SELECT partman.create_parent(
   p_parent_table => 'public.attendance',
   p_control => 'date',
-  p_type => 'native',
-  p_interval => 'monthly',
+  p_interval => '1 month',
   p_premake => 6
 );
