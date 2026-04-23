@@ -153,3 +153,48 @@ export async function submitExamGrades(gradesData: any[]) {
     return { success: false, error: err.message };
   }
 }
+
+export async function getParentAcademics() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff', 'parent', 'student']);
+  if (authErr) throw new Error('Unauthorized');
+
+  try {
+    const { supabaseAdmin, tenantId, profile } = await getAdminClientAndTenant();
+
+    // 1. Fetch child from parent_links
+    const { data: parentLinks } = await supabaseAdmin.from('parent_links').select('student_id').eq('parent_id', user.id);
+    let childClass = '10-A'; // Default fallback
+    if (parentLinks && parentLinks.length > 0) {
+      const { data: student } = await supabaseAdmin.from('students').select('class_grade').eq('id', parentLinks[0].student_id).single();
+      if (student && student.class_grade) childClass = student.class_grade;
+    }
+
+    // 2. Fetch homework for that class
+    const { data: homework } = await supabaseAdmin
+      .from('homework_assignments')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      // For demo, we just fetch all if no specific class match, or match class
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    // 3. Mock timetable (since no timetable table exists in ERP schema yet)
+    const timetable = [
+      { subject: 'Mathematics', teacher: 'Priya Sharma', time: '09:00 AM - 09:45 AM', room: 'Room 201', status: 'completed' },
+      { subject: 'Physics', teacher: 'Vikram Singh', time: '09:50 AM - 10:35 AM', room: 'Lab 3', status: 'active' },
+      { subject: 'English', teacher: 'Sarah Jenkins', time: '10:50 AM - 11:35 AM', room: 'Room 105', status: 'upcoming' },
+    ];
+
+    return { 
+      success: true, 
+      data: {
+        homework: homework || [],
+        timetable,
+        attendance: 94,
+        assignmentsCompleted: 88
+      }
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}

@@ -1,20 +1,30 @@
 'use client';
-import { useState } from 'react';
-
-const MOCK_CURRENT_CLASSES = [
-  { subject: 'Mathematics', teacher: 'Priya Sharma', time: '09:00 AM - 09:45 AM', room: 'Room 201', status: 'completed' },
-  { subject: 'Physics', teacher: 'Vikram Singh', time: '09:50 AM - 10:35 AM', room: 'Lab 3', status: 'active' },
-  { subject: 'English', teacher: 'Sarah Jenkins', time: '10:50 AM - 11:35 AM', room: 'Room 105', status: 'upcoming' },
-];
-
-const MOCK_HOMEWORK = [
-  { id: 1, subject: 'Mathematics', title: 'Algebra Practice Set 4', dueDate: 'Tomorrow', status: 'pending' },
-  { id: 2, subject: 'Physics', title: 'Kinematics Lab Report', dueDate: 'Friday', status: 'submitted' },
-];
+import { useState, useEffect } from 'react';
+import { getParentAcademics } from '@/app/actions/academics';
 
 export default function PortalAcademicsPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const res = await getParentAcademics();
+      if (res.success && res.data) {
+        setData(res.data);
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return <div className="p-12 text-center animate-pulse text-violet-400">Loading academics hub...</div>;
+  }
+
+  const { timetable = [], homework = [], attendance = 0, assignmentsCompleted = 0 } = data || {};
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pt-4 pb-20">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Academics Hub</h1>
@@ -30,12 +40,12 @@ export default function PortalAcademicsPage() {
                 <span className="text-2xl mr-2">📅</span> Today&apos;s Schedule
               </h2>
               <span className="text-sm font-medium text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20">
-                Tuesday
+                {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
               </span>
             </div>
 
             <div className="space-y-4">
-              {MOCK_CURRENT_CLASSES.map((cls, idx) => (
+              {timetable.map((cls: any, idx: number) => (
                 <div 
                   key={idx} 
                   className={`relative p-5 rounded-xl border transition-all ${
@@ -74,19 +84,19 @@ export default function PortalAcademicsPage() {
               <div>
                 <div className="flex justify-between text-sm mb-1 text-slate-300">
                   <span>Overall Attendance</span>
-                  <span className="text-emerald-400 font-bold">94%</span>
+                  <span className="text-emerald-400 font-bold">{attendance}%</span>
                 </div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 w-[94%]" />
+                  <div className="h-full bg-emerald-500 transition-all" style={{width: `${attendance}%`}} />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1 text-slate-300">
                   <span>Assignments Completed</span>
-                  <span className="text-cyan-400 font-bold">88%</span>
+                  <span className="text-cyan-400 font-bold">{assignmentsCompleted}%</span>
                 </div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-cyan-500 w-[88%]" />
+                  <div className="h-full bg-cyan-500 transition-all" style={{width: `${assignmentsCompleted}%`}} />
                 </div>
               </div>
             </div>
@@ -97,21 +107,29 @@ export default function PortalAcademicsPage() {
               <span className="text-xl mr-2">📝</span> Active Assignments
             </h2>
             <div className="space-y-3">
-              {MOCK_HOMEWORK.map(hw => (
-                <div key={hw.id} className="p-3 bg-white/[0.02] border border-white/5 rounded-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-cyan-400 uppercase font-semibold">{hw.subject}</p>
-                    <p className="text-sm text-white font-medium mt-0.5">{hw.title}</p>
+              {homework.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">No active assignments</p>
+              ) : (
+                homework.map((hw: any) => (
+                  <div key={hw.id} className="p-3 bg-white/[0.02] border border-white/5 rounded-lg flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-cyan-400 uppercase font-semibold">{hw.subject}</p>
+                      <p className="text-sm text-white font-medium mt-0.5 truncate">{hw.title}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      {hw.status === 'graded' ? (
+                        <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">Graded</span>
+                      ) : hw.status === 'submitted' ? (
+                        <span className="text-xs bg-violet-500/10 text-violet-400 px-2 py-1 rounded border border-violet-500/20">Done</span>
+                      ) : (
+                        <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded border border-amber-500/20">
+                          Due {new Date(hw.due_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    {hw.status === 'submitted' ? (
-                      <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">Done</span>
-                    ) : (
-                      <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded border border-amber-500/20">Due {hw.dueDate}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -119,3 +137,4 @@ export default function PortalAcademicsPage() {
     </div>
   );
 }
+
