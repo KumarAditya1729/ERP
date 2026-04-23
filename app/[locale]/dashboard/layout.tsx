@@ -8,6 +8,7 @@ import { logout } from '@/app/actions/auth';
 import AICopilot from '@/components/AI_Copilot';
 import { I18nProvider, useI18n } from '@/contexts/I18nContext';
 import LanguageSwitcher from '@/components/dashboard/LanguageSwitcher';
+import { getRecentNotifications } from '@/app/actions/notifications';
 
 // Feature flags — driven by env vars, no redeployment needed (unlocked for demo)
 const FEATURE_TRANSPORT_GPS = true; // process.env.NEXT_PUBLIC_FEATURE_TRANSPORT_GPS === 'true';
@@ -37,6 +38,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [tenant, setTenant] = useState<any>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const router = useRouter();
   const { t } = useI18n();
 
@@ -56,6 +59,21 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     }
     loadUser();
   }, [supabase, router]);
+
+  const toggleNotifications = async () => {
+    if (!notificationsOpen) {
+      setNotificationsOpen(true);
+      setLoadingNotifications(true);
+      const res = await getRecentNotifications();
+      if (res.success) {
+        setNotifications(res.data);
+      }
+      setLoadingNotifications(false);
+      setHasUnread(false);
+    } else {
+      setNotificationsOpen(false);
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-transparent">
@@ -196,7 +214,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="relative">
               <button 
                 id="notifications-btn" 
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                onClick={toggleNotifications}
                 className="relative w-9 h-9 glass border border-white/[0.08] rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                 aria-label="Toggle notifications"
               >
@@ -209,49 +227,69 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               {notificationsOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-80 bg-[#080C1A]/95 backdrop-blur-3xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
+                  <div className="absolute right-0 mt-2 w-80 md:w-96 bg-[#080C1A]/95 backdrop-blur-3xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
                     <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-white">Notifications</h3>
+                      <h3 className="text-sm font-bold text-white">System Notifications</h3>
                       {hasUnread && (
                         <button 
-                          onClick={() => { setHasUnread(false); setNotificationsOpen(false); }}
+                          onClick={() => { setHasUnread(false); }}
                           className="text-[10px] text-violet-400 hover:text-violet-300 font-medium cursor-pointer"
                         >
                           Mark all as read
                         </button>
                       )}
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      <div className="p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer">
-                        <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 text-lg">💰</div>
-                          <div>
-                            <p className="text-sm text-white font-medium">Fee Payment Received</p>
-                            <p className="text-xs text-slate-400 mt-0.5">₹4,500 received from John Doe (Class 10-A)</p>
-                            <p className="text-[10px] text-slate-500 mt-1.5">10 minutes ago</p>
-                          </div>
+                    <div className="max-h-[400px] overflow-y-auto">
+                      {loadingNotifications ? (
+                        <div className="p-8 text-center text-sm text-slate-400 flex flex-col items-center justify-center">
+                          <svg className="animate-spin h-5 w-5 text-violet-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading latest activities...
                         </div>
-                      </div>
-                      <div className="p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer">
-                        <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 text-lg">🚌</div>
-                          <div>
-                            <p className="text-sm text-white font-medium">Bus Delayed</p>
-                            <p className="text-xs text-slate-400 mt-0.5">Route #4 is running 15 mins late due to traffic.</p>
-                            <p className="text-[10px] text-slate-500 mt-1.5">1 hour ago</p>
+                      ) : notifications.length === 0 ? (
+                        <div className="p-8 text-center flex flex-col items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-white/[0.02] flex items-center justify-center text-2xl mb-3 border border-white/[0.05]">
+                            📭
                           </div>
+                          <p className="text-sm font-medium text-slate-300">All caught up!</p>
+                          <p className="text-xs text-slate-500 mt-1">No recent system notifications.</p>
                         </div>
-                      </div>
-                      <div className="p-4 hover:bg-white/[0.02] transition-colors cursor-pointer">
-                        <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0 text-lg">📋</div>
-                          <div>
-                            <p className="text-sm text-white font-medium">New Admission Lead</p>
-                            <p className="text-xs text-slate-400 mt-0.5">A new inquiry was submitted via the portal.</p>
-                            <p className="text-[10px] text-slate-500 mt-1.5">Yesterday</p>
-                          </div>
-                        </div>
-                      </div>
+                      ) : (
+                        notifications.map((n: any) => {
+                          const isWarning = n.severity === 'warn' || n.action === 'DELETE';
+                          const isSuccess = n.severity === 'success' || n.resource_type === 'fees';
+                          const iconBg = isWarning ? 'bg-red-500/20' : isSuccess ? 'bg-emerald-500/20' : 'bg-violet-500/20';
+                          const iconText = isWarning ? 'text-red-400' : isSuccess ? 'text-emerald-400' : 'text-violet-400';
+                          
+                          let icon = '🔔';
+                          if (n.resource_type === 'fees') icon = '💰';
+                          if (n.resource_type === 'students') icon = '🎓';
+                          if (n.resource_type === 'attendance') icon = '⏰';
+                          if (n.resource_type === 'transport_routes') icon = '🚌';
+                          if (n.action === 'DELETE') icon = '🗑️';
+
+                          return (
+                            <div key={n.id} className="p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer flex gap-3">
+                              <div className={`w-9 h-9 rounded-full ${iconBg} ${iconText} flex items-center justify-center shrink-0 text-lg`}>
+                                {icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white font-medium truncate">
+                                  {n.action} on {n.resource_type}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                                  {n.resource_label || 'A record'} was {n.action === 'INSERT' ? 'added' : n.action === 'DELETE' ? 'removed' : 'updated'}.
+                                </p>
+                                <p className="text-[10px] text-slate-500 mt-1.5 font-medium">
+                                  {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(n.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </>
