@@ -86,10 +86,23 @@ export default function PortalAdmissionsTracker() {
       </div>
 
       {apps.length === 0 ? (
-        <div className="glass border border-white/[0.08] rounded-2xl p-8 text-center mt-5">
-           <p className="text-4xl mb-4">📝</p>
-           <h2 className="text-white font-bold text-lg">No Applications Found</h2>
-           <p className="text-slate-400 text-xs mt-2">We could not find any admission forms linked to your email address.</p>
+        <div className="glass-strong border border-white/[0.08] rounded-3xl p-12 text-center mt-8 relative overflow-hidden group shadow-2xl">
+           <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 to-cyan-600/5 opacity-50 transition-opacity group-hover:opacity-100" />
+           <div className="absolute -top-20 -right-20 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+           <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+           
+           <div className="relative z-10">
+             <div className="w-24 h-24 mx-auto bg-gradient-to-br from-[#0f172a] to-[#080C1A] border border-white/10 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(139,92,246,0.15)] mb-6 group-hover:scale-110 transition-transform duration-500">
+               <span className="text-4xl">📝</span>
+             </div>
+             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300 tracking-tight">No Active Applications</h2>
+             <p className="text-slate-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
+               We could not find any admission forms linked to your email address. If you recently applied, it may take 24-48 hours to appear here.
+             </p>
+             <button className="mt-8 px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold text-white transition-all shadow-lg hover:shadow-violet-500/20">
+               Contact Admissions Office
+             </button>
+           </div>
         </div>
       ) : (
         <div className="space-y-5">

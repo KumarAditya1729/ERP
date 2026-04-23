@@ -48,12 +48,12 @@ export default async function PortalLayout({ children }: { children: React.React
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 flex-1 max-w-lg mx-auto w-full pb-24">
+      <main className="relative z-10 flex-1 max-w-5xl mx-auto w-full pb-24 px-4 sm:px-6">
         {children}
       </main>
 
       {/* Bottom App Bar (Mobile UI Style) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#080C1A]/90 backdrop-blur-xl border-t border-white/[0.08] px-6 py-3 pb-safe max-w-lg mx-auto w-full">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#080C1A]/90 backdrop-blur-xl border-t border-white/[0.08] px-6 py-3 pb-safe max-w-5xl mx-auto w-full rounded-t-3xl sm:rounded-none">
         <div className="flex items-center justify-between">
           <Link href="/portal" className="flex flex-col items-center gap-1 group">
             <svg className="w-6 h-6 text-violet-400 group-hover:text-violet-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
