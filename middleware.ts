@@ -125,6 +125,7 @@ export async function middleware(req: NextRequest) {
     path.match(`^/${locale}/signup`) ||
     path.match(`^/${locale}/register`) ||
     path.match(`^/${locale}/portal`) ||
+    path.match(`^/${locale}/unauthorized`) ||
     path === `/${locale}`;
 
   if (isPublic) return res;
@@ -134,7 +135,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/login`, req.url))
   }
 
-  const role = user.app_metadata?.role
+  const role = user.app_metadata?.role || user.user_metadata?.role
 
   if (!role) {
     return NextResponse.redirect(new URL(`/${locale}/unauthorized`, req.url))
