@@ -303,37 +303,54 @@ export async function getFleetAnalytics() {
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
-    // Try fetching real data (if migration 00002 has been applied)
-    const { data: incidents, error: incErr } = await supabaseAdmin
-      .from('transport_incidents')
-      .select('*, transport_routes(name, bus_number)')
-      .eq('tenant_id', tenantId)
-      .order('reported_at', { ascending: false })
-      .limit(5);
+    // Use simple queries without FK joins to avoid PostgREST relationship errors
+    // Then manually enrich with route data in JS
+    const [incidentRes, fuelRes, maintRes, routesRes] = await Promise.allSettled([
+      supabaseAdmin
+        .from('transport_incidents')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('reported_at', { ascending: false })
+        .limit(5),
+      supabaseAdmin
+        .from('transport_fuel_logs')
+        .select('*')
+        .eq('tenant_id', tenantId),
+      supabaseAdmin
+        .from('transport_maintenance')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('next_due_date', { ascending: true }),
+      supabaseAdmin
+        .from('transport_routes')
+        .select('id, name, bus_number')
+        .eq('tenant_id', tenantId),
+    ]);
 
-    const { data: fuelLogs, error: fuelErr } = await supabaseAdmin
-      .from('transport_fuel_logs')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .order('recorded_at', { ascending: false });
+    // Build route lookup map
+    const routes: Record<string, { name: string; bus_number: string }> = {};
+    if (routesRes.status === 'fulfilled' && routesRes.value.data) {
+      for (const r of routesRes.value.data) {
+        routes[r.id] = { name: r.name, bus_number: r.bus_number };
+      }
+    }
 
-    const { data: maintenance, error: maintErr } = await supabaseAdmin
-      .from('transport_maintenance')
-      .select('*, transport_routes(name, bus_number)')
-      .eq('tenant_id', tenantId)
-      .order('next_due_date', { ascending: true });
+    const incidents = incidentRes.status === 'fulfilled' ? (incidentRes.value.data ?? []) : [];
+    const fuelLogs  = fuelRes.status  === 'fulfilled' ? (fuelRes.value.data  ?? []) : [];
+    const maintenance = maintRes.status === 'fulfilled' ? (maintRes.value.data ?? []) : [];
 
-    const safeIncidents = incidents || [];
-    const safeMaintenance = maintenance || [];
+    // Enrich with route info manually
+    const enrichedIncidents   = incidents.map(  (i: any) => ({ ...i, transport_routes: routes[i.route_id] ?? null }));
+    const enrichedMaintenance = maintenance.map((m: any) => ({ ...m, transport_routes: routes[m.route_id] ?? null }));
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
-        totalFuelSpent: fuelLogs?.reduce((a, b) => a + b.total_cost, 0) || 0,
-        averageKMPL: 4.8, // In real app, calculate from odometer and fuel_volume_liters
-        activeAlerts: safeIncidents.length + safeMaintenance.length,
-        incidents: safeIncidents,
-        maintenance: safeMaintenance
+        totalFuelSpent: fuelLogs.reduce((a: number, b: any) => a + (b.total_cost || 0), 0),
+        averageKMPL: 4.8,
+        activeAlerts: incidents.length + maintenance.length,
+        incidents: enrichedIncidents,
+        maintenance: enrichedMaintenance,
       }
     };
   } catch (e: any) {

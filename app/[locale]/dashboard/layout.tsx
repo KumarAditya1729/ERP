@@ -36,6 +36,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<any>(null);
   const [tenant, setTenant] = useState<any>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(true);
   const router = useRouter();
   const { t } = useI18n();
 
@@ -202,16 +203,23 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+                {hasUnread && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />}
               </button>
 
               {notificationsOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setNotificationsOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-80 glass-strong border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
+                  <div className="absolute right-0 mt-2 w-80 bg-[#080C1A]/95 backdrop-blur-3xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right">
                     <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
                       <h3 className="text-sm font-bold text-white">Notifications</h3>
-                      <button className="text-[10px] text-violet-400 hover:text-violet-300 font-medium">Mark all as read</button>
+                      {hasUnread && (
+                        <button 
+                          onClick={() => { setHasUnread(false); setNotificationsOpen(false); }}
+                          className="text-[10px] text-violet-400 hover:text-violet-300 font-medium cursor-pointer"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       <div className="p-4 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer">

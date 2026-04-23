@@ -277,7 +277,7 @@ export default function AdmissionsPage() {
             <div>
               <label className="text-xs text-slate-400 mb-1 block">Applying for Class</label>
               <select className="erp-input w-full" value={form.applying_class} onChange={e => setForm(p => ({ ...p, applying_class: e.target.value }))}>
-                {['Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'].map(c => <option key={c}>{c}</option>)}
+                {['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'].map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div>

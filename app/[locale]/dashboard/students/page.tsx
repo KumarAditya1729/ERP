@@ -140,8 +140,8 @@ export default function StudentsPage() {
           style={{ appearance: 'none' }}
         >
           <option value="all">All Classes</option>
-          {['6','7','8','9','10','11','12'].map((c) => (
-            <option key={c} value={c}>Class {c}</option>
+          {['Nursery', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map((c) => (
+            <option key={c} value={c.length <= 2 && !isNaN(Number(c)) ? `Class ${c}` : c}>{c.length <= 2 && !isNaN(Number(c)) ? `Class ${c}` : c}</option>
           ))}
         </select>
         <span className="text-sm text-slate-400">{filtered.length} results</span>

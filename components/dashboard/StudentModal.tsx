@@ -19,7 +19,7 @@ export default function StudentModal({ isOpen, onClose, student }: StudentModalP
       const form = formRef.current;
       (form.elements.namedItem('first_name') as HTMLInputElement).value = student.first_name || '';
       (form.elements.namedItem('last_name') as HTMLInputElement).value = student.last_name || '';
-      (form.elements.namedItem('class_grade') as HTMLSelectElement).value = student.class_grade || '6';
+      (form.elements.namedItem('class_grade') as HTMLSelectElement).value = student.class_grade || 'Nursery';
       (form.elements.namedItem('section') as HTMLInputElement).value = student.section || 'A';
       (form.elements.namedItem('roll_number') as HTMLInputElement).value = student.roll_number || '';
       (form.elements.namedItem('guardian_name') as HTMLInputElement).value = student.guardian_name || '';
@@ -93,13 +93,9 @@ export default function StudentModal({ isOpen, onClose, student }: StudentModalP
             <div>
               <label className="block text-xs font-semibold tracking-wider text-slate-400 uppercase mb-1.5">Class</label>
               <select name="class_grade" required className="erp-input w-full text-sm">
-                <option value="6">Class 6</option>
-                <option value="7">Class 7</option>
-                <option value="8">Class 8</option>
-                <option value="9">Class 9</option>
-                <option value="10">Class 10</option>
-                <option value="11">Class 11</option>
-                <option value="12">Class 12</option>
+                {['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'].map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </div>
             <div>
