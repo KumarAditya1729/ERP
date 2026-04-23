@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/contexts/I18nContext';
 import type { Metadata } from 'next';
 import '../globals.css';
 import { Plus_Jakarta_Sans } from 'next/font/google';
@@ -28,7 +29,12 @@ export default function RootLayout({
     <html lang={locale} className={plusJakartaSans.className}>
       <head>
       </head>
-      <body>{children}</body>
+      <body>
+        <div className="app-bg-mesh" />
+        <I18nProvider>
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

@@ -7,7 +7,7 @@ import Footer from '@/components/landing/Footer';
 
 export default function LandingPage() {
   return (
-    <main style={{ background: '#080C1A' }}>
+    <main className="relative">
       <Navbar />
       <Hero />
       <Features />

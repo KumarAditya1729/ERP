@@ -57,10 +57,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }, [supabase, router]);
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#080C1A' }}>
+    <div className="flex h-screen overflow-hidden bg-transparent">
       {/* Sidebar */}
       <aside
-        className={`fixed lg:relative inset-y-0 left-0 z-30 w-64 flex flex-col glass border-r border-white/[0.07] transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed lg:relative inset-y-0 left-0 z-30 w-64 flex flex-col bg-navy-900/40 backdrop-blur-3xl border-r border-white/[0.07] transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-white/[0.06]">
@@ -161,7 +161,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 glass border-b border-white/[0.07] flex items-center px-6 gap-4 shrink-0">
+        <header className="h-16 bg-navy-900/30 backdrop-blur-2xl border-b border-white/[0.07] flex items-center px-6 gap-4 shrink-0 shadow-sm z-10 relative">
           <button
             id="sidebar-toggle"
             className="lg:hidden text-slate-400 hover:text-white"
@@ -276,8 +276,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <I18nProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </I18nProvider>
+    <DashboardLayoutContent>{children}</DashboardLayoutContent>
   );
 }

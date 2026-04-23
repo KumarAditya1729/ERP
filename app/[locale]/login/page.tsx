@@ -63,16 +63,16 @@ function LoginForm() {
       )}
 
       {/* Role Selector */}
-      <div className="glass border border-white/[0.08] rounded-2xl p-1.5 grid grid-cols-4 gap-1 mb-6">
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-1.5 grid grid-cols-4 gap-1 mb-6 backdrop-blur-xl shadow-inner">
         {roles.map((r) => (
           <button
             key={r.id}
             onClick={() => setRole(r.id)}
             type="button"
-            className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl text-xs font-semibold transition-all duration-200 ${
+            className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl text-xs font-semibold transition-all duration-300 ${
               role === r.id
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/50'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-gradient-to-br from-violet-600 to-violet-700 text-white shadow-lg shadow-violet-900/50 scale-[1.02]'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             <span className="text-base">{r.icon}</span>
@@ -82,7 +82,7 @@ function LoginForm() {
       </div>
 
       {/* Login / Signup Form */}
-      <form action={isLogin ? login : signup} onSubmit={() => setLoading(true)} className="glass border border-white/[0.08] rounded-2xl p-7 space-y-5">
+      <form action={isLogin ? login : signup} onSubmit={() => setLoading(true)} className="bg-white/[0.02] backdrop-blur-2xl border border-white/[0.08] shadow-2xl rounded-3xl p-8 space-y-6">
         <input type="hidden" name="role" value={role} />
 
         <div>
@@ -152,12 +152,12 @@ function LoginForm() {
       </form>
 
       {/* ── One-Click Demo Access ─────────────────────────────────────────── */}
-      <div className="mt-5 glass border border-white/[0.06] rounded-2xl p-5">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="mt-6 bg-white/[0.02] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-6 shadow-xl">
+        <div className="flex items-center gap-3 mb-4">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">🧪 One-Click Demo Access</span>
-          <div className="flex-1 h-px bg-white/[0.05]" />
+          <div className="flex-1 h-px bg-gradient-to-r from-white/[0.08] to-transparent" />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           {DEMO_ACCOUNTS.map((demo) => (
             <button
               key={demo.role}
@@ -194,12 +194,14 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden" style={{ background: '#080C1A' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
       <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-violet-700/20 blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-[400px] h-[400px] rounded-full bg-cyan-700/15 blur-[100px] pointer-events-none" />
 
       <Suspense fallback={<div className="text-emerald-500 relative z-10 font-bold">Loading Identity Provider...</div>}>
-        <LoginForm />
+        <div className="relative z-10 animate-fade-in w-full max-w-md">
+          <LoginForm />
+        </div>
       </Suspense>
     </div>
   );

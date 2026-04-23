@@ -341,20 +341,69 @@ export async function getFleetAnalytics() {
   }
 }
 
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import { z } from 'zod';
+import { Client } from "@upstash/qstash";
+
+// Setup Rate Limiting
+const redis = process.env.UPSTASH_REDIS_REST_URL ? Redis.fromEnv() : null;
+const ratelimit = redis ? new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, '1 m'), // 3 SOS alerts per minute
+  analytics: true,
+}) : null;
+
+const alertSchema = z.object({
+  message: z.string().min(10, "Message must be at least 10 characters long").max(500, "Message too long")
+});
+
 export async function broadcastTransportAlert(message: string) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
   if (authErr) throw new Error('Unauthorized');
 
+  // Zod Validation
+  const parsed = alertSchema.safeParse({ message });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
+  // Rate Limiting
+  if (ratelimit) {
+    const { success } = await ratelimit.limit(`sos_alert_${user.id}`);
+    if (!success) {
+      return { success: false, error: 'SOS rate limit exceeded. Please wait a minute.' };
+    }
+  }
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     
+    // Save to DB
     const { error } = await supabaseAdmin.from('notices').insert({
       tenant_id: tenantId,
       title: 'Transport Alert 🚌',
-      raw_content: message
+      raw_content: parsed.data.message
     });
 
     if (error) throw error;
+
+    // Trigger SMS to all parents linked to transport module
+    if (process.env.QSTASH_TOKEN) {
+      const qstashClient = new Client({ token: process.env.QSTASH_TOKEN });
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      
+      await qstashClient.publishJSON({
+        url: `${baseUrl}/api/jobs/send-transport-sos`,
+        body: {
+          message: parsed.data.message,
+          tenantId: tenantId
+        }
+      });
+    } else {
+      console.warn('QSTASH_TOKEN missing. SOS SMS bypassed.');
+    }
+
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (e: any) {

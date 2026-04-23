@@ -32,11 +32,16 @@ export default function TransportPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rForm, setRForm] = useState({ name: '', driver_name: '', bus_number: '', capacity: 40 });
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [bForm, setBForm] = useState({ message: '' });
 
   useEffect(() => {
     async function init() {
-      await seedTransportDatabase(); // Auto-seed mock data locally for demo if empty
+      const seedRes = await seedTransportDatabase(); // Auto-seed mock data locally for demo if empty
+      if (seedRes && !seedRes.success) {
+        setLoadError(seedRes.error || 'Seed failed');
+      }
+      
       const [res, analyticsRes] = await Promise.all([
         getTransportRoutes(),
         getFleetAnalytics()
@@ -44,7 +49,10 @@ export default function TransportPage() {
       if (res.success && res.data) {
         setRoutes(res.data);
         if (res.data.length > 0) setSelected(res.data[0].id);
+      } else if (!res.success) {
+        setLoadError((prev) => prev ? prev + ' | ' + res.error : (res.error || 'Fetch failed'));
       }
+      
       if (analyticsRes.success) {
         setFleetDocs(analyticsRes.data);
       }
@@ -115,7 +123,16 @@ export default function TransportPage() {
   }
 
   if (!selectedRoute) {
-    return <div className="text-white">No fleet data found.</div>;
+    return (
+      <div className="p-8 text-center text-white bg-red-500/10 border border-red-500/20 rounded-xl mt-6 max-w-2xl mx-auto">
+        <h2 className="text-xl font-bold mb-2">No fleet data found</h2>
+        {loadError && (
+          <div className="mt-4 p-4 bg-black/40 rounded-lg text-left overflow-auto text-sm text-red-300 font-mono">
+            {loadError}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
