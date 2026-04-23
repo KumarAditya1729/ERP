@@ -364,10 +364,36 @@ export default function StaffTransportPage() {
               </button>
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setShowAddModal(false)} className="btn-secondary flex-1">Cancel</button>
-              <button onClick={handleAddRoute} disabled={saving} className="btn-primary flex-1">
-                {saving ? 'Adding…' : 'Add Route'}
+            {/* Bus Documents Upload */}
+            <div className="pt-2 border-t border-white/[0.06]">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Bus Documents</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'rc', label: 'Registration (RC)' },
+                  { id: 'insurance', label: 'Insurance Policy' },
+                  { id: 'puc', label: 'Pollution (PUC)' },
+                  { id: 'fitness', label: 'Fitness Cert' },
+                  { id: 'permit', label: 'Route Permit' },
+                  { id: 'driver', label: 'Driver License' }
+                ].map(doc => (
+                  <label key={doc.id} className="flex flex-col items-center justify-center p-3 border border-dashed border-white/20 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] hover:border-violet-500/50 cursor-pointer transition-all group">
+                    <span className="text-lg mb-1 group-hover:scale-110 transition-transform">📄</span>
+                    <span className="text-[10px] text-slate-300 font-semibold text-center">{doc.label}</span>
+                    <span className="text-[8px] text-slate-500 mt-0.5">Click to upload</span>
+                    <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => {
+                       if(e.target.files && e.target.files[0]) {
+                         showToast(`Selected ${e.target.files[0].name} for ${doc.label}`);
+                       }
+                    }} />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button onClick={() => setShowAddModal(false)} className="btn-secondary flex-1 py-2.5">Cancel</button>
+              <button onClick={handleAddRoute} disabled={saving} className="btn-primary flex-1 py-2.5">
+                {saving ? 'Saving Route...' : 'Save & Add Route'}
               </button>
             </div>
           </div>
