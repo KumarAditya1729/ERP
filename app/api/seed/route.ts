@@ -9,7 +9,6 @@ export async function GET() {
       .insert([{
         name: 'NexSchool Demo',
         subdomain: 'nexschool',
-        slug: 'nexschool',
         status: 'active'
       }])
       .select('id')
