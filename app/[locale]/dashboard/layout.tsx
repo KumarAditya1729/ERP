@@ -9,9 +9,9 @@ import AICopilot from '@/components/AI_Copilot';
 import { I18nProvider, useI18n } from '@/contexts/I18nContext';
 import LanguageSwitcher from '@/components/dashboard/LanguageSwitcher';
 
-// Feature flags — driven by env vars, no redeployment needed
-const FEATURE_TRANSPORT_GPS = process.env.NEXT_PUBLIC_FEATURE_TRANSPORT_GPS === 'true';
-const FEATURE_HOSTEL = process.env.NEXT_PUBLIC_FEATURE_HOSTEL === 'true';
+// Feature flags — driven by env vars, no redeployment needed (unlocked for demo)
+const FEATURE_TRANSPORT_GPS = true; // process.env.NEXT_PUBLIC_FEATURE_TRANSPORT_GPS === 'true';
+const FEATURE_HOSTEL = true; // process.env.NEXT_PUBLIC_FEATURE_HOSTEL === 'true';
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: '📊', i18nKey: 'overview' },
