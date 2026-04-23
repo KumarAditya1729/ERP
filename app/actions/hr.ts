@@ -58,7 +58,7 @@ export async function addStaff(formData: FormData) {
 
   // Ensure profile is synced properly
   const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
-    id: authData.supabaseUser.id,
+    id: authData.user.id,
     tenant_id: profile.tenant_id,
     first_name: first_name,
     last_name: last_name,

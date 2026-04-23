@@ -18,7 +18,7 @@ async function getAdminClientAndTenant() {
   const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) throw new Error('Profile not found');
 
-  return { supabaseAdmin, user, profile, tenantId: profile.tenant_id as string };
+  return { supabaseAdmin, user: supabaseUser, profile, tenantId: profile.tenant_id as string };
 }
 
 export async function getHostelRooms() {

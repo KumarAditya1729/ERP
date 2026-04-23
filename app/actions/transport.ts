@@ -46,7 +46,7 @@ export async function getTransportRoutes() {
   }
 }
 
-export async function getParentTransportRoute() {
+export async function getParentTransportRoute(): Promise<{ success: boolean; data?: any; error?: string }> {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
   if (authErr) throw new Error('Unauthorized');
 
@@ -85,13 +85,7 @@ export async function getParentTransportRoute() {
       .eq('tenant_id', tenantId);
     */
 
-    if (error) throw error;
-    if (!routes || routes.length === 0) return { success: false, error: 'No route assigned.' };
-    
-    const route = routes[0];
-    route.transport_stops = (route.transport_stops ?? []).sort((a: any, b: any) => a.sequence_order - b.sequence_order);
-
-    return { success: true, data: route };
+    // (Dead code removed)
   } catch (e: any) {
     return { success: false, error: e.message };
   }
