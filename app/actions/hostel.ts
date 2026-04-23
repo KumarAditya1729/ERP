@@ -81,12 +81,12 @@ export async function seedHostelDatabase() {
     if (count && count > 0) return { success: true, message: 'Already seeded' };
 
     const demoRooms = [
-      { tenant_id: tenantId, room_number: '101', type: 'Standard', capacity: 3, floor: '1', occupied: 3 },
-      { tenant_id: tenantId, room_number: '102', type: 'Standard', capacity: 3, floor: '1', occupied: 2 },
-      { tenant_id: tenantId, room_number: '103', type: 'Standard', capacity: 3, floor: '1', occupied: 0 },
-      { tenant_id: tenantId, room_number: '201', type: 'Deluxe', capacity: 2, floor: '2', occupied: 2 },
-      { tenant_id: tenantId, room_number: '202', type: 'Deluxe', capacity: 2, floor: '2', occupied: 1 },
-      { tenant_id: tenantId, room_number: '203', type: 'Premium', capacity: 1, floor: '2', occupied: 0 }
+      { tenant_id: tenantId, room_number: '101', block_name: 'Block A', room_type: 'Standard', capacity: 3, floor_level: 1, occupied: 3, status: 'full' },
+      { tenant_id: tenantId, room_number: '102', block_name: 'Block A', room_type: 'Standard', capacity: 3, floor_level: 1, occupied: 2, status: 'partial' },
+      { tenant_id: tenantId, room_number: '103', block_name: 'Block A', room_type: 'Standard', capacity: 3, floor_level: 1, occupied: 0, status: 'vacant' },
+      { tenant_id: tenantId, room_number: '201', block_name: 'Block B', room_type: 'Deluxe', capacity: 2, floor_level: 2, occupied: 2, status: 'full' },
+      { tenant_id: tenantId, room_number: '202', block_name: 'Block B', room_type: 'Deluxe', capacity: 2, floor_level: 2, occupied: 1, status: 'partial' },
+      { tenant_id: tenantId, room_number: '203', block_name: 'Block B', room_type: 'Premium', capacity: 1, floor_level: 2, occupied: 0, status: 'vacant' }
     ];
 
     const { error } = await supabaseAdmin.from('hostel_rooms').insert(demoRooms);
@@ -95,6 +95,33 @@ export async function seedHostelDatabase() {
     revalidatePath('/', 'layout');
     revalidatePath('/', 'layout');
     return { success: true, message: 'Seeded successfully' };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function addHostelRoom(payload: { room_number: string; block_name: string; room_type: string; capacity: number; floor_level: number }) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+
+    const { error } = await supabaseAdmin
+      .from('hostel_rooms')
+      .insert({
+        tenant_id: tenantId,
+        room_number: payload.room_number,
+        block_name: payload.block_name,
+        room_type: payload.room_type,
+        capacity: payload.capacity,
+        floor_level: payload.floor_level,
+        occupied: 0,
+        status: 'vacant'
+      });
+
+    if (error) throw error;
+    return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
