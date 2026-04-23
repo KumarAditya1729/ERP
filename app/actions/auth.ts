@@ -38,7 +38,7 @@ export async function login(formData: FormData) {
 
   if (authData.user) {
     // First: try the fast JWT path (works for newly-created users with trigger)
-    let role = authData.user.app_metadata?.role as string | undefined;
+    let role = (authData.user.app_metadata?.role || authData.user.user_metadata?.role) as string | undefined;
 
     // Fallback: if JWT doesn't have role yet (older users), read from DB authoritatively
     if (!role) {

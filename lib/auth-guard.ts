@@ -15,9 +15,9 @@ export async function requireAuth(allowedRoles?: AllowedRole[]) {
   if (error || !user) {
     return { user: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
-  const role = user.app_metadata?.role as AllowedRole
+  const role = (user.app_metadata?.role || user.user_metadata?.role) as AllowedRole
   if (allowedRoles && !allowedRoles.includes(role)) {
     return { user: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
-  return { user, role, tenantId: user.app_metadata?.tenant_id, error: null }
+  return { user, role, tenantId: user.app_metadata?.tenant_id || user.user_metadata?.tenant_id, error: null }
 }
