@@ -47,7 +47,10 @@ export async function middleware(req: NextRequest) {
   const parts = host.split('.')
   let tenantSubdomain = 'www'
 
-  if (parts.length > 2) {
+  if (host.includes('.vercel.app')) {
+    // Vercel deployment URLs should be treated as the main domain
+    tenantSubdomain = 'www'
+  } else if (parts.length > 2) {
     tenantSubdomain = parts[0]
   } else if (parts.length === 2 && host.includes('localhost')) {
     tenantSubdomain = parts[0]
@@ -101,7 +104,7 @@ export async function middleware(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (tenantSubdomain !== 'www') {
+  if (tenantSubdomain !== 'www' && !path.includes('not-found')) {
     const { data: tenant } = await supabase
       .from('tenants')
       .select('id, status')
@@ -109,7 +112,7 @@ export async function middleware(req: NextRequest) {
       .single()
 
     if (!tenant || tenant.status !== 'active') {
-      return NextResponse.redirect(new URL('/not-found', req.url))
+      return NextResponse.redirect(new URL(`/${locale}/not-found`, req.url))
     }
     // Now set x-tenant-id header with the real UUID
     res.headers.set('x-tenant-id', tenant.id)
