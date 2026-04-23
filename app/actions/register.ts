@@ -18,8 +18,7 @@ import { RegistrationSchema } from '@/lib/validation'
  *  4. Redirect to "check your email" page
  */
 export async function registerSchool(formData: FormData) {
-  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  // Registration is a public action, no requireAuth needed
 
   const parseResult = RegistrationSchema.safeParse({
     school_name: formData.get('school_name'),
