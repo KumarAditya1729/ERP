@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -6,10 +7,10 @@ import { revalidatePath } from 'next/cache'
 
 async function getAdminClientAndTenant() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) throw new Error('Unauthorized');
 
-  const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', supabaseUser.id).single();
   if (!profile) throw new Error('Profile not found');
 
   return { supabaseAdmin, profile, tenantId: profile.tenant_id as string };
@@ -18,6 +19,9 @@ async function getAdminClientAndTenant() {
 // --- HOMEWORK ACTIONS ---
 
 export async function getTeacherHomeworks() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     const { data, error } = await supabaseAdmin
@@ -34,6 +38,9 @@ export async function getTeacherHomeworks() {
 }
 
 export async function createHomeworkAssignment(formData: any) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, profile, tenantId } = await getAdminClientAndTenant();
     const { title, subject, class_name, due_date, instructions } = formData;
@@ -64,6 +71,9 @@ export async function createHomeworkAssignment(formData: any) {
 }
 
 export async function gradeSubmission(submissionId: string, score: string) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     const { error } = await supabaseAdmin
@@ -82,6 +92,9 @@ export async function gradeSubmission(submissionId: string, score: string) {
 }
 
 export async function updateAssignmentStatus(assignmentId: string, status: string) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     const { error } = await supabaseAdmin
@@ -102,6 +115,9 @@ export async function updateAssignmentStatus(assignmentId: string, status: strin
 // --- EXAM ACTIONS ---
 
 export async function getTeacherExams() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     const { data, error } = await supabaseAdmin
@@ -118,6 +134,9 @@ export async function getTeacherExams() {
 }
 
 export async function submitExamGrades(gradesData: any[]) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     

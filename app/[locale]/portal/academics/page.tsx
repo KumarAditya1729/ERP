@@ -27,7 +27,7 @@ export default function PortalAcademicsPage() {
           <div className="glass border border-white/[0.08] rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white flex items-center">
-                <span className="text-2xl mr-2">📅</span> Today's Schedule
+                <span className="text-2xl mr-2">📅</span> Today&apos;s Schedule
               </h2>
               <span className="text-sm font-medium text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20">
                 Tuesday

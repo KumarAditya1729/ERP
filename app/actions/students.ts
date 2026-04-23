@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -6,11 +7,14 @@ import { revalidatePath } from 'next/cache'
 import { StudentSchema } from '@/lib/validation';
 
 export async function getTeacherStudents(classGrade: string) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Unauthorized' };
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
   
-  const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
+  const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) return { success: false, error: 'Profile not found' };
 
   try {
@@ -36,16 +40,19 @@ export async function getTeacherStudents(classGrade: string) {
 import { studentSchema } from '@/lib/validations/schemas';
 
 export async function addStudent(formData: FormData) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   const supabase = createClient()
   
   // Get current user and tenant
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Unauthorized' };
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
 
   const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('tenant_id')
-    .eq('id', user.id)
+    .eq('id', supabaseUser.id)
     .single();
 
   if (!profile) return { success: false, error: 'Profile not found' };
@@ -90,12 +97,15 @@ export async function addStudent(formData: FormData) {
 }
 
 export async function updateStudent(id: string, formData: FormData) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   const supabase = createClient()
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) throw new Error("Unauthorized");
   
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) throw new Error("Profile not found");
 
   // SECURITY: Verify the student belongs to this tenant before updating (prevents cross-tenant mutation)
@@ -135,11 +145,14 @@ export async function updateStudent(id: string, formData: FormData) {
 }
 
 export async function deleteStudent(id: string) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Unauthorized' };
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
 
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  const supabase = createClient();
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
+
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) return { success: false, error: 'Profile not found' };
 
   const { error } = await supabase.from('students').delete().eq('id', id).eq('tenant_id', profile.tenant_id);

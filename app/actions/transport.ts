@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -7,18 +8,21 @@ import { revalidatePath } from 'next/cache';
 // ── Shared helper ─────────────────────────────────────────────────────────────
 async function getAdminClientAndTenant() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) throw new Error('Unauthorized');
 
   const { data: profile } = await supabaseAdmin
-    .from('profiles').select('tenant_id').eq('id', user.id).single();
+    .from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) throw new Error('Profile missing');
 
-  return { supabaseAdmin, tenantId: profile.tenant_id as string, userId: user.id };
+  return { supabaseAdmin, tenantId: profile.tenant_id as string, userId: supabaseUser.id };
 }
 
 // ── READ ──────────────────────────────────────────────────────────────────────
 export async function getTransportRoutes() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -43,6 +47,9 @@ export async function getTransportRoutes() {
 }
 
 export async function getParentTransportRoute() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId, userId } = await getAdminClientAndTenant();
     
@@ -99,6 +106,9 @@ export async function addTransportRoute(payload: {
   enrolled_students: number;
   stops?: { stop_name: string; scheduled_time: string }[];
 }) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -139,6 +149,9 @@ export async function addTransportRoute(payload: {
 
 // ── UPDATE ROUTE STATUS ───────────────────────────────────────────────────────
 export async function updateRouteStatus(routeId: string, status: 'on-route' | 'at-school' | 'delayed') {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -158,6 +171,9 @@ export async function updateRouteStatus(routeId: string, status: 'on-route' | 'a
 
 // ── UPDATE STOP STATUS ────────────────────────────────────────────────────────
 export async function updateStopStatus(stopId: string, status: 'done' | 'current' | 'upcoming') {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -177,6 +193,9 @@ export async function updateStopStatus(stopId: string, status: 'done' | 'current
 
 // ── UPDATE ENROLLED STUDENTS ──────────────────────────────────────────────────
 export async function updateEnrolledStudents(routeId: string, delta: number) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -207,6 +226,9 @@ export async function updateEnrolledStudents(routeId: string, delta: number) {
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 export async function deleteTransportRoute(routeId: string) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -227,6 +249,9 @@ export async function deleteTransportRoute(routeId: string) {
 
 // ── SEED ──────────────────────────────────────────────────────────────────────
 export async function seedTransportDatabase() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -278,6 +303,9 @@ export async function seedTransportDatabase() {
 
 // ── ADVANCED FLEET ANALYTICS (Fuel, Maintenance, Safety) ──────────────
 export async function getFleetAnalytics() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
 
@@ -320,6 +348,9 @@ export async function getFleetAnalytics() {
 }
 
 export async function broadcastTransportAlert(message: string) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     

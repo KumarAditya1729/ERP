@@ -1,24 +1,28 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache'
 import { sendBulkSMS } from '@/lib/services/twilio'
-import { unstable_after as after } from 'next/server'
+// using direct async execution instead of unstable_after due to Next 14
 import { CommunicationNoticeSchema } from '@/lib/validation'
 
 async function getAdminClientAndTenant() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) throw new Error('Unauthorized');
 
-  const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', supabaseUser.id).single();
   if (!profile) throw new Error('Profile not found');
 
-  return { supabaseAdmin, user, profile, tenantId: profile.tenant_id as string };
+  return { supabaseAdmin, user: supabaseUser, profile, tenantId: profile.tenant_id as string };
 }
 
 export async function getTeacherNotices() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     
@@ -43,6 +47,9 @@ export async function sendNotice(formData: {
   target: string;
   channels: string[];
 }) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, user, tenantId } = await getAdminClientAndTenant();
 
@@ -89,7 +96,6 @@ export async function sendNotice(formData: {
           .eq('status', 'active');
 
         if (students && students.length > 0) {
-          after(async () => {
             const smsPayloads = students
               .filter(s => s.guardian_phone && s.guardian_phone.length >= 10)
               .map(s => ({
@@ -97,15 +103,16 @@ export async function sendNotice(formData: {
                 message: `[${validData.title}] ${validData.body.substring(0, 120)} — NexSchool`
               }));
 
-            // Send in chunks of 100
-            const chunkSize = 100;
-            for (let i = 0; i < smsPayloads.length; i += chunkSize) {
-              const chunk = smsPayloads.slice(i, i + chunkSize);
-              await sendBulkSMS(chunk).catch(err => console.error('[Notice SMS] Bulk SMS chunk error:', err));
-              // Prevent Twilio API rate limiting
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-          });
+            // Fire-and-forget background processing
+            (async () => {
+              const chunkSize = 100;
+              for (let i = 0; i < smsPayloads.length; i += chunkSize) {
+                const chunk = smsPayloads.slice(i, i + chunkSize);
+                await sendBulkSMS(chunk).catch(err => console.error('[Notice SMS] Bulk SMS chunk error:', err));
+                // Prevent Twilio API rate limiting
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            })();
         }
       }
 

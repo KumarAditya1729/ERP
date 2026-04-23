@@ -1,4 +1,5 @@
-'use client'
+'use client';
+import Image from 'next/image';
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
@@ -48,7 +49,7 @@ function RegisterForm() {
       {/* Logo */}
       <div className="text-center mb-8">
         <Link href="/" className="inline-flex items-center gap-2.5 mb-4">
-          <img src="/logo.svg" alt="NexSchool AI" className="w-10 h-10 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+          <Image src="/logo.svg" alt="NexSchool AI" className="w-10 h-10 object-contain" width={120} height={32} priority />
           <span className="font-bold text-2xl text-white">NexSchool <span className="gradient-text">AI</span></span>
         </Link>
         <h1 className="text-3xl font-bold text-white mb-1">Register Your School</h1>

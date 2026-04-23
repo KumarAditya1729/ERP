@@ -7,9 +7,9 @@ export async function register() {
       dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
       tracesSampleRate: 1.0,
       debug: false,
-      // Remove deprecated configurations
-      // disableLogger is deprecated - use webpack.treeshake.removeDebugLogging instead
-      // automaticVercelMonitors is deprecated - use webpack.automaticVercelMonitors instead
     });
   }
 }
+
+export const onRequestError = Sentry.captureException;
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

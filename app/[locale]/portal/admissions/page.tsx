@@ -28,7 +28,7 @@ export default function PortalAdmissionsTracker() {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [supabase]);
 
   const handleUploadClick = (appId: string, docKey: string) => {
     setUploadTarget({ appId, docKey });

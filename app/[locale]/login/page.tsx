@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { login, signup } from '@/app/actions/auth';
@@ -42,7 +43,7 @@ function LoginForm() {
     <div className="w-full max-w-md relative">
       <div className="text-center mb-8">
         <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
-          <img src="/logo.svg" alt="NexSchool AI" className="w-10 h-10 object-contain" onError={(e) => (e.currentTarget.style.display='none')} />
+          <Image src="/logo.svg" alt="NexSchool AI" className="w-10 h-10 object-contain" width={120} height={32} priority />
           <span className="font-bold text-2xl text-white">
             NexSchool <span className="gradient-text">AI</span>
           </span>

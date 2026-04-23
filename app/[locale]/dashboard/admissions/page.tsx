@@ -100,7 +100,7 @@ export default function AdmissionsPage() {
     setLoading(false);
   }, [supabase, selected]);
 
-  useEffect(() => { fetchApplications(); }, []);
+  useEffect(() => { fetchApplications(); }, [fetchApplications]);
 
   // ─── Submit new application ───────────────────────────────────────────────
   const handleSubmit = async () => {

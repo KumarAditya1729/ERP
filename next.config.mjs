@@ -2,9 +2,8 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig = {
-  // Lint and type errors are caught by CI — don't block the build on Vercel
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  // Lint and type errors MUST be caught by CI
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'api.dicebear.com' },
@@ -21,7 +20,30 @@ export default withSentryConfig(
     widenClientFileUpload: true,
     transpileClientSDK: true,
     hideSourceMaps: true,
-    disableLogger: true,
-    automaticVercelMonitors: true,
+    // Fix deprecation warnings
+    webpack: (config, options) => {
+      config.optimization = {
+        ...config.optimization,
+        usedExports: true,
+        sideEffects: false,
+      };
+      // Replace deprecated disableLogger with treeshake option
+      if (config.optimization && config.optimization.minimizer) {
+        config.optimization.minimizer.forEach((minimizer) => {
+          if (minimizer.constructor.name === 'TerserPlugin') {
+            minimizer.options.terserOptions = {
+              ...minimizer.options.terserOptions,
+              compress: {
+                ...minimizer.options.terserOptions.compress,
+                drop_console: true,
+                drop_debugger: true,
+              },
+            };
+          }
+        });
+      }
+      config.automaticVercelMonitors = true;
+      return config;
+    },
   }
 );

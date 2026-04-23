@@ -94,8 +94,8 @@ export default function HostelPage() {
     setLoadingWardens(false);
   }, [supabase]);
 
-  useEffect(() => { fetchRooms(); }, []);
-  useEffect(() => { if (tab === 'wardens') fetchWardens(); }, [tab]);
+  useEffect(() => { fetchRooms(); }, [fetchRooms]);
+  useEffect(() => { if (tab === 'wardens') fetchWardens(); }, [tab, fetchWardens]);
 
   const generateStarterRooms = async () => {
     setSaving(true);

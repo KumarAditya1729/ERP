@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -64,7 +65,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-white/[0.06]">
           <Link href="/" className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="NexSchool AI Logo" className="w-8 h-8 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+            <Image src="/logo.svg" alt="NexSchool AI Logo" className="w-8 h-8 object-contain" width={120} height={32} priority />
             <span className="font-bold text-lg text-white">
               NexSchool <span className="gradient-text">AI</span>
             </span>

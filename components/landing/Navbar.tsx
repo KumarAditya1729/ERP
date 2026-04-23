@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -10,7 +11,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="NexSchool AI Logo" className="w-10 h-10 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+          <Image src="/logo.svg" alt="NexSchool AI Logo" className="w-10 h-10 object-contain" width={120} height={32} priority />
           <span className="font-bold text-xl text-white">
             NexSchool <span className="gradient-text">AI</span>
           </span>

@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -17,6 +18,9 @@ import { RegistrationSchema } from '@/lib/validation'
  *  4. Redirect to "check your email" page
  */
 export async function registerSchool(formData: FormData) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   const parseResult = RegistrationSchema.safeParse({
     school_name: formData.get('school_name'),
     city: formData.get('city'),

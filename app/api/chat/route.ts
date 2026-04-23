@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth-guard';
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { createServerClient } from '@supabase/ssr';
@@ -8,6 +9,9 @@ export const maxDuration = 30;
 export const runtime = 'edge';
 
 export async function POST(req: Request) {
+  const { user, tenantId, error: authErr } = await requireAuth();
+  if (authErr) return authErr;
+
   try {
     // ── Session Authentication ───────────────────────────────────────────────────────
     const supabase = createServerClient(

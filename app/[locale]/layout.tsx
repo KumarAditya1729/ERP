@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
 import '../globals.css';
+import { Plus_Jakarta_Sans } from 'next/font/google';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'NexSchool AI – The School Management Platform Built for Tomorrow',
@@ -19,14 +25,8 @@ export default function RootLayout({
   params: { locale: string };
 }) {
   return (
-    <html lang={locale}>
+    <html lang={locale} className={plusJakartaSans.className}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body>{children}</body>
     </html>

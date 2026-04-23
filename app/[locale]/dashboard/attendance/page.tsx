@@ -25,7 +25,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     fetchStudents();
-  }, [selectedClass]);
+  }, [selectedClass, fetchStudents]);
 
   async function fetchStudents() {
     setLoading(true);

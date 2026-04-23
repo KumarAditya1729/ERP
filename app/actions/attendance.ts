@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -12,13 +13,16 @@ type AttendanceRecord = {
 };
 
 export async function saveAttendance(dateStr: string, records: AttendanceRecord[]) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   const supabase = createClient()
   
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+    if (!supabaseUser) return { success: false, error: 'Unauthorized' };
     
-    const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
+    const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
     if (!profile) return { success: false, error: 'Profile not found' };
 
     const dbRecords = records.map(r => ({
@@ -26,7 +30,7 @@ export async function saveAttendance(dateStr: string, records: AttendanceRecord[
       student_id: r.student_id,
       date: dateStr,
       status: r.status,
-      marked_by: user.id
+      marked_by: supabaseUser.id
     }));
 
     const { error } = await supabaseAdmin.from('attendance').upsert(dbRecords, { onConflict: 'student_id,date' });

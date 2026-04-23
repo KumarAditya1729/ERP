@@ -36,7 +36,6 @@ export async function middleware(req: NextRequest) {
   // Skip for Next.js internals and static assets
   if (
     path.startsWith('/_next') ||
-    path.startsWith('/api') ||
     path.includes('/favicon.ico') ||
     path.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|css|js)$/)
   ) {
@@ -101,6 +100,20 @@ export async function middleware(req: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+
+  if (tenantSubdomain !== 'www') {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('id, status')
+      .eq('slug', tenantSubdomain)
+      .single()
+
+    if (!tenant || tenant.status !== 'active') {
+      return NextResponse.redirect(new URL('/not-found', req.url))
+    }
+    // Now set x-tenant-id header with the real UUID
+    res.headers.set('x-tenant-id', tenant.id)
+  }
 
   // ── Public routes (locale-prefixed) ──────────────────────────────────────
   const isPublic =

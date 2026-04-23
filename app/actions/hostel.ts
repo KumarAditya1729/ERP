@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
@@ -6,21 +7,24 @@ import { revalidatePath } from 'next/cache'
 
 async function getAdminClientAndTenant() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Unauthorized');
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) throw new Error('Unauthorized');
 
   const supabaseAdmin = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
   
-  const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
+  const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) throw new Error('Profile not found');
 
   return { supabaseAdmin, user, profile, tenantId: profile.tenant_id as string };
 }
 
 export async function getHostelRooms() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     
@@ -38,6 +42,9 @@ export async function getHostelRooms() {
 }
 
 export async function seedHostelDatabase() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   try {
     const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
     

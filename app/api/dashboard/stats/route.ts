@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth-guard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
@@ -16,6 +17,9 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET(req: Request) {
+  const { user, tenantId, error: authErr } = await requireAuth();
+  if (authErr) return authErr;
+
   try {
     // Get tenant from session cookie — multi-tenant safe
     const cookieStore = cookies();

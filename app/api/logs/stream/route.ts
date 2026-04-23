@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth-guard';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
@@ -17,29 +18,10 @@ const supabaseAdmin = createClient(
  * Tenant-isolated via session profile lookup.
  */
 export async function GET(req: Request) {
-  const cookieStore = cookies();
-  const supabaseUser = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name) => cookieStore.get(name)?.value } }
-  );
+  const { user, tenantId, error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
-  const { data: { user } } = await supabaseUser.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-  }
-
-  const tenantId = profile.tenant_id;
+  // user and tenantId are already authenticated by requireAuth
   const since = new Date().toISOString();
 
   const encoder = new TextEncoder();

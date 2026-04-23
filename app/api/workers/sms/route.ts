@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { dispatchNotification } from '@/lib/notifications';
@@ -25,6 +26,8 @@ async function sendAlert(message: string) {
 } 
 
 export async function GET(request: Request) {
+
+
   // Secure cron route (Vercel sets explicit header on CRON calls)
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && process.env.NODE_ENV === 'production') {

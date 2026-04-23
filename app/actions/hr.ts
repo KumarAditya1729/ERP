@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -12,12 +13,15 @@ const supabaseAdmin = createAdminClient(
 import { staffSchema } from '@/lib/validations/schemas';
 
 export async function addStaff(formData: FormData) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
   const supabase = createClient()
   
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Unauthorized' };
+  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
   
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
   if (!profile) return { success: false, error: 'Profile not found' };
 
   const rawData = {
@@ -54,7 +58,7 @@ export async function addStaff(formData: FormData) {
 
   // Ensure profile is synced properly
   const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
-    id: authData.user.id,
+    id: authData.supabaseUser.id,
     tenant_id: profile.tenant_id,
     first_name: first_name,
     last_name: last_name,

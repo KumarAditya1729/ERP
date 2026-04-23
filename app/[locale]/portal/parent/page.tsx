@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 
 import React from 'react';
 import { User, BellRing, AlertTriangle, ArrowRight, LineChart, CheckCircle2 } from 'lucide-react';
@@ -32,7 +33,7 @@ export default function ParentProactiveDashboard() {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-emerald-500/50 overflow-hidden shrink-0">
               {/* Mock student photo via Unsplash or placeholder */}
-              <img src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=150&q=80" alt="Chloe" className="w-full h-full object-cover" />
+              <Image src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=150&q=80" alt="Chloe" className="w-full h-full object-cover" width={120} height={32} priority />
             </div>
             <div>
               <p className="text-sm text-slate-400 font-medium">Student:</p>

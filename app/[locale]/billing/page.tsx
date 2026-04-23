@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -154,7 +155,7 @@ export default function BillingPage() {
       {/* Header */}
       <div className="border-b border-white/[0.06] px-6 py-4 flex items-center justify-between relative z-10">
         <Link href="/" className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="NexSchool AI" className="w-8 h-8" onError={e => (e.currentTarget.style.display = 'none')} />
+          <Image src="/logo.svg" alt="NexSchool AI" className="w-8 h-8" width={120} height={32} priority />
           <span className="font-bold text-lg text-white">NexSchool <span className="gradient-text">AI</span></span>
         </Link>
         {isActive && (

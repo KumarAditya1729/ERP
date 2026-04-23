@@ -1,3 +1,5 @@
+
+import Image from 'next/image';
 import React from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -28,7 +30,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <header className="sticky top-0 z-40 bg-[#080C1A]/80 backdrop-blur-xl border-b border-white/[0.08] px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0">
-            <img src="/logo.svg" alt="NexSchool AI" className="w-full h-full object-contain" />
+            <Image src="/logo.svg" alt="NexSchool AI" className="w-full h-full object-contain" width={120} height={32} priority />
           </div>
           <div>
             <h1 className="text-white font-bold text-lg leading-tight tracking-tight">NexSchool Portal</h1>

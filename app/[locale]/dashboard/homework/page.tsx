@@ -84,7 +84,7 @@ export default function HomeworkPage() {
     setLoading(false);
   }, [supabase, selected]);
 
-  useEffect(() => { fetchAssignments(); }, []);
+  useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
 
   // ─── Fetch submissions when selected assignment changes ────────────────────
   useEffect(() => {

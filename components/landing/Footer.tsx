@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Footer() {
@@ -42,7 +43,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <img src="/logo.svg" alt="NexSchool AI Logo" className="w-8 h-8 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+              <Image src="/logo.svg" alt="NexSchool AI Logo" className="w-8 h-8 object-contain" width={120} height={32} priority />
               <span className="font-bold text-lg text-white">
                 NexSchool <span className="gradient-text">AI</span>
               </span>

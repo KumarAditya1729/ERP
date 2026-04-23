@@ -1,4 +1,5 @@
 'use server'
+import { requireAuth } from '@/lib/auth-guard';
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -13,6 +14,8 @@ function getRouteForRole(role: string): string {
 }
 
 export async function login(formData: FormData) {
+
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const supabase = createClient()
@@ -87,6 +90,8 @@ async function checkPasswordPwned(password: string): Promise<number> {
 }
 
 export async function signup(formData: FormData) {
+
+
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const requestedRole = formData.get('role') as string
@@ -156,6 +161,8 @@ export async function signup(formData: FormData) {
 }
 
 export async function logout() {
+
+
   const supabase = createClient()
   await supabase.auth.signOut()
   redirect('/login')
