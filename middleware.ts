@@ -33,8 +33,9 @@ function pathnameHasLocale(pathname: string): boolean {
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Skip for Next.js internals and static assets
+  // Skip for Next.js internals, static assets, and API routes
   if (
+    path.startsWith('/api') ||
     path.startsWith('/_next') ||
     path.includes('/favicon.ico') ||
     path.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|css|js)$/)
