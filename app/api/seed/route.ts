@@ -37,6 +37,17 @@ export async function GET() {
 
     const results = [];
 
+    // First, find and delete any existing _v3 users that were corrupted by manual SQL inserts
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (!listError && existingUsers?.users) {
+      for (const eu of existingUsers.users) {
+        if (users.map(u => u.email).includes(eu.email)) {
+          await supabaseAdmin.auth.admin.deleteUser(eu.id);
+          results.push(`Deleted corrupted user: ${eu.email}`);
+        }
+      }
+    }
+
     for (const u of users) {
       const { data: user, error } = await supabaseAdmin.auth.admin.createUser({
         email: u.email,
