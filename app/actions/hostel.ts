@@ -21,6 +21,30 @@ async function getAdminClientAndTenant() {
   return { supabaseAdmin, user: supabaseUser, profile, tenantId: profile.tenant_id as string };
 }
 
+export async function getOperationsStats() {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr) throw new Error('Unauthorized');
+
+  try {
+    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    
+    const [{ count: routeCount }, { count: roomCount }] = await Promise.all([
+      supabaseAdmin.from('transport_routes').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabaseAdmin.from('hostel_rooms').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    ]);
+
+    return { 
+      success: true, 
+      data: {
+        routes: routeCount || 0,
+        rooms: roomCount || 0,
+      } 
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 export async function getHostelRooms() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
   if (authErr) throw new Error('Unauthorized');
