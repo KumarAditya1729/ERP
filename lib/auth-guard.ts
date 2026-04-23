@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-export type AllowedRole = 'admin' | 'teacher' | 'staff' | 'parent' | 'student'
+export type AllowedRole = 'admin' | 'teacher' | 'staff' | 'parent' | 'student' | 'warden'
 
 export async function requireAuth(allowedRoles?: AllowedRole[]) {
   const cookieStore = cookies()
