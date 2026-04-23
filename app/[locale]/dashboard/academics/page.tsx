@@ -120,10 +120,15 @@ export default function AcademicsPage() {
                </h3>
 
                {!timetable ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-                     <span className="text-5xl opacity-50 mb-4">🗓️</span>
-                     <p className="text-white font-bold">No Schedule Found</p>
-                     <p className="text-slate-400 text-sm mt-2 max-w-sm">Hit the Run Generator Engine button to compile available data into a master timetable.</p>
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12 relative overflow-hidden rounded-2xl">
+                     <div className="absolute inset-0 bg-gradient-to-t from-violet-500/5 to-transparent pointer-events-none"></div>
+                     <div className="w-24 h-24 rounded-full bg-violet-500/10 flex items-center justify-center text-5xl mb-6 shadow-[0_0_40px_rgba(139,92,246,0.15)] border border-violet-500/20 animate-pulse-slow">
+                       🗓️
+                     </div>
+                     <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2 drop-shadow-sm">No Schedule Found</h2>
+                     <p className="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">
+                       Hit the Run Generator Engine button to compile available data into a master timetable. The collision-free algorithm will resolve overlapping slots.
+                     </p>
                   </div>
                ) : (
                   <div className="overflow-x-auto">

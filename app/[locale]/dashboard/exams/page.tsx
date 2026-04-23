@@ -213,10 +213,25 @@ export default function ExamsPage() {
                 <p className="text-slate-400 text-sm">Loading exam schedule...</p>
               </div>
             ) : exams.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-4xl mb-3">📭</p>
-                <p className="text-white font-semibold">No Exams Scheduled</p>
-                <p className="text-slate-400 text-sm mt-1">Create your first exam using the &ldquo;Schedule Exam&rdquo; button above to get started.</p>
+              <div className="relative glass border border-white/[0.08] rounded-3xl p-16 text-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-violet-500/10 rounded-full blur-[80px] pointer-events-none -z-10"></div>
+                
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 flex items-center justify-center text-5xl mb-6 shadow-[0_0_40px_rgba(139,92,246,0.15)] border border-violet-500/20 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
+                    📝
+                  </div>
+                  <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2 drop-shadow-sm">No Exams Scheduled</h2>
+                  <p className="text-slate-400 text-sm max-w-sm mx-auto mb-8 leading-relaxed">
+                    Your assessment calendar is currently empty. Start by scheduling a new examination period and defining the subjects.
+                  </p>
+                  <button 
+                    onClick={() => showToast('Calendar integration module required to schedule live exams. Coming soon.', false)}
+                    className="px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] flex items-center gap-2"
+                  >
+                    📅 Schedule First Exam
+                  </button>
+                </div>
               </div>
             ) : (
               exams.map((e) => (

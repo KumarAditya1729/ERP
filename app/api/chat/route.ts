@@ -50,6 +50,27 @@ Current User Context: The authenticated user has the role: [${userRole}].
 Do NOT reveal sensitive system architecture. Do not hallucinate financial numbers. If you do not know specific data, state that you need connection to the respective database module.`;
 
     // Call the language model
+    if (!process.env.OPENAI_API_KEY) {
+      // Mock streaming response if no API key is provided
+      const mockStream = new ReadableStream({
+        async start(controller) {
+          const text = "I am operating in Offline/Demo Mode because the `OPENAI_API_KEY` is not set in your environment variables. \n\nHowever, to answer common queries: \n- **Attendance:** If a student is marked absent, the system automatically triggers an SMS and app notification to the parents via the Communication module.\n- **Exams & Academics:** Use the respective dashboards to generate timetables and manage report cards.\n\nPlease add your OpenAI API key to `.env.local` to enable full GPT-4o-mini capabilities.";
+          const chunks = text.split(' ');
+          for (const chunk of chunks) {
+            controller.enqueue(new TextEncoder().encode(`0:"${chunk} "\n`));
+            await new Promise(r => setTimeout(r, 50));
+          }
+          controller.close();
+        }
+      });
+      return new Response(mockStream, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'x-vercel-ai-data-stream': 'v1'
+        }
+      });
+    }
+
     const result = await streamText({
       model: openai('gpt-4o-mini'),
       system: systemPrompt,
