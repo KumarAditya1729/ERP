@@ -149,31 +149,159 @@ export default function TransportPage() {
         </div>
       </div>
 
-      {/* Route Form Modal */}
+      {/* Route Form Premium Modal */}
       {showRouteForm && (
-        <div className="glass border border-violet-500/30 rounded-2xl p-6 mb-6 animate-fade-in">
-          <h2 className="text-white font-bold mb-4">🗺️ Provision New Route</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">Route Name</label>
-              <input type="text" className="erp-input w-full" placeholder="e.g. Route 5 - EastZone" value={rForm.name} onChange={e => setRForm({...rForm, name: e.target.value})} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-[#080C1A]/80 backdrop-blur-xl"
+            onClick={() => setShowRouteForm(false)}
+          ></div>
+          
+          {/* Modal Content */}
+          <div className="relative w-full max-w-2xl bg-[#0F1428]/90 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-[0_0_80px_rgba(139,92,246,0.15)] overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex-none p-6 border-b border-white/[0.04] bg-gradient-to-r from-violet-500/10 to-transparent">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-violet-500/20 flex items-center justify-center text-xl shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+                    🗺️
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white tracking-tight">Provision New Route</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">Configure fleet details and vehicle documents.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowRouteForm(false)}
+                  className="w-8 h-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">Bus Number</label>
-              <input type="text" className="erp-input w-full" placeholder="DL-01-XX-0000" value={rForm.bus_number} onChange={e => setRForm({...rForm, bus_number: e.target.value})} />
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+              <div className="space-y-6">
+                {/* Fleet Details */}
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <span className="w-5 h-5 rounded bg-violet-500/20 text-violet-400 flex items-center justify-center text-xs">1</span>
+                    Fleet Identification
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-xs font-medium text-slate-400 mb-1.5 block">Route Name <span className="text-red-400">*</span></label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-[#080C1A]/50 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all" 
+                        placeholder="e.g. Route 5 - EastZone" 
+                        value={rForm.name} 
+                        onChange={e => setRForm({...rForm, name: e.target.value})} 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-400 mb-1.5 block">Bus Registration <span className="text-red-400">*</span></label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-[#080C1A]/50 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all font-mono uppercase" 
+                        placeholder="DL-01-XX-0000" 
+                        value={rForm.bus_number} 
+                        onChange={e => setRForm({...rForm, bus_number: e.target.value})} 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent"></div>
+
+                {/* Operations */}
+                <div>
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <span className="w-5 h-5 rounded bg-violet-500/20 text-violet-400 flex items-center justify-center text-xs">2</span>
+                    Operational Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-xs font-medium text-slate-400 mb-1.5 block">Assigned Driver</label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-[#080C1A]/50 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all" 
+                        placeholder="e.g. Anil Kumar" 
+                        value={rForm.driver_name} 
+                        onChange={e => setRForm({...rForm, driver_name: e.target.value})} 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-400 mb-1.5 block">Seating Capacity</label>
+                      <div className="relative">
+                        <input 
+                          type="number" 
+                          className="w-full bg-[#080C1A]/50 border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all" 
+                          value={rForm.capacity} 
+                          onChange={e => setRForm({...rForm, capacity: parseInt(e.target.value) || 0})} 
+                          min="10" max="100"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">seats</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent"></div>
+
+                {/* Documents Upload (Mock UI) */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <span className="w-5 h-5 rounded bg-violet-500/20 text-violet-400 flex items-center justify-center text-xs">3</span>
+                      Compliance Documents
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">Required</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {['RC Book', 'Insurance', 'PUC Cert', 'Driver License'].map((doc) => (
+                      <div key={doc} className="relative group cursor-pointer border border-white/[0.08] border-dashed rounded-xl p-4 bg-white/[0.01] hover:bg-white/[0.03] hover:border-violet-500/50 transition-all text-center">
+                        <div className="w-8 h-8 mx-auto rounded-full bg-white/[0.05] group-hover:bg-violet-500/20 flex items-center justify-center text-slate-400 group-hover:text-violet-400 transition-colors mb-2">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        </div>
+                        <p className="text-xs text-slate-300 font-medium">{doc}</p>
+                        <p className="text-[9px] text-slate-500 mt-0.5">Upload PDF/JPG</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">Driver Name</label>
-              <input type="text" className="erp-input w-full" placeholder="e.g. Anil" value={rForm.driver_name} onChange={e => setRForm({...rForm, driver_name: e.target.value})} />
+
+            {/* Footer */}
+            <div className="flex-none p-5 border-t border-white/[0.04] bg-[#080C1A]/50 flex items-center justify-between">
+              <p className="text-xs text-slate-500">Route will be active immediately after provisioning.</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowRouteForm(false)} 
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleAddRoute} 
+                  disabled={isSubmitting || !rForm.name || !rForm.bus_number} 
+                  className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-violet-600 hover:bg-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all disabled:opacity-50 disabled:hover:bg-violet-600 disabled:hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Provisioning...
+                    </>
+                  ) : 'Provision Route'}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-slate-400 mb-1 block">Capacity</label>
-              <input type="number" className="erp-input w-full" value={rForm.capacity} onChange={e => setRForm({...rForm, capacity: parseInt(e.target.value)})} />
-            </div>
-          </div>
-          <div className="flex gap-3 mt-4">
-             <button onClick={handleAddRoute} disabled={isSubmitting} className="btn-primary text-sm py-2 px-5 disabled:opacity-50">{isSubmitting ? 'Provisioning...' : 'Add Route'}</button>
-             <button onClick={() => setShowRouteForm(false)} className="btn-secondary text-sm py-2 px-4">Cancel</button>
           </div>
         </div>
       )}
