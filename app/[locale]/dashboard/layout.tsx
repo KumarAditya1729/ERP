@@ -66,7 +66,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       setLoadingNotifications(true);
       const res = await getRecentNotifications();
       if (res.success) {
-        setNotifications(res.data);
+        setNotifications(res.data ?? []);
       }
       setLoadingNotifications(false);
       setHasUnread(false);
