@@ -52,54 +52,48 @@ export async function getParentTransportRoute(): Promise<{ success: boolean; dat
 
   try {
     const { supabaseAdmin, tenantId, userId } = await getAdminClientAndTenant();
-    
-    // Actually find the student linked to this parent, then find their route.
-    // For now, if no student links are formalised for routes, we query a mock junction or return nothing.
-    // Assuming a parent_student_routes table or just students table has a route_id.
-    // For this ERP currently, there is no direct route_id on student, so we return a safer mock or
-    // simply look up the first child's route if it existed.
-    // Here we will just look for the first route where the child goes, or fail safely if not setup yet.
-    
-    // For MVP Demo purposes: Just grab the first route in the tenant and attach some mock stops
-    // so the parent can see a live tracking interface.
-    const { data: routeData, error: routeError } = await supabaseAdmin
+
+    // Try to find the student linked to this parent
+    const { data: parentLinks } = await supabaseAdmin
+      .from('parent_links')
+      .select('student_id')
+      .eq('parent_id', userId)
+      .limit(1);
+
+    let routeId: string | null = null;
+
+    if (parentLinks && parentLinks.length > 0) {
+      // Check if the student has a route_id assigned
+      const { data: student } = await supabaseAdmin
+        .from('students')
+        .select('route_id')
+        .eq('id', parentLinks[0].student_id)
+        .single();
+      if (student?.route_id) routeId = student.route_id;
+    }
+
+    // Build query — prefer the student's assigned route, else show the first active route in the tenant
+    const query = supabaseAdmin
       .from('transport_routes')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .limit(1)
-      .single();
+      .select('*, transport_stops(*)')
+      .eq('tenant_id', tenantId);
+
+    if (routeId) query.eq('id', routeId);
+
+    const { data: routeData, error: routeError } = await query.limit(1).single();
 
     if (routeError || !routeData) {
       return { success: false, error: 'Transport route not yet assigned to your child.' };
     }
 
-    // Attach mock stops for visualization
-    const mockRoute = {
+    // Sort stops by sequence order
+    const route = {
       ...routeData,
-      transport_stops: [
-        { id: 1, stop_name: 'School Campus', scheduled_time: '08:00 AM', status: 'done' },
-        { id: 2, stop_name: 'Park Avenue', scheduled_time: '08:15 AM', status: 'done' },
-        { id: 3, stop_name: 'Main Street', scheduled_time: '08:30 AM', status: 'current' },
-        { id: 4, stop_name: 'River View (Your Stop)', scheduled_time: '08:45 AM', status: 'upcoming' },
-      ]
+      transport_stops: (routeData.transport_stops ?? [])
+        .sort((a: any, b: any) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0)),
     };
 
-    return { success: true, data: mockRoute };
-    
-    // (If route_id existed on student, we'd do):
-    /*
-    const childStudentId = parentLinks[0].student_id;
-    const { data: studentData } = await supabaseAdmin.from('students').select('route_id').eq('id', childStudentId).single();
-    if (!studentData?.route_id) return { success: false, error: 'No route assigned.' };
-    
-    const { data: routes, error } = await supabaseAdmin
-      .from('transport_routes')
-      .select('*, transport_stops(*)')
-      .eq('id', studentData.route_id)
-      .eq('tenant_id', tenantId);
-    */
-
-    // (Dead code removed)
+    return { success: true, data: route };
   } catch (e: any) {
     return { success: false, error: e.message };
   }

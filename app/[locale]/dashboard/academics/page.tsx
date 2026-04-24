@@ -1,47 +1,125 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { generateTimetable } from '@/lib/algorithms';
+import { createClient } from '@/lib/supabase/client';
 
-const MOCK_REQUIREMENTS = [
-  { id: '1', className: '10A', subject: 'Maths', teacherId: 't1', hoursNeeded: 6 },
-  { id: '2', className: '10A', subject: 'Science', teacherId: 't2', hoursNeeded: 5 },
-  { id: '3', className: '10A', subject: 'English', teacherId: 't3', hoursNeeded: 5 },
-  { id: '4', className: '10B', subject: 'Maths', teacherId: 't1', hoursNeeded: 6 },
-  { id: '5', className: '10B', subject: 'Science', teacherId: 't4', hoursNeeded: 5 },
-  { id: '6', className: '10C', subject: 'English', teacherId: 't3', hoursNeeded: 4 },
-];
+const supabase = createClient();
+
+interface Requirement {
+  id: string;
+  className: string;
+  subject: string;
+  teacherId: string;
+  teacherName?: string;
+  hoursNeeded: number;
+}
 
 export default function AcademicsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [timetable, setTimetable] = useState<any[] | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [requirements, setRequirements] = useState<Requirement[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
 
+  // Load real class-subject-teacher mappings from DB
+  const fetchRequirements = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Try timetable_requirements table first
+      const { data: reqs, error } = await supabase
+        .from('timetable_requirements')
+        .select('id, class_name, subject, teacher_id, hours_per_week, profiles(first_name, last_name)')
+        .order('class_name', { ascending: true });
+
+      if (!error && reqs && reqs.length > 0) {
+        setRequirements(reqs.map((r: any) => ({
+          id: r.id,
+          className: r.class_name,
+          subject: r.subject,
+          teacherId: r.teacher_id,
+          teacherName: r.profiles ? `${r.profiles.first_name} ${r.profiles.last_name}` : r.teacher_id,
+          hoursNeeded: r.hours_per_week,
+        })));
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: build from teacher_assignments or profiles
+      const { data: teachers, error: tErr } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, subject, class_name')
+        .eq('role', 'teacher')
+        .not('class_name', 'is', null);
+
+      if (!tErr && teachers && teachers.length > 0) {
+        setRequirements(teachers.map((t: any) => ({
+          id: t.id,
+          className: t.class_name || 'Unassigned',
+          subject: t.subject || 'General',
+          teacherId: t.id,
+          teacherName: `${t.first_name} ${t.last_name}`,
+          hoursNeeded: 5,
+        })));
+        setLoading(false);
+        return;
+      }
+
+      // Final fallback if no teachers in DB yet — demo dataset
+      setRequirements([
+        { id: '1', className: '10A', subject: 'Maths', teacherId: 't1', teacherName: 'Priya Sharma', hoursNeeded: 6 },
+        { id: '2', className: '10A', subject: 'Science', teacherId: 't2', teacherName: 'Vikram Singh', hoursNeeded: 5 },
+        { id: '3', className: '10A', subject: 'English', teacherId: 't3', teacherName: 'Sarah Jenkins', hoursNeeded: 5 },
+        { id: '4', className: '10B', subject: 'Maths', teacherId: 't1', teacherName: 'Priya Sharma', hoursNeeded: 6 },
+        { id: '5', className: '10B', subject: 'Science', teacherId: 't4', teacherName: 'Anita Rao', hoursNeeded: 5 },
+        { id: '6', className: '10C', subject: 'English', teacherId: 't3', teacherName: 'Sarah Jenkins', hoursNeeded: 4 },
+      ]);
+    } catch {
+      // Silently use demo data if DB is unreachable
+      setRequirements([]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchRequirements(); }, [fetchRequirements]);
+
   const handleGenerateTimetable = async () => {
+    if (requirements.length === 0) {
+      showToast('No class-subject requirements found. Please assign teachers to classes first.', 'error');
+      return;
+    }
     setIsGenerating(true);
     setProgress(0);
     setTimetable(null);
 
-    // Deep Mock sequence simulating complex algorithmic resolution
+    // Animate progress while the algorithm runs
     let p = 0;
     const interval = setInterval(() => {
       p += 15;
-      setProgress(Math.min(p, 100));
-      if (p >= 100) {
-        clearInterval(interval);
-        
-        // Actually run the greedy engine
-        const tt = generateTimetable(MOCK_REQUIREMENTS, 5, 8);
-        setTimetable(tt);
-        setIsGenerating(false);
-        showToast('Collision-Free Timetable Generated Successfully!');
-      }
-    }, 400);
+      setProgress(Math.min(p, 90));
+      if (p >= 90) clearInterval(interval);
+    }, 300);
+
+    // Run greedy timetable engine with real requirements
+    const algoReqs = requirements.map(r => ({
+      id: r.id,
+      className: r.className,
+      subject: r.subject,
+      teacherId: r.teacherId,
+      hoursNeeded: r.hoursNeeded,
+    }));
+
+    const tt = generateTimetable(algoReqs, 5, 8);
+    clearInterval(interval);
+    setProgress(100);
+    setTimetable(tt);
+    setIsGenerating(false);
+    showToast(`Collision-Free Timetable Generated — ${tt.length} slots across ${requirements.length} requirements.`);
   };
 
   return (
@@ -86,28 +164,42 @@ export default function AcademicsPage() {
                       </div>
                    </div>
                 ) : (
-                   <button onClick={handleGenerateTimetable} className="btn-primary w-full text-center py-3">
-                     ⚡ Run Generator Engine
+                   <button onClick={handleGenerateTimetable} disabled={loading} className="btn-primary w-full text-center py-3 disabled:opacity-50">
+                     {loading ? '⏳ Loading Requirements...' : '⚡ Run Generator Engine'}
                    </button>
                 )}
             </div>
 
             <div className="glass border border-white/[0.08] rounded-2xl p-6">
-               <h3 className="text-white font-bold mb-4">Input Requirements</h3>
-               <div className="space-y-3">
-                  {MOCK_REQUIREMENTS.map(m => (
-                     <div key={m.id} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg border border-white/5">
-                        <div>
-                           <p className="text-sm font-bold text-white">{m.className}</p>
-                           <p className="text-xs text-slate-400 uppercase">{m.subject}</p>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-xs text-slate-400">Teacher: <span className="text-cyan-400 font-mono">{m.teacherId.toUpperCase()}</span></p>
-                           <p className="text-xs font-bold text-violet-400">{m.hoursNeeded} hrs/wk</p>
-                        </div>
-                     </div>
-                  ))}
+               <div className="flex items-center justify-between mb-4">
+                 <h3 className="text-white font-bold">Input Requirements</h3>
+                 <span className="text-xs text-slate-500">{loading ? 'Loading...' : `${requirements.length} entries`}</span>
                </div>
+               {loading ? (
+                 <div className="space-y-3">
+                   {[1,2,3].map(i => <div key={i} className="h-12 bg-white/[0.02] rounded-lg animate-pulse" />)}
+                 </div>
+               ) : (
+                 <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                   {requirements.map(m => (
+                      <div key={m.id} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg border border-white/5">
+                         <div>
+                            <p className="text-sm font-bold text-white">{m.className}</p>
+                            <p className="text-xs text-slate-400 uppercase">{m.subject}</p>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-xs text-slate-400">
+                              {m.teacherName
+                                ? <span className="text-cyan-400 font-medium">{m.teacherName}</span>
+                                : <span className="text-slate-500 font-mono">{m.teacherId.toUpperCase()}</span>
+                              }
+                            </p>
+                            <p className="text-xs font-bold text-violet-400">{m.hoursNeeded} hrs/wk</p>
+                         </div>
+                      </div>
+                   ))}
+                 </div>
+               )}
             </div>
          </div>
 
@@ -122,7 +214,7 @@ export default function AcademicsPage() {
                {!timetable ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-12 relative overflow-hidden rounded-2xl">
                      <div className="absolute inset-0 bg-gradient-to-t from-violet-500/5 to-transparent pointer-events-none"></div>
-                     <div className="w-24 h-24 rounded-full bg-violet-500/10 flex items-center justify-center text-5xl mb-6 shadow-[0_0_40px_rgba(139,92,246,0.15)] border border-violet-500/20 animate-pulse-slow">
+                     <div className="w-24 h-24 rounded-full bg-violet-500/10 flex items-center justify-center text-5xl mb-6 shadow-[0_0_40px_rgba(139,92,246,0.15)] border border-violet-500/20">
                        🗓️
                      </div>
                      <h2 className="text-white font-extrabold text-2xl tracking-tight mb-2 drop-shadow-sm">No Schedule Found</h2>
@@ -143,19 +235,22 @@ export default function AcademicsPage() {
                            </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                           {timetable.slice(0, 12).map((slot, idx) => (
-                              <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
-                                 <td className="p-3 text-sm text-white font-medium">Day {slot.day}</td>
-                                 <td className="p-3 text-sm text-cyan-400 font-mono">P{slot.period}</td>
-                                 <td className="p-3 text-sm font-bold text-white"><span className="bg-white/10 rounded px-2 py-1">{slot.className}</span></td>
-                                 <td className="p-3 text-sm text-slate-300">{slot.subject}</td>
-                                 <td className="p-3 text-xs text-slate-500 font-mono">ID:{slot.teacherId.toUpperCase()}</td>
-                              </tr>
-                           ))}
+                           {timetable.slice(0, 15).map((slot, idx) => {
+                             const req = requirements.find(r => r.teacherId === slot.teacherId);
+                             return (
+                               <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
+                                  <td className="p-3 text-sm text-white font-medium">Day {slot.day}</td>
+                                  <td className="p-3 text-sm text-cyan-400 font-mono">P{slot.period}</td>
+                                  <td className="p-3 text-sm font-bold text-white"><span className="bg-white/10 rounded px-2 py-1">{slot.className}</span></td>
+                                  <td className="p-3 text-sm text-slate-300">{slot.subject}</td>
+                                  <td className="p-3 text-xs text-slate-400">{req?.teacherName || slot.teacherId.toUpperCase()}</td>
+                               </tr>
+                             );
+                           })}
                         </tbody>
                      </table>
-                     {timetable.length > 12 && (
-                        <p className="text-center text-xs text-slate-500 mt-4">+ {timetable.length - 12} more slots scheduled across the week.</p>
+                     {timetable.length > 15 && (
+                        <p className="text-center text-xs text-slate-500 mt-4">+ {timetable.length - 15} more slots scheduled across the week.</p>
                      )}
                   </div>
                )}

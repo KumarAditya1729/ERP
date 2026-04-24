@@ -16,11 +16,13 @@ const ratelimit = redis ? new Ratelimit({
   analytics: true,
 }) : null;
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'mock_key_id',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'mock_key_secret',
-});
+// Initialize Razorpay — requires RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in env
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+
+const razorpay = razorpayKeyId && razorpayKeySecret
+  ? new Razorpay({ key_id: razorpayKeyId, key_secret: razorpayKeySecret })
+  : null;
 
 export async function createInvoice(formData: FormData) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
@@ -84,6 +86,9 @@ export async function createRazorpayOrder(invoiceId: string, amountINR: number) 
       payment_capture: 1
     };
 
+    if (!razorpay) {
+      return { success: false, error: 'Payment gateway not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your environment variables.' };
+    }
     const order = await razorpay.orders.create(options);
     return { success: true, orderId: order.id };
   } catch (err: any) {
@@ -101,7 +106,8 @@ export async function verifyRazorpayPayment(
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'parent', 'staff']);
   if (authErr) throw new Error('Unauthorized');
 
-  const secret = process.env.RAZORPAY_KEY_SECRET || 'mock_key_secret';
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!secret) return { success: false, error: 'Payment gateway not configured. Contact administrator.' };
   
   // Verify signature
   const generated_signature = crypto
