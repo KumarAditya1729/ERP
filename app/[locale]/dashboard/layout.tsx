@@ -58,7 +58,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       }
     }
     loadUser();
-  }, [supabase, router]);
+  }, [router]);
 
   const toggleNotifications = async () => {
     if (!notificationsOpen) {

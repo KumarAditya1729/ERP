@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { saveAttendance } from '@/app/actions/attendance';
 
@@ -27,7 +27,7 @@ export default function AttendancePage() {
     fetchStudents();
   }, [selectedClass, fetchStudents]);
 
-  async function fetchStudents() {
+  const fetchStudents = useCallback(async () => {
     setLoading(true);
     // Fetch unique classes for dropdown
     const { data: allStudents } = await supabase.from('students').select('class_grade, section, status').eq('status', 'active');
@@ -54,7 +54,7 @@ export default function AttendancePage() {
        setSaved(false);
     }
     setLoading(false);
-  }
+  }, [selectedClass, supabase]);
 
   const toggleStatus = (id: string) => {
     setAttendance((prev) => {

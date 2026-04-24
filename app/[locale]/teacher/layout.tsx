@@ -38,7 +38,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       }
     }
     loadUser();
-  }, [supabase, router]);
+  }, [router]);
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#080C1A' }}>
