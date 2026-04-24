@@ -23,9 +23,7 @@ export default function AttendancePage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  useEffect(() => {
-    fetchStudents();
-  }, [selectedClass, fetchStudents]);
+
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -55,6 +53,10 @@ export default function AttendancePage() {
     }
     setLoading(false);
   }, [selectedClass, supabase]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [selectedClass, fetchStudents]);
 
   const toggleStatus = (id: string) => {
     setAttendance((prev) => {
