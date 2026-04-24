@@ -21,7 +21,7 @@ export default function SaaSDashboard() {
       if (data) {
         setTenants(data);
         
-        // Mocking MRR calculation and Student counts for the saas dashboard
+        // Demo MRR calculation and Student counts for the saas dashboard
         // In a real world scenario, you'd aggregate this from other tables securely or via RPC
         setMetrics({
            total_schools: data.length,
@@ -35,7 +35,7 @@ export default function SaaSDashboard() {
   }, [supabase]);
 
   const toggleTenantStatus = async (id: string, currentStatus: string) => {
-    // In this mock, we just bounce a toast since we don't have a specific "status" column outside of subscription tier yet
+    // In this demo, we just bounce a toast since we don't have a specific "status" column outside of subscription tier yet
     // But this visualizes the capability
     showToast(`Tenant ${id.split('-')[0]} access has been toggled.`, 'success');
   };

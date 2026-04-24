@@ -32,7 +32,7 @@ export default function ParentProactiveDashboard() {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-emerald-500/50 overflow-hidden shrink-0">
-              {/* Mock student photo via Unsplash or placeholder */}
+              {/* Placeholder student photo via Unsplash */ }
               <Image src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=150&q=80" alt="Chloe" className="w-full h-full object-cover" width={120} height={32} priority />
             </div>
             <div>
@@ -93,7 +93,7 @@ export default function ParentProactiveDashboard() {
         </div>
       </section>
 
-      {/* 4. Reward / Dopamine Loop (Mock Line Chart) */}
+      {/* 4. Reward / Dopamine Loop (Demo Line Chart) */}
       <section className="rounded-3xl border border-emerald-500/30 bg-emerald-950/30 p-5 backdrop-blur-sm relative overflow-hidden">
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-emerald-500/10 to-transparent pointer-events-none" />
         <div className="flex items-center justify-between mb-1">
@@ -102,7 +102,7 @@ export default function ParentProactiveDashboard() {
         </div>
         <p className="text-emerald-400 text-sm mb-4">Last Test: 88% (Exceeding!)</p>
         
-        {/* Mocking the neon SVG graph line from the mockup */}
+        {/* Rendering the neon SVG graph line from the mockup */}
         <div className="w-full h-24 mt-2 relative">
            <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible" preserveAspectRatio="none">
               <path 

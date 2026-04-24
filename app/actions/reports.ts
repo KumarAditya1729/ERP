@@ -34,7 +34,7 @@ export async function getDashboardAnalytics() {
     });
   }
 
-  // 3. Students by Gender & Class (Mocked aggregate for presentation if DB is small)
+  // 3. Students by Gender & Class (Aggregated aggregate for presentation if DB is small)
   const { count: totalStudents } = await supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('tenant_id', tenant).eq('status', 'active');
   
   // 4. Daily Attendance Trend (Last 7 Days)

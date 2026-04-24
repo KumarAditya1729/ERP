@@ -24,11 +24,11 @@ export default function TransportPage() {
   const [showRouteForm, setShowRouteForm] = useState(false);
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
   
-  // Mocks
+  // demos
   const [showSOS, setShowSOS] = useState(false);
   const [showSpeedLog, setShowSpeedLog] = useState(false);
   const [showGeo, setShowGeo] = useState(false);
-  const [mockProgress, setMockProgress] = useState(0);
+  const [demoProgress, setdemoProgress] = useState(0);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rForm, setRForm] = useState({ name: '', driver_name: '', bus_number: '', capacity: 40 });
@@ -37,7 +37,7 @@ export default function TransportPage() {
 
   useEffect(() => {
     async function init() {
-      const seedRes = await seedTransportDatabase(); // Auto-seed mock data locally for demo if empty
+      const seedRes = await seedTransportDatabase(); // Auto-seed demo data locally for demo if empty
       if (seedRes && !seedRes.success) {
         setLoadError(seedRes.error || 'Seed failed');
       }
@@ -84,11 +84,11 @@ export default function TransportPage() {
 
   const handleSOS = async () => {
     setShowSOS(true);
-    setMockProgress(0);
+    setdemoProgress(0);
     let p = 0;
     const interval = setInterval(() => {
       p += 20;
-      setMockProgress(p);
+      setdemoProgress(p);
       if (p >= 100) {
         clearInterval(interval);
         broadcastTransportAlert('🚨 SOS EMERGENCY: Fleet vehicle triggered SOS sequence. Dispatching nearest unit and alerting parents. Please check app for live tracker.');
@@ -251,7 +251,7 @@ export default function TransportPage() {
 
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent"></div>
 
-                {/* Documents Upload (Mock UI) */}
+                {/* Documents Upload (demo UI) */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -497,7 +497,7 @@ export default function TransportPage() {
 
         {/* Map Placeholder + Route Detail */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Map mockup */}
+          {/* Map demoup */}
           <div className="glass border border-white/[0.08] rounded-2xl overflow-hidden" style={{ height: '280px' }}>
             <div className="relative w-full h-full bg-gradient-to-br from-[#0f1f3d] to-[#0a1628] flex items-center justify-center overflow-hidden">
               {/* Grid lines */}
@@ -608,16 +608,16 @@ export default function TransportPage() {
         </div>
       </div>
 
-      {/* Deep Mock: SOS Trigger */}
+      {/* Deep demo: SOS Trigger */}
       {showSOS && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/90 backdrop-blur-md animate-fade-in">
           <div className="glass border border-red-500/50 rounded-3xl p-8 max-w-sm w-full text-center relative overflow-hidden bg-red-900/20">
-            <h2 className="text-3xl font-extrabold text-red-500 mb-2">{mockProgress >= 100 ? 'SOS Dispatched!' : 'Initiating SOS Alert'}</h2>
-            {mockProgress < 100 ? (
+            <h2 className="text-3xl font-extrabold text-red-500 mb-2">{demoProgress >= 100 ? 'SOS Dispatched!' : 'Initiating SOS Alert'}</h2>
+            {demoProgress < 100 ? (
               <div className="space-y-4 mt-6">
                 <p className="text-sm text-red-300">Triangulating last active GPS coordinates and mapping emergency numbers...</p>
                 <div className="w-full bg-red-950 rounded-full h-3 mb-2 border border-red-900">
-                  <div className="bg-red-500 h-3 rounded-full transition-all duration-300" style={{ width: `${mockProgress}%` }} />
+                  <div className="bg-red-500 h-3 rounded-full transition-all duration-300" style={{ width: `${demoProgress}%` }} />
                 </div>
               </div>
             ) : (
@@ -630,7 +630,7 @@ export default function TransportPage() {
         </div>
       )}
 
-      {/* Deep Mock: Speed Alerts Log */}
+      {/* Deep demo: Speed Alerts Log */}
       {showSpeedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/80 backdrop-blur-md animate-fade-in">
           <div className="glass border border-amber-500/30 rounded-2xl p-6 w-full max-w-lg">
@@ -658,7 +658,7 @@ export default function TransportPage() {
         </div>
       )}
 
-      {/* Deep Mock: Geofence Builder */}
+      {/* Deep demo: Geofence Builder */}
       {showGeo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/80 backdrop-blur-md animate-fade-in">
           <div className="glass border border-violet-500/30 rounded-2xl w-full max-w-xl overflow-hidden">

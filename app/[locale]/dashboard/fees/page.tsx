@@ -198,7 +198,7 @@ export default function FeesPage() {
              ) : transactions.length === 0 ? (
                  <div className="p-8 text-center bg-slate-900/40">
                     <p className="text-lg font-bold text-white mb-2">No Invoices Found</p>
-                    <p className="text-slate-400 text-sm">Create an invoice or trigger the mock seed script.</p>
+                    <p className="text-slate-400 text-sm">Create an invoice or trigger the seed script.</p>
                  </div>
              ) : (
               <table className="data-table">

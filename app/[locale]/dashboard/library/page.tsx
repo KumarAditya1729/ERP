@@ -24,7 +24,7 @@ export default function LibraryPage() {
 
   useEffect(() => {
     async function fetchBooks() {
-      // Deep Mock logic: if we don't have db connection/tenant, return mocked data
+      // Fetch library books from DB — fall back to sample data if table is empty
       const { data, error } = await supabase.from('library_books').select('*');
       if (data && data.length > 0) {
         setBooks(data);
@@ -48,23 +48,31 @@ export default function LibraryPage() {
       return;
     }
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setBooks([...books, {
-        id: Math.random().toString(),
-        title: bookForm.title,
-        author: bookForm.author,
-        category: bookForm.category,
-        total_copies: bookForm.copies,
-        available_copies: bookForm.copies,
-        location_rack: bookForm.location || 'Unassigned',
-        isbn: bookForm.isbn || 'N/A'
-      }]);
+    try {
+      const { data, error } = await supabase
+        .from('library_books')
+        .insert({
+          title: bookForm.title,
+          author: bookForm.author,
+          category: bookForm.category,
+          total_copies: bookForm.copies,
+          available_copies: bookForm.copies,
+          location_rack: bookForm.location || 'Unassigned',
+          isbn: bookForm.isbn || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setBooks(prev => [data, ...prev]);
       setShowAddBook(false);
-      setIsSubmitting(false);
       showToast('Book added to inventory successfully!');
       setBookForm({ title: '', author: '', isbn: '', category: 'Science', copies: 1, location: '' });
-    }, 800);
+    } catch (err: any) {
+      showToast('Failed to add book: ' + err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredBooks = books.filter(b => b.title.toLowerCase().includes(search.toLowerCase()) || b.author.toLowerCase().includes(search.toLowerCase()));

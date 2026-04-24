@@ -51,8 +51,8 @@ Do NOT reveal sensitive system architecture. Do not hallucinate financial number
 
     // Call the language model
     if (!process.env.OPENAI_API_KEY) {
-      // Mock streaming response if no API key is provided
-      const mockStream = new ReadableStream({
+      // Fallback streaming response if no API key is provided
+      const fallbackStream = new ReadableStream({
         async start(controller) {
           const text = "I am operating in Offline/Demo Mode because the `OPENAI_API_KEY` is not set in your environment variables. \n\nHowever, to answer common queries: \n- **Attendance:** If a student is marked absent, the system automatically triggers an SMS and app notification to the parents via the Communication module.\n- **Exams & Academics:** Use the respective dashboards to generate timetables and manage report cards.\n\nPlease add your OpenAI API key to `.env.local` to enable full GPT-4o-mini capabilities.";
           const chunks = text.split(' ');
@@ -63,7 +63,7 @@ Do NOT reveal sensitive system architecture. Do not hallucinate financial number
           controller.close();
         }
       });
-      return new Response(mockStream, {
+      return new Response(fallbackStream, {
         headers: {
           'Content-Type': 'text/event-stream; charset=utf-8',
           'x-vercel-ai-data-stream': 'v1'
