@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export interface Plan {
   name: string
@@ -70,6 +65,12 @@ export const plans: Record<string, Plan> = {
  */
 export async function getTenantPlan(tenantId: string): Promise<{ plan: Plan; status: string } | null> {
   try {
+    const supabaseAdmin = getSupabaseAdminClient()
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not configured')
+      return null
+    }
+
     const { data: tenant, error } = await supabaseAdmin
       .from('tenants')
       .select('plan, subscription_status')
@@ -116,6 +117,11 @@ export async function canAddStudents(
   additionalCount: number
 ): Promise<{ canAdd: boolean; current: number; limit: number; remaining: number }> {
   try {
+    const supabaseAdmin = getSupabaseAdminClient()
+    if (!supabaseAdmin) {
+      return { canAdd: false, current: 0, limit: 0, remaining: 0 }
+    }
+
     const tenantPlan = await getTenantPlan(tenantId)
     
     if (!tenantPlan || tenantPlan.status !== 'active') {

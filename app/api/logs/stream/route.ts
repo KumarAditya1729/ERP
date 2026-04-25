@@ -1,15 +1,10 @@
 import { requireAuth } from '@/lib/auth-guard';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 /**
  * GET /api/logs/stream
@@ -20,6 +15,11 @@ const supabaseAdmin = createClient(
 export async function GET(req: Request) {
   const { user, tenantId, error: authErr } = await requireAuth();
   if (authErr) return authErr;
+
+  const supabaseAdmin = getSupabaseAdminClient();
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
+  }
 
   // user and tenantId are already authenticated by requireAuth
   const since = new Date().toISOString();

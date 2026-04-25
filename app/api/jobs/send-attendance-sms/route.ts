@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from '@upstash/qstash/dist/nextjs';
-import { createClient } from '@supabase/supabase-js';
 import { sendSMS } from '@/lib/services/twilio';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 
-// Setup Supabase Admin
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = 'force-dynamic';
 
 // We verify the request cryptographically to ensure it actually came from QStash
 async function handler(req: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdminClient();
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
+    }
+
     const payload = await req.json();
     const { absentIds, dateStr, tenantId } = payload;
 
