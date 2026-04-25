@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/nextjs';
+import { webhookRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/request';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 
 /**
  * 1M-USER SCALE: Asynchronous Webhook Ledger
@@ -11,6 +13,11 @@ import * as Sentry from '@sentry/nextjs';
  */
 export async function POST(req: Request) {
   try {
+    const { success } = await webhookRateLimit.limit(`razorpay:${getClientIp(req.headers)}`);
+    if (!success) {
+      return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+    }
+
     const bodyText = await req.text();
     const signature = req.headers.get('x-razorpay-signature');
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -28,7 +35,10 @@ export async function POST(req: Request) {
       .update(bodyText)
       .digest('hex');
 
-    if (generated_signature !== signature) {
+    if (
+      generated_signature.length !== signature.length ||
+      !crypto.timingSafeEqual(Buffer.from(generated_signature), Buffer.from(signature))
+    ) {
       console.warn("Webhook Signature Mismatch! Possible Replay Attack.");
       return NextResponse.json({ error: 'Unauthorized webhook' }, { status: 401 });
     }
@@ -36,11 +46,10 @@ export async function POST(req: Request) {
     const payload = JSON.parse(bodyText);
     const event = payload.event;
     
-    // Server-side Supabase client using Service Role to bypass RLS for background ledger writes
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    );
+    const supabase = getSupabaseAdminClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Billing database is not configured' }, { status: 503 });
+    }
 
     if (event === 'payment.captured' || event === 'order.paid') {
       const paymentEntity = payload.payload.payment.entity;

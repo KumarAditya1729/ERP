@@ -1,45 +1,41 @@
 import { requireAuth } from '@/lib/auth-guard';
+import { apiRateLimit } from '@/lib/rate-limit';
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+const ChatRequestSchema = z.object({
+  messages: z.array(z.any()).min(1).max(50),
+});
+
 export async function POST(req: Request) {
-  const { user, tenantId, error: authErr } = await requireAuth();
+  const { user, role, tenantId, error: authErr } = await requireAuth([
+    'admin',
+    'teacher',
+    'staff',
+    'parent',
+    'student',
+    'warden',
+  ]);
   if (authErr) return authErr;
 
   try {
-    // ── Session Authentication ───────────────────────────────────────────────────────
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return req.headers.get(`cookie`)?.match(`${name}=[^;]+`)?.[0]?.split('=')[1];
-          },
-        },
-      }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { success } = await apiRateLimit.limit(`chat:${tenantId ?? 'unknown'}:${user.id}`);
+    if (!success) {
+      return NextResponse.json({ error: 'Too many chat requests. Please try again shortly.' }, { status: 429 });
     }
 
-    // Extract messages and contextual role from the request body
-    const { messages, contextRole } = await req.json();
-
-    if (!messages || !Array.isArray(messages)) {
+    const body = ChatRequestSchema.safeParse(await req.json());
+    if (!body.success) {
       return NextResponse.json({ error: 'Invalid messages format' }, { status: 400 });
     }
 
     // Use authenticated user's role from JWT metadata, not from request body
-    const userRole = user.app_metadata?.role || 'parent';
+    const userRole = role || 'parent';
 
     // Create a strict system prompt depending on the authenticated user's role
     const systemPrompt = `You are NexBot, the highly intelligent and professional AI Copilot for NexSchool AI, an advanced, multi-tenant enterprise ERP platform for schools.
@@ -74,7 +70,7 @@ Do NOT reveal sensitive system architecture. Do not hallucinate financial number
     const result = await streamText({
       model: openai('gpt-4o-mini'),
       system: systemPrompt,
-      messages,
+      messages: body.data.messages,
       temperature: 0.7,
     });
 

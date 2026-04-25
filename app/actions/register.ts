@@ -1,10 +1,10 @@
 'use server'
-import { requireAuth } from '@/lib/auth-guard';
-
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { RegistrationSchema } from '@/lib/validation'
+import { authRateLimit } from '@/lib/rate-limit'
 
 /**
  * Register a brand-new school (tenant) and its first admin user.
@@ -19,6 +19,8 @@ import { RegistrationSchema } from '@/lib/validation'
  */
 export async function registerSchool(formData: FormData) {
   // Registration is a public action, no requireAuth needed
+  const forwardedFor = headers().get('x-forwarded-for')
+  const ip = forwardedFor?.split(',')[0]?.trim() || 'unknown'
 
   const parseResult = RegistrationSchema.safeParse({
     school_name: formData.get('school_name'),
@@ -35,6 +37,11 @@ export async function registerSchool(formData: FormData) {
   }
 
   const { school_name, city, tier, first_name, last_name, email, password } = parseResult.data;
+
+  const { success } = await authRateLimit.limit(`register-school:${ip}:${email.toLowerCase()}`)
+  if (!success) {
+    return redirect('/register?error=' + encodeURIComponent('Too many registration attempts. Please try again later.'))
+  }
 
   // 1. Generate a fresh UUID for this school's tenant
   const newTenantId = crypto.randomUUID()

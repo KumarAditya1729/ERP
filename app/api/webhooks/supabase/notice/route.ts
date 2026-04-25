@@ -1,15 +1,34 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { dispatchNotification } from '@/lib/notifications';
+import { webhookRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/request';
+import { getOptionalSecret, isProduction } from '@/lib/env';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 
 // Use Service Role Key to bypass RLS for background workers
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(req: Request) {
   try {
+    const { success } = await webhookRateLimit.limit(`notice:${getClientIp(req.headers)}`);
+    if (!success) {
+      return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+    }
+
+    const webhookSecret = getOptionalSecret('SUPABASE_NOTICE_WEBHOOK_SECRET');
+    const providedSecret = req.headers.get('x-notice-webhook-secret');
+
+    if (webhookSecret) {
+      if (providedSecret !== webhookSecret) {
+        return NextResponse.json({ error: 'Unauthorized webhook' }, { status: 401 });
+      }
+    } else if (isProduction()) {
+      return NextResponse.json({ error: 'Webhook secret is not configured' }, { status: 503 });
+    }
+
+    const supabase = getSupabaseAdminClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Notification database is not configured' }, { status: 503 });
+    }
+
     const payload = await req.json();
 
     // Verify it's an INSERT operation from Supabase Webhook
@@ -24,10 +43,18 @@ export async function POST(req: Request) {
     
     // If it's not "All Parents", target the specific class
     if (target_audience !== 'All Parents') {
-      // E.g. target_audience = 'Class 10A'
-      // We assume it maps to student.class_name for MVP purposes.
-      const parsedClass = target_audience.replace('Class ', ''); // '10A'
-      audienceQuery = audienceQuery.eq('class_name', parsedClass);
+      const parsedClass = target_audience.replace('Class ', '').trim();
+      const match = parsedClass.match(/^(.+?)([A-Za-z])?$/);
+      const classGrade = match?.[1]?.trim();
+      const section = match?.[2]?.trim();
+
+      if (classGrade) {
+        audienceQuery = audienceQuery.eq('class_grade', classGrade);
+      }
+
+      if (section) {
+        audienceQuery = audienceQuery.eq('section', section);
+      }
     }
 
     const { data: students, error } = await audienceQuery;

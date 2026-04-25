@@ -31,15 +31,30 @@ export async function GET(req: Request) {
     const deactivatedTenants = []
     
     for (const tenant of tenants || []) {
-      // Deactivate users for inactive tenants
-      const { error: userError } = await supabaseAdmin.auth.admin.updateUserById(
-        tenant.id,
-        { user_metadata: { active: false } }
-      )
+      // Resolve actual auth user IDs for the tenant before mutating auth metadata.
+      const { data: profiles, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('tenant_id', tenant.id)
 
-      if (userError) {
-        console.error(`Cron: Failed to deactivate users for tenant ${tenant.id}:`, userError)
+      if (profileError) {
+        console.error(`Cron: Failed to fetch profiles for tenant ${tenant.id}:`, profileError)
         continue
+      }
+
+      let usersUpdated = 0
+      for (const profile of profiles || []) {
+        const { error: userError } = await supabaseAdmin.auth.admin.updateUserById(
+          profile.id,
+          { user_metadata: { active: false } }
+        )
+
+        if (userError) {
+          console.error(`Cron: Failed to deactivate user ${profile.id} for tenant ${tenant.id}:`, userError)
+          continue
+        }
+
+        usersUpdated += 1
       }
 
       // Update tenant status
@@ -57,7 +72,7 @@ export async function GET(req: Request) {
       }
 
       deactivatedTenants.push(tenant.id)
-      console.log(`Cron: Deactivated tenant ${tenant.name} (${tenant.id})`)
+      console.log(`Cron: Deactivated tenant ${tenant.name} (${tenant.id}), users updated: ${usersUpdated}`)
     }
 
     return NextResponse.json({ 

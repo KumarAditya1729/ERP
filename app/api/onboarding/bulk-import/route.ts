@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { requireAuth } from '@/lib/auth-guard';
+import { apiRateLimit } from '@/lib/rate-limit';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
 // Zod schema for student validation
@@ -17,36 +18,14 @@ const BulkImportSchema = z.object({
   students: z.array(StudentSchema).min(1, 'At least one student is required'),
 });
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(req: Request) {
+  const { user, role, tenantId, error: authErr } = await requireAuth(['admin', 'teacher']);
+  if (authErr) return authErr;
+
   try {
-    // ── Session Authentication ───────────────────────────────────────────────────────
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return req.headers.get(`cookie`)?.match(`${name}=[^;]+`)?.[0]?.split('=')[1];
-          },
-        },
-      }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // ── Role Authorization ───────────────────────────────────────────────────────────
-    const userRole = user.app_metadata?.role;
-    if (!['admin', 'teacher'].includes(userRole || '')) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    const { success } = await apiRateLimit.limit(`bulk-import:${tenantId ?? 'unknown'}:${user.id}`);
+    if (!success) {
+      return NextResponse.json({ error: 'Bulk import rate limit exceeded. Please try again shortly.' }, { status: 429 });
     }
 
     // ── Request Validation ───────────────────────────────────────────────────────────
@@ -63,16 +42,15 @@ export async function POST(req: Request) {
     const { students } = validationResult.data;
 
     // ── Tenant Resolution ───────────────────────────────────────────────────────────
-    const userTenantId = user.app_metadata?.tenant_id;
-    if (!userTenantId) {
+    if (!tenantId) {
       return NextResponse.json({ error: 'User tenant not found' }, { status: 400 });
     }
 
     // Verify tenant exists and is active
     const { data: tenant, error: tenantError } = await supabaseAdmin
       .from('tenants')
-      .select('id, subscription_status')
-      .eq('id', userTenantId)
+      .select('id, subscription_status, subscription_tier')
+      .eq('id', tenantId)
       .single();
 
     if (tenantError || !tenant) {
@@ -87,7 +65,7 @@ export async function POST(req: Request) {
     const { data: existingStudents, error: countError } = await supabaseAdmin
       .from('students')
       .select('id')
-      .eq('tenant_id', userTenantId);
+      .eq('tenant_id', tenantId);
 
     if (countError) {
       console.error('Failed to count existing students:', countError);
@@ -99,13 +77,12 @@ export async function POST(req: Request) {
 
     // Basic plan limits (can be enhanced with plan-specific logic)
     const STUDENT_LIMITS = {
-      basic: 100,
-      pro: 1000,
+      starter: 300,
+      growth: 1500,
       enterprise: 5000,
     };
 
-    // For now, use a default limit - this can be enhanced to check actual tenant plan
-    const planLimit = STUDENT_LIMITS.basic; // Default to basic plan limit
+    const planLimit = STUDENT_LIMITS[tenant.subscription_tier as keyof typeof STUDENT_LIMITS] ?? STUDENT_LIMITS.starter;
 
     if (newTotal > planLimit) {
       return NextResponse.json({ 
@@ -115,7 +92,7 @@ export async function POST(req: Request) {
 
     // ── Prepare Payload for Insertion ─────────────────────────────────────────────────
     const payload = students.map((s, index) => ({
-      tenant_id: userTenantId,
+      tenant_id: tenantId,
       first_name: s.first_name.trim(),
       last_name: s.last_name?.trim() || '',
       class_grade: s.class_grade.trim(),
@@ -136,7 +113,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to insert students' }, { status: 500 });
     }
 
-    console.log(`Bulk Import: Successfully inserted ${payload.length} students for tenant ${userTenantId}`);
+    console.log(`Bulk Import: Successfully inserted ${payload.length} students for tenant ${tenantId} by ${role}`);
 
     return NextResponse.json({ 
       success: true, 

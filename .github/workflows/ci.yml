@@ -6,20 +6,32 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  quality:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      CI: true
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_ENABLE_DEMO_MODE: false
+      E2E_AUTH_ENABLED: false
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
+        cache: npm
     - name: Install dependencies
       run: npm ci
+    - name: Run lint
+      run: npm run lint
+    - name: Run unit and integration tests
+      run: npm test -- --runInBand
+    - name: Run production build
+      run: npm run build
     - name: Install Playwright browsers
       run: npx playwright install --with-deps chromium
     - name: Run E2E tests
       run: npm run test:e2e
-      env:
-        PLAYWRIGHT_BASE_URL: http://localhost:3000
-        CI: true

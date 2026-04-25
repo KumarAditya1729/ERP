@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { webhookRateLimit } from '@/lib/rate-limit'
 import crypto from 'crypto'
+import { getClientIp } from '@/lib/request'
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
+  const ip = getClientIp(req.headers)
   const { success } = await webhookRateLimit.limit(`gps:${ip}`)
   if (!success) return NextResponse.json({ error: 'Rate limited' }, { status: 429 })
 
@@ -15,13 +16,20 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.text()
+  const gpsSecret = process.env.GPS_DEVICE_SECRET
+  if (!gpsSecret) {
+    return NextResponse.json({ error: 'GPS secret is not configured' }, { status: 503 })
+  }
 
   const expectedSig = crypto
-    .createHmac('sha256', process.env.GPS_DEVICE_SECRET || '')
+    .createHmac('sha256', gpsSecret)
     .update(body)
     .digest('hex')
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
+  if (
+    signature.length !== expectedSig.length ||
+    !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))
+  ) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
@@ -40,6 +48,10 @@ export async function POST(req: NextRequest) {
     payload = JSON.parse(body)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  if (payload.device_id !== deviceId) {
+    return NextResponse.json({ error: 'Device ID mismatch' }, { status: 401 })
   }
 
   if (
