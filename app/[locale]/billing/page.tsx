@@ -3,43 +3,7 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-
-const PLANS = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    icon: '🌱',
-    price: 2999,
-    priceLabel: '₹2,999',
-    period: '/month',
-    students: 'Up to 300 students',
-    color: 'emerald',
-    features: ['Student Information System', 'Attendance Tracking', 'Fee Management', 'Parent Portal', 'Email Support'],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    icon: '🚀',
-    price: 7999,
-    priceLabel: '₹7,999',
-    period: '/month',
-    students: 'Up to 1,500 students',
-    color: 'violet',
-    popular: true,
-    features: ['Everything in Starter', 'Admission Pipeline', 'Transport & Hostel', 'Homework & Grading', 'Bulk SMS/WhatsApp', 'Priority Support'],
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    icon: '🏛️',
-    price: 0,
-    priceLabel: 'Custom',
-    period: '',
-    students: 'Unlimited students',
-    color: 'amber',
-    features: ['Everything in Growth', 'Custom Integrations', 'Dedicated Account Manager', 'On-premise option', 'SLA Guarantee', 'Custom Training'],
-  },
-];
+import { COMMERCIAL_PLANS, type CommercialPlan } from '@/lib/pricing';
 
 export default function BillingPage() {
   const [tenant, setTenant] = useState<any>(null);
@@ -75,8 +39,8 @@ export default function BillingPage() {
       document.body.appendChild(script);
     });
 
-  const handleSubscribe = async (plan: typeof PLANS[0]) => {
-    if (plan.price === 0) {
+  const handleSubscribe = async (plan: CommercialPlan) => {
+    if (plan.monthlyPriceInr === null) {
       window.location.href = 'mailto:sales@nexschool.ai?subject=Enterprise Inquiry';
       return;
     }
@@ -89,7 +53,7 @@ export default function BillingPage() {
       const res = await fetch('/api/razorpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: plan.price, plan: plan.id }),
+        body: JSON.stringify({ amount: plan.monthlyPriceInr, plan: plan.id }),
       });
       const { order, error: orderError } = await res.json();
       if (orderError || !order) throw new Error(orderError || 'Failed to create order');
@@ -187,35 +151,36 @@ export default function BillingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PLANS.map((plan) => (
+          {COMMERCIAL_PLANS.map((plan) => (
             <div
               key={plan.id}
               className={`glass rounded-2xl p-6 flex flex-col transition-all relative ${
-                plan.popular
+                plan.highlight
                   ? 'border-2 border-violet-500/60 shadow-lg shadow-violet-900/30'
                   : 'border border-white/[0.08]'
               }`}
             >
-              {plan.popular && (
+              {plan.highlight && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</span>
+                  <span className="bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-full">{plan.badge}</span>
                 </div>
               )}
               <div className="text-4xl mb-3">{plan.icon}</div>
               <h2 className="text-xl font-bold text-white mb-1">{plan.name}</h2>
-              <p className="text-slate-500 text-sm mb-4">{plan.students}</p>
+              <p className="text-slate-500 text-sm mb-2">{plan.studentRangeLabel}</p>
+              <p className="text-slate-400 text-sm mb-4">{plan.tagline}</p>
               <div className="mb-6">
                 <span className="text-3xl font-bold text-white">{plan.priceLabel}</span>
-                <span className="text-slate-400 text-sm">{plan.period}</span>
+                <span className="text-slate-400 text-sm">{plan.periodLabel}</span>
               </div>
 
               <ul className="space-y-2 mb-8 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-slate-400">
+                {plan.billingFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-sm text-slate-400">
                     <svg className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    {f}
+                    {feature}
                   </li>
                 ))}
               </ul>
@@ -226,7 +191,7 @@ export default function BillingPage() {
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${
                   isActive && tenant?.subscription_tier === plan.id
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-default'
-                    : plan.popular
+                    : plan.highlight
                     ? 'bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-600/30'
                     : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'
                 }`}
@@ -240,7 +205,7 @@ export default function BillingPage() {
                     Initiating Payment…
                   </span>
                 ) : isActive && tenant?.subscription_tier === plan.id ? '✓ Current Plan' :
-                   plan.price === 0 ? 'Contact Sales' : `Subscribe — ${plan.priceLabel}/mo`}
+                   plan.monthlyPriceInr === null ? 'Contact Sales' : `Subscribe — ${plan.priceLabel}${plan.periodLabel}`}
               </button>
             </div>
           ))}

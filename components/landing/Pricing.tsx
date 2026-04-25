@@ -1,71 +1,6 @@
 'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import RazorpayCheckout from '../RazorpayCheckout';
-
-const plans = [
-  {
-    name: 'Growth Plan',
-    tagline: 'Essential ERP for budget schools',
-    price: 240,
-    interval: '/student/yr',
-    students: 'Equates to ₹20/month',
-    color: 'border-white/10',
-    badge: null,
-    features: [
-      'Student Information System',
-      'Daily Attendance Logs',
-      'Fee Management + Razorpay',
-      'Basic HR & Examinations',
-      'Email Support (48hr)',
-    ],
-    missing: ['Parent App', 'Transport GPS', 'AI Auto-Grader', 'Hostel Gatepass'],
-    cta: 'Start Free Trial',
-    highlight: false,
-  },
-  {
-    name: 'Pro Plan',
-    tagline: 'Operational Excellence',
-    price: 600,
-    interval: '/student/yr',
-    students: 'Equates to ₹50/month',
-    color: 'border-violet-500/50',
-    badge: '⭐ Best Seller',
-    features: [
-      'Everything in Growth',
-      'Dedicated Parent App',
-      'Transport Module + GPS',
-      'Library & Inventory',
-      'Hostel Digital Gatepass',
-      'Automated SMS notices',
-      'Priority Support (12hr)',
-    ],
-    missing: ['Voice AI', 'Predictive Analytics'],
-    cta: 'Select Pro',
-    highlight: true,
-  },
-  {
-    name: 'AI Elite',
-    tagline: 'Next-Gen School Architecture',
-    price: 1440,
-    interval: '/student/yr',
-    students: 'Equates to ₹120/month',
-    color: 'border-cyan-500/30',
-    badge: null,
-    features: [
-      'Everything in Pro',
-      'Voice AI Auto-Grader',
-      'AI Timetable Collision Engine',
-      'White-label Custom Branding',
-      'Parent Access Vault',
-      'Dedicated Account Manager',
-      'On-premise option available',
-    ],
-    missing: [],
-    cta: 'Contact Sales',
-    highlight: false,
-  },
-];
+import { COMMERCIAL_PLANS } from '@/lib/pricing';
 
 export default function Pricing() {
   return (
@@ -75,22 +10,22 @@ export default function Pricing() {
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-12">
-          <span className="badge badge-blue text-xs mb-4">Transparent Scale Pricing</span>
+          <span className="badge badge-blue text-xs mb-4">Transparent School Pricing</span>
           <h2 className="text-4xl lg:text-5xl font-bold text-white mb-5">
-            Premium capability,
-            <span className="gradient-text"> affordable scale</span>
+            Plans that fit your
+            <span className="gradient-text"> current campus size</span>
           </h2>
           <p className="text-slate-400 text-lg mb-8">
-            The standard ERP architecture is broken. Stop paying massive flat fees, pay only for the students you serve.
+            Start with the tier that fits your school today, then upgrade as enrollment and operations grow.
           </p>
         </div>
 
         {/* Cards */}
         <div className="grid md:grid-cols-3 gap-6 items-stretch">
-          {plans.map((plan) => (
+          {COMMERCIAL_PLANS.map((plan) => (
             <div
-              key={plan.name}
-              className={`relative glass rounded-3xl p-8 border ${plan.color} flex flex-col ${plan.highlight ? 'glow-violet scale-[1.03]' : ''} card-hover`}
+              key={plan.id}
+              className={`relative glass rounded-3xl p-8 border ${plan.highlight ? 'border-violet-500/50 glow-violet scale-[1.03]' : 'border-white/10'} flex flex-col card-hover`}
             >
               {plan.badge && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
@@ -105,46 +40,44 @@ export default function Pricing() {
 
               <div className="mb-6">
                 <div className="flex items-end gap-1">
-                  <p className="text-4xl font-extrabold gradient-text">
-                    ₹{plan.price}
-                  </p>
-                  <span className="text-slate-400 text-sm mb-1">{plan.interval}</span>
+                  <p className="text-4xl font-extrabold gradient-text">{plan.priceLabel}</p>
+                  {plan.periodLabel && <span className="text-slate-400 text-sm mb-1">{plan.periodLabel}</span>}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">{plan.students}</p>
+                <p className="text-xs text-slate-500 mt-1">{plan.studentRangeLabel}</p>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-300">
+                {plan.marketingFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-300">
                     <svg className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    {f}
+                    {feature}
                   </li>
                 ))}
-                {plan.missing.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-600">
+                {plan.missingFeatures?.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-600">
                     <svg className="w-4 h-4 text-slate-700 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    {f}
+                    {feature}
                   </li>
                 ))}
               </ul>
 
-                <Link
-                  href={plan.price === 0 ? 'mailto:sales@nexschool.ai' : `/register?tier=${plan.name.split(' ')[0].toLowerCase()}`}
-                  className={plan.highlight ? 'btn-primary justify-center w-full text-center' : 'btn-secondary justify-center w-full text-center'}
-                >
-                  {plan.cta}
-                </Link>
+              <Link
+                href={plan.monthlyPriceInr === null ? 'mailto:sales@nexschool.ai' : `/register?tier=${plan.id}`}
+                className={plan.highlight ? 'btn-primary justify-center w-full text-center' : 'btn-secondary justify-center w-full text-center'}
+              >
+                {plan.ctaLabel}
+              </Link>
             </div>
           ))}
         </div>
 
         {/* Bottom note */}
         <p className="text-center text-slate-500 text-sm mt-10">
-          All prices in INR + GST. Billed annually per student. Cancel anytime.
+          All prices in INR + GST. Starter and Growth are billed monthly. Enterprise pricing is custom.
         </p>
       </div>
     </section>

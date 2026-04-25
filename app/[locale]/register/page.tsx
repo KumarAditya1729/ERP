@@ -5,42 +5,14 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { registerSchool } from '@/app/actions/register'
-
-const TIERS = [
-  {
-    id: 'starter',
-    label: 'Starter',
-    price: '₹2,999/mo',
-    desc: 'Up to 300 students',
-    icon: '🌱',
-    color: 'border-emerald-500/40 hover:border-emerald-500/70',
-    active: 'bg-emerald-500/10 border-emerald-500',
-  },
-  {
-    id: 'growth',
-    label: 'Growth',
-    price: '₹7,999/mo',
-    desc: 'Up to 1,500 students',
-    icon: '🚀',
-    color: 'border-violet-500/40 hover:border-violet-500/70',
-    active: 'bg-violet-500/10 border-violet-500',
-  },
-  {
-    id: 'enterprise',
-    label: 'Enterprise',
-    price: 'Custom',
-    desc: 'Unlimited students',
-    icon: '🏛️',
-    color: 'border-amber-500/40 hover:border-amber-500/70',
-    active: 'bg-amber-500/10 border-amber-500',
-  },
-]
+import { COMMERCIAL_PLANS, type CommercialPlanId } from '@/lib/pricing'
 
 function RegisterForm() {
   const searchParams = useSearchParams()
   const errorMsg = searchParams?.get('error')
-  const initialTier = searchParams?.get('tier') || 'growth'
-  const [tier, setTier] = useState(initialTier)
+  const requestedTier = searchParams?.get('tier')
+  const initialTier = COMMERCIAL_PLANS.some((plan) => plan.id === requestedTier) ? (requestedTier as CommercialPlanId) : 'growth'
+  const [tier, setTier] = useState<CommercialPlanId>(initialTier)
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<1 | 2>(1)
 
@@ -97,27 +69,34 @@ function RegisterForm() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Subscription Plan</label>
-              <div className="grid grid-cols-3 gap-3 mt-2">
-                {TIERS.map((t) => (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                {COMMERCIAL_PLANS.map((plan) => (
                   <label
-                    key={t.id}
+                    key={plan.id}
                     className={`relative cursor-pointer border rounded-xl p-4 transition-all ${
-                      tier === t.id ? t.active : `border-white/10 hover:border-white/20 bg-white/[0.02]`
+                      tier === plan.id
+                        ? plan.id === 'starter'
+                          ? 'bg-emerald-500/10 border-emerald-500'
+                          : plan.id === 'growth'
+                          ? 'bg-violet-500/10 border-violet-500'
+                          : 'bg-amber-500/10 border-amber-500'
+                        : 'border-white/10 hover:border-white/20 bg-white/[0.02]'
                     }`}
                   >
                     <input
                       type="radio"
                       name="tier"
-                      value={t.id}
-                      checked={tier === t.id}
-                      onChange={() => setTier(t.id)}
+                      value={plan.id}
+                      checked={tier === plan.id}
+                      onChange={() => setTier(plan.id)}
                       className="sr-only"
                     />
-                    <p className="text-xl mb-1">{t.icon}</p>
-                    <p className="font-semibold text-white text-sm">{t.label}</p>
-                    <p className="text-xs text-slate-400">{t.desc}</p>
-                    <p className="text-xs font-bold text-violet-400 mt-1">{t.price}</p>
-                    {tier === t.id && (
+                    <p className="text-xl mb-1">{plan.icon}</p>
+                    <p className="font-semibold text-white text-sm">{plan.name}</p>
+                    <p className="text-xs text-slate-400">{plan.studentRangeLabel}</p>
+                    <p className="text-xs text-slate-500 mt-1">{plan.registerDescription}</p>
+                    <p className="text-xs font-bold text-violet-400 mt-2">{plan.priceLabel}{plan.periodLabel}</p>
+                    {tier === plan.id && (
                       <div className="absolute top-2 right-2 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center">
                         <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
