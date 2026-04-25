@@ -1,10 +1,15 @@
 'use server'
-import { requireAuth } from '@/lib/auth-guard';
-
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { authRateLimit } from '@/lib/rate-limit'
+
+function getRequestIp() {
+  const forwardedFor = headers().get('x-forwarded-for')
+  return forwardedFor?.split(',')[0]?.trim() || 'unknown'
+}
 
 function getRouteForRole(role: string): string {
   if (role === 'admin') return '/dashboard'
@@ -14,10 +19,14 @@ function getRouteForRole(role: string): string {
 }
 
 export async function login(formData: FormData) {
-
-
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+
+  const { success } = await authRateLimit.limit(`login:${getRequestIp()}:${email.toLowerCase()}`)
+  if (!success) {
+    return redirect('/login?error=' + encodeURIComponent('Too many login attempts. Please try again later.'))
+  }
+
   const supabase = createClient()
 
   const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -90,11 +99,15 @@ async function checkPasswordPwned(password: string): Promise<number> {
 }
 
 export async function signup(formData: FormData) {
-
-
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const requestedRole = formData.get('role') as string
+
+  const { success } = await authRateLimit.limit(`signup:${getRequestIp()}:${email.toLowerCase()}`)
+  if (!success) {
+    return redirect('/login?error=' + encodeURIComponent('Too many signup attempts. Please try again later.'))
+  }
+
   const supabase = createClient()
 
   // SECURITY: Block admin role self-assignment from public forms
@@ -161,8 +174,6 @@ export async function signup(formData: FormData) {
 }
 
 export async function logout() {
-
-
   const supabase = createClient()
   await supabase.auth.signOut()
   redirect('/login')

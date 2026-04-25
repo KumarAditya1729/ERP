@@ -5,7 +5,7 @@
   NexSchool AI — Enterprise School ERP
 </h1>
 
-<p><strong>A production-ready, multi-tenant SaaS platform for modern schools.</strong></p>
+<p><strong>A multi-tenant school ERP platform with production hardening in progress.</strong></p>
 
 <p>
   <a href="https://erp-omega-brown.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-%E2%86%92-7c3aed?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo"/></a>
@@ -21,7 +21,7 @@
 
 ## 🚀 What is NexSchool AI?
 
-NexSchool AI is a **fully multi-tenant, production-grade School ERP** built on the modern SaaS stack. Each school gets its own **isolated, secure data workspace** powered by Supabase Row Level Security (RLS) — no data leakage between tenants is architecturally possible.
+NexSchool AI is a **multi-tenant School ERP** built on the modern SaaS stack. Each school gets its own **isolated, secure data workspace** powered by Supabase Row Level Security (RLS).
 
 It replaces legacy, monolithic school software with a cloud-native platform that scales from a 200-student school to a 10,000-student university group on the same infrastructure.
 
@@ -173,19 +173,34 @@ Server Action: registerSchool()
 ## 🧪 Testing
 
 ```bash
-# Unit + Integration tests (Jest)
-npm run test
+# Lint
+npm run lint
 
-# E2E tests (Playwright — requires running dev server)
+# Unit + integration tests (Jest)
+npm test -- --runInBand
+
+# Production build
+npm run build
+
+# E2E tests (public + unauthenticated coverage)
 npm run test:e2e
 ```
 
-The E2E suite covers:
-- ✅ 5 Public page renders
-- ✅ 7 Auth guard / unauthenticated blocking tests  
-- ✅ 2 RBAC enforcement (teacher cannot access admin routes)
-- ✅ 5 Admin dashboard module integrity tests
-- ✅ 2 Onboarding funnel flow validations
+Auth-backed browser tests are available when a real Supabase project is configured:
+
+```bash
+node scripts/seed_mock_users.js
+E2E_AUTH_ENABLED=true npm run test:e2e
+```
+
+Default E2E coverage includes:
+- public page renders
+- unauthenticated route blocking
+- onboarding form flow
+
+Additional production notes live in:
+- `docs/PRODUCTION_READINESS.md`
+- `docs/OPERATIONS_AND_COMPLIANCE.md`
 
 ---
 
@@ -217,15 +232,15 @@ The E2E suite covers:
 
 ## 🌍 Deployment
 
-This project auto-deploys to **Vercel** on every push to `main` via GitHub Actions:
+Deployment is split into a quality gate and a deployment workflow:
 
 ```
-git push origin main
+Pull Request / Push
     │
-    ▼ GitHub Actions
-  Lint → Install → Build
+    ▼ GitHub Actions CI
+  Lint → Test → Build → Public E2E
     │
-    ▼ (on success)
+    ▼ (on success for main)
   Vercel Production Deploy
 ```
 

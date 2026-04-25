@@ -1,48 +1,46 @@
 import { requireAuth } from '@/lib/auth-guard';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { getUpstashRedisEnv } from '@/lib/env';
+import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 
 // Prevent Next.js from pre-rendering this route at build time
 export const dynamic = 'force-dynamic';
 
-// Only init Redis if tokens are present
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+type DashboardStatsPayload = {
+  kpis: Array<{
+    label: string
+    value: string
+    change: string
+    up: boolean
+    icon: string
+    color: string
+    border: string
+  }>
+  timestamp: string
+}
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function GET(req: Request) {
-  const { user, tenantId, error: authErr } = await requireAuth();
+export async function GET() {
+  const { tenantId, error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
   try {
-    // Get tenant from session cookie — multi-tenant safe
-    const cookieStore = cookies();
-    const supabaseUser = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
-    );
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
 
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const supabaseAdmin = getSupabaseAdminClient();
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
+    }
 
-    const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', user.id).single();
-    if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-
-    const tenantId = profile.tenant_id;
     const CACHE_KEY = `dashboard_stats:${tenantId}`;
+    const redisEnv = getUpstashRedisEnv();
 
     // 1. Check Redis Cache first
-    if (redisUrl && redisToken) {
+    if (redisEnv) {
       const { Redis } = await import('@upstash/redis');
-      const redis = new Redis({ url: redisUrl, token: redisToken });
-      const cached = await redis.get(CACHE_KEY);
+      const redis = new Redis(redisEnv);
+      const cached = await redis.get<DashboardStatsPayload>(CACHE_KEY);
       if (cached) {
         return NextResponse.json(cached, { status: 200, headers: { 'X-Cache': 'HIT' } });
       }
@@ -60,7 +58,7 @@ export async function GET(req: Request) {
     const feesCollected = Number(viewResult.data?.collected || 0);
     const feesPending = Number(viewResult.data?.pending || 0);
 
-    const payload = {
+    const payload: DashboardStatsPayload = {
       kpis: [
         { label: 'Total Students', value: totalStudents.toLocaleString(), change: 'active enrollment', up: true, icon: '🎓', color: 'from-violet-600/25 to-violet-900/10', border: 'border-violet-500/25' },
         { label: 'Fees Collected', value: `₹${(feesCollected / 100000).toFixed(1)}L`, change: 'this session', up: true, icon: '💰', color: 'from-emerald-600/25 to-emerald-900/10', border: 'border-emerald-500/25' },
@@ -71,10 +69,10 @@ export async function GET(req: Request) {
     };
 
     // 3. Cache for 60 seconds
-    if (redisUrl && redisToken) {
+    if (redisEnv) {
       const { Redis } = await import('@upstash/redis');
-      const redis = new Redis({ url: redisUrl, token: redisToken });
-      await redis.set(CACHE_KEY, JSON.stringify(payload), { ex: 60 });
+      const redis = new Redis(redisEnv);
+      await redis.set(CACHE_KEY, payload, { ex: 60 });
     }
 
     return NextResponse.json(payload, { status: 200, headers: { 'X-Cache': 'MISS' } });

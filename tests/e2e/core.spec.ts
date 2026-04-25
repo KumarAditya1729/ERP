@@ -1,8 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 
+const AUTH_E2E_ENABLED = process.env.E2E_AUTH_ENABLED === 'true';
+
 // ─── Seed credentials (from seed_mock_users.js output) ────────────────────────
-const ADMIN   = { email: 'admin@dps.nexschool.ai',   password: 'Password!123' };
-const TEACHER = { email: 'teacher@dps.nexschool.ai', password: 'Password!123' };
+const ADMIN   = { email: 'admin@nexschool.local',   password: 'Password!123' };
+const TEACHER = { email: 'teacher@nexschool.local', password: 'Password!123' };
 
 // ─── Helper: sign in programmatically via UI ──────────────────────────────────
 async function signIn(page: Page, user: { email: string; password: string }) {
@@ -11,7 +13,7 @@ async function signIn(page: Page, user: { email: string; password: string }) {
   await page.locator('input[type="password"]').fill(user.password);
   await page.locator('button[type="submit"]').click();
   // Wait for navigation away from /login
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 10_000 });
+  await page.waitForURL((url) => !url.pathname.endsWith('/login'), { timeout: 10_000 });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -82,6 +84,8 @@ test.describe('Auth Guard — Unauthenticated Blocking', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe('RBAC — Teacher cannot access Admin-only routes', () => {
+  test.skip(!AUTH_E2E_ENABLED, 'Auth-backed E2E requires configured demo users.');
+
   // Log in as teacher once, reuse cookie state per the suite
   test.beforeEach(async ({ page }) => {
     await signIn(page, TEACHER);
@@ -107,6 +111,8 @@ test.describe('RBAC — Teacher cannot access Admin-only routes', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe('Admin Dashboard — Core Module Integrity', () => {
+  test.skip(!AUTH_E2E_ENABLED, 'Auth-backed E2E requires configured demo users.');
+
   test.beforeEach(async ({ page }) => {
     await signIn(page, ADMIN);
   });

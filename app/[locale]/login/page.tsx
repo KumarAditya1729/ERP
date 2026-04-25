@@ -6,11 +6,13 @@ import { login, signup } from '@/app/actions/auth';
 import { useSearchParams } from 'next/navigation';
 
 const DEMO_ACCOUNTS = [
-  { role: 'admin' as const,   label: 'Admin',   icon: '🏫', email: 'admin_v3@nexschool.com',   password: 'Admin1234!', color: 'border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300' },
-  { role: 'teacher' as const, label: 'Teacher', icon: '👩‍🏫', email: 'teacher_v3@nexschool.com', password: 'Admin1234!', color: 'border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300' },
-  { role: 'parent' as const,  label: 'Parent',  icon: '👪', email: 'parent_v3@nexschool.com',  password: 'Admin1234!', color: 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300' },
-  { role: 'staff' as const,   label: 'Staff',   icon: '👨‍💼', email: 'staff_v3@nexschool.com',   password: 'Admin1234!', color: 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300' },
+  { role: 'admin' as const,   label: 'Admin',   icon: '🏫', email: 'admin@nexschool.local',   password: 'Password!123', color: 'border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300' },
+  { role: 'teacher' as const, label: 'Teacher', icon: '👩‍🏫', email: 'teacher@nexschool.local', password: 'Password!123', color: 'border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300' },
+  { role: 'parent' as const,  label: 'Parent',  icon: '👪', email: 'parent@nexschool.local',  password: 'Password!123', color: 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300' },
+  { role: 'staff' as const,   label: 'Staff',   icon: '👨‍💼', email: 'staff@nexschool.local',   password: 'Password!123', color: 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300' },
 ] as const;
+
+const SHOW_DEMO_MODE = process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE === 'true';
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -151,39 +153,40 @@ function LoginForm() {
         </div>
       </form>
 
-      {/* ── One-Click Demo Access ─────────────────────────────────────────── */}
-      <div className="mt-6 bg-white/[0.02] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-6 shadow-xl">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">🧪 One-Click Demo Access</span>
-          <div className="flex-1 h-px bg-gradient-to-r from-white/[0.08] to-transparent" />
+      {SHOW_DEMO_MODE && (
+        <div className="mt-6 bg-white/[0.02] backdrop-blur-xl border border-white/[0.06] rounded-3xl p-6 shadow-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">🧪 One-Click Demo Access</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-white/[0.08] to-transparent" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {DEMO_ACCOUNTS.map((demo) => (
+              <button
+                key={demo.role}
+                type="button"
+                onClick={() => fillDemo(demo)}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 ${demo.color} ${
+                  filledDemo === demo.role ? 'ring-1 ring-white/20 scale-[0.98]' : ''
+                }`}
+              >
+                <span className="text-base">{demo.icon}</span>
+                <div className="text-left">
+                  <p className="font-bold">{demo.label} Portal</p>
+                  <p className="text-[10px] opacity-60 truncate max-w-[110px]">{demo.email}</p>
+                </div>
+                {filledDemo === demo.role && (
+                  <svg className="w-3.5 h-3.5 ml-auto shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-600 mt-3 text-center">
+            Click any role above → credentials auto-fill → hit Sign In
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {DEMO_ACCOUNTS.map((demo) => (
-            <button
-              key={demo.role}
-              type="button"
-              onClick={() => fillDemo(demo)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200 ${demo.color} ${
-                filledDemo === demo.role ? 'ring-1 ring-white/20 scale-[0.98]' : ''
-              }`}
-            >
-              <span className="text-base">{demo.icon}</span>
-              <div className="text-left">
-                <p className="font-bold">{demo.label} Portal</p>
-                <p className="text-[10px] opacity-60 truncate max-w-[110px]">{demo.email}</p>
-              </div>
-              {filledDemo === demo.role && (
-                <svg className="w-3.5 h-3.5 ml-auto shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </button>
-          ))}
-        </div>
-        <p className="text-[10px] text-slate-600 mt-3 text-center">
-          Click any role above → credentials auto-fill → hit Sign In
-        </p>
-      </div>
+      )}
 
       <p className="text-center text-sm text-slate-500 mt-4">
         &copy; {new Date().getFullYear()} NexSchool. All rights reserved.

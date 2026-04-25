@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { i18n, type Locale } from '@/i18n.config'
+import { getSupabasePublicEnv } from '@/lib/env'
 
 // ⚠️ EDGE SAFE (NO nodejs imports)
 // Subdomain parsing, Session refresh, RBAC blocking, and i18n Locale resolution
@@ -76,10 +77,24 @@ export async function middleware(req: NextRequest) {
   res.headers.set('x-tenant-subdomain', tenantSubdomain);
   res.headers.set('x-locale', locale);
 
+  const isPublic =
+    path === `/${locale}` ||
+    path.startsWith(`/${locale}/login`) ||
+    path.startsWith(`/${locale}/signup`) ||
+    path.startsWith(`/${locale}/register`) ||
+    path.startsWith(`/${locale}/portal`) ||
+    path.startsWith(`/${locale}/unauthorized`);
+
+  const supabaseEnv = getSupabasePublicEnv()
+  if (!supabaseEnv) {
+    if (isPublic) return res
+    return NextResponse.redirect(new URL(`/${locale}/login`, req.url))
+  }
+
   // ── Supabase Auth Session Refresh ─────────────────────────────────────────
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseEnv.url,
+    supabaseEnv.anonKey,
     {
       cookies: {
         get(name: string) {
@@ -103,7 +118,18 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (error) {
+    console.error('[Middleware] Failed to refresh session:', error)
+    if (isPublic) {
+      return res
+    }
+    return NextResponse.redirect(new URL(`/${locale}/login`, req.url))
+  }
 
   if (tenantSubdomain !== 'www' && !path.includes('not-found')) {
     const { data: tenant } = await supabase
@@ -118,15 +144,6 @@ export async function middleware(req: NextRequest) {
     // Now set x-tenant-id header with the real UUID
     res.headers.set('x-tenant-id', tenant.id)
   }
-
-  // ── Public routes (locale-prefixed) ──────────────────────────────────────
-  const isPublic =
-    path.match(`^/${locale}/login`) ||
-    path.match(`^/${locale}/signup`) ||
-    path.match(`^/${locale}/register`) ||
-    path.match(`^/${locale}/portal`) ||
-    path.match(`^/${locale}/unauthorized`) ||
-    path === `/${locale}`;
 
   if (isPublic) return res;
 
