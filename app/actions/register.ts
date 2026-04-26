@@ -26,6 +26,12 @@ export async function registerSchool(formData: FormData) {
     school_name: formData.get('school_name'),
     city: formData.get('city'),
     tier: formData.get('tier') || 'starter',
+    estimated_students: formData.get('estimated_students'),
+    branch_count: formData.get('branch_count'),
+    billing_email: formData.get('billing_email'),
+    contact_phone: formData.get('contact_phone'),
+    custom_requirements: formData.get('custom_requirements'),
+    custom_monthly_amount: formData.get('custom_monthly_amount'),
     first_name: formData.get('first_name'),
     last_name: formData.get('last_name'),
     email: formData.get('email'),
@@ -36,7 +42,21 @@ export async function registerSchool(formData: FormData) {
     return redirect(`/register?error=${encodeURIComponent(parseResult.error.errors[0].message)}`)
   }
 
-  const { school_name, city, tier, first_name, last_name, email, password } = parseResult.data;
+  const {
+    school_name,
+    city,
+    tier,
+    estimated_students,
+    branch_count,
+    billing_email,
+    contact_phone,
+    custom_requirements,
+    custom_monthly_amount,
+    first_name,
+    last_name,
+    email,
+    password,
+  } = parseResult.data;
 
   const { success } = await authRateLimit.limit(`register-school:${ip}:${email.toLowerCase()}`)
   if (!success) {
@@ -45,16 +65,37 @@ export async function registerSchool(formData: FormData) {
 
   // 1. Generate a fresh UUID for this school's tenant
   const newTenantId = crypto.randomUUID()
+  const maxStudents =
+    tier === 'starter' ? 300 :
+    tier === 'growth' ? 1500 :
+    estimated_students ?? 5000
+  const baseTenantInsert = {
+    id: newTenantId,
+    name: school_name,
+    city: city,
+    subscription_tier: tier,
+    max_students: maxStudents,
+    billing_email: billing_email || email,
+  }
 
   // 2. Create the tenant row first (the trigger will FK reference this)
-  const { error: tenantError } = await supabaseAdmin
+  let { error: tenantError } = await supabaseAdmin
     .from('tenants')
     .insert({
-      id: newTenantId,
-      name: school_name,
-      city: city,
-      subscription_tier: tier,
+      ...baseTenantInsert,
+      branch_count: branch_count ?? null,
+      contact_phone: contact_phone ?? null,
+      custom_requirements: custom_requirements ?? null,
+      custom_monthly_amount: custom_monthly_amount ?? null,
     })
+
+  if (tenantError && tier === 'enterprise') {
+    console.warn('Enterprise tenant insert fell back to base columns:', tenantError.message)
+    const retry = await supabaseAdmin
+      .from('tenants')
+      .insert(baseTenantInsert)
+    tenantError = retry.error
+  }
 
   if (tenantError) {
     console.error('Tenant creation error:', tenantError)

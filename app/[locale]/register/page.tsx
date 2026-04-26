@@ -107,6 +107,87 @@ function RegisterForm() {
                 ))}
               </div>
             </div>
+
+            {tier === 'enterprise' && (
+              <div className="space-y-4 border-t border-white/[0.08] pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-white">Custom Plan Details</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Share your deployment scope now. We&apos;ll prefill billing with these details so your school can pay the custom amount directly after signup.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Estimated Students</label>
+                    <input
+                      name="estimated_students"
+                      type="number"
+                      min={1}
+                      className="erp-input"
+                      placeholder="e.g., 3200"
+                      required={tier === 'enterprise'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Branches / Campuses</label>
+                    <input
+                      name="branch_count"
+                      type="number"
+                      min={1}
+                      className="erp-input"
+                      placeholder="e.g., 3"
+                      required={tier === 'enterprise'}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Billing Email</label>
+                    <input
+                      name="billing_email"
+                      type="email"
+                      className="erp-input"
+                      placeholder="accounts@myschool.edu.in"
+                      required={tier === 'enterprise'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Contact Phone</label>
+                    <input
+                      name="contact_phone"
+                      type="tel"
+                      className="erp-input"
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Custom Monthly Amount (INR)</label>
+                  <input
+                    name="custom_monthly_amount"
+                    type="number"
+                    min={1000}
+                    step={1}
+                    className="erp-input"
+                    placeholder="e.g., 24999"
+                    required={tier === 'enterprise'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Requirements</label>
+                  <textarea
+                    name="custom_requirements"
+                    rows={4}
+                    className="erp-input min-h-[120px] resize-y"
+                    placeholder="Mention rollout timeline, custom integrations, transport GPS scale, parent app needs, reporting requirements, or deployment constraints."
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <button

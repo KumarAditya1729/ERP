@@ -6,9 +6,50 @@ import { apiRateLimit } from '@/lib/rate-limit';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { z } from 'zod';
 
+const PLAN_AMOUNTS = {
+  starter: 2999,
+  growth: 7999,
+} as const;
+
+const CUSTOM_DETAILS_SCHEMA = z.object({
+  estimated_students: z.number().int().positive().max(100000).optional(),
+  branch_count: z.number().int().positive().max(100).optional(),
+  billing_email: z.string().email().optional(),
+  contact_phone: z.string().regex(/^\+?[0-9\s-]{10,}$/).optional(),
+  custom_requirements: z.string().max(2000).optional(),
+  custom_monthly_amount: z.number().int().positive().max(10000000).optional(),
+}).optional();
+
 const ORDER_SCHEMA = z.object({
-  amount: z.number().positive(),
+  amount: z.number().positive().max(10000000),
   plan: z.enum(['starter', 'growth', 'enterprise']).default('starter'),
+  customDetails: CUSTOM_DETAILS_SCHEMA,
+}).superRefine((data, ctx) => {
+  if (data.plan === 'starter' && data.amount !== PLAN_AMOUNTS.starter) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amount'], message: 'Starter plan amount is invalid' });
+  }
+
+  if (data.plan === 'growth' && data.amount !== PLAN_AMOUNTS.growth) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['amount'], message: 'Growth plan amount is invalid' });
+  }
+
+  if (data.plan === 'enterprise') {
+    if (!data.customDetails?.billing_email) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['customDetails', 'billing_email'], message: 'Billing email is required' });
+    }
+
+    if (!data.customDetails?.estimated_students) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['customDetails', 'estimated_students'], message: 'Estimated students is required' });
+    }
+
+    if (!data.customDetails?.branch_count) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['customDetails', 'branch_count'], message: 'Branch count is required' });
+    }
+
+    if (!data.customDetails?.custom_monthly_amount || data.customDetails.custom_monthly_amount !== data.amount) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['customDetails', 'custom_monthly_amount'], message: 'Custom monthly amount must match the payable amount' });
+    }
+  }
 });
 
 const VERIFY_SCHEMA = z.object({
@@ -45,7 +86,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid order payload' }, { status: 400 });
     }
 
-    const { amount, plan } = parsedBody.data;
+    const { amount, plan, customDetails } = parsedBody.data;
+    const supabase = getSupabaseAdminClient();
+
+    if (tenantId && supabase && plan === 'enterprise' && customDetails) {
+      const { error: updateError } = await supabase
+        .from('tenants')
+        .update({
+          max_students: customDetails.estimated_students ?? null,
+          branch_count: customDetails.branch_count ?? null,
+          billing_email: customDetails.billing_email ?? null,
+          contact_phone: customDetails.contact_phone ?? null,
+          custom_requirements: customDetails.custom_requirements ?? null,
+          custom_monthly_amount: customDetails.custom_monthly_amount ?? null,
+        })
+        .eq('id', tenantId);
+
+      if (updateError) {
+        console.error('Failed to save enterprise plan details:', updateError.message);
+      }
+    }
+
     const order = await razorpay.orders.create({
       amount: Math.round(amount * 100), // Razorpay uses paise
       currency: 'INR',
@@ -53,6 +114,12 @@ export async function POST(req: Request) {
       notes: {
         plan,
         tenant_id: tenantId ?? '',
+        billing_email: customDetails?.billing_email?.slice(0, 255) ?? '',
+        student_count: customDetails?.estimated_students ? String(customDetails.estimated_students) : '',
+        branch_count: customDetails?.branch_count ? String(customDetails.branch_count) : '',
+        contact_phone: customDetails?.contact_phone?.slice(0, 50) ?? '',
+        custom_amount: customDetails?.custom_monthly_amount ? String(customDetails.custom_monthly_amount) : '',
+        requirements: customDetails?.custom_requirements?.slice(0, 255) ?? '',
       },
     });
 

@@ -66,7 +66,7 @@ export default function Pricing() {
               </ul>
 
               <Link
-                href={plan.monthlyPriceInr === null ? 'mailto:sales@nexschool.ai' : `/register?tier=${plan.id}`}
+                href={`/register?tier=${plan.id}`}
                 className={plan.highlight ? 'btn-primary justify-center w-full text-center' : 'btn-secondary justify-center w-full text-center'}
               >
                 {plan.ctaLabel}

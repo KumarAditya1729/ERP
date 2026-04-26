@@ -5,10 +5,29 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { COMMERCIAL_PLANS, type CommercialPlan } from '@/lib/pricing';
 
+type EnterpriseBillingDetails = {
+  estimated_students: string
+  branch_count: string
+  billing_email: string
+  contact_phone: string
+  custom_monthly_amount: string
+  custom_requirements: string
+}
+
+const emptyEnterpriseDetails: EnterpriseBillingDetails = {
+  estimated_students: '',
+  branch_count: '',
+  billing_email: '',
+  contact_phone: '',
+  custom_monthly_amount: '',
+  custom_requirements: '',
+}
+
 export default function BillingPage() {
   const [tenant, setTenant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [payLoading, setPayLoading] = useState('');
+  const [enterpriseDetails, setEnterpriseDetails] = useState<EnterpriseBillingDetails>(emptyEnterpriseDetails);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const supabase = createClient();
 
@@ -18,16 +37,40 @@ export default function BillingPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('tenants')
-        .select('id, name, subscription_status, subscription_tier, trial_ends_at, paid_until')
+        .select('id, name, subscription_status, subscription_tier, trial_ends_at, paid_until, max_students, branch_count, billing_email, contact_phone, custom_monthly_amount, custom_requirements')
         .eq('id', user.app_metadata?.tenant_id)
         .single();
-      setTenant(data);
+      let tenantData: any = data
+
+      if (error) {
+        console.warn('Falling back to legacy tenant billing query:', error.message)
+        const fallback = await supabase
+          .from('tenants')
+          .select('id, name, subscription_status, subscription_tier, trial_ends_at, paid_until, max_students, billing_email')
+          .eq('id', user.app_metadata?.tenant_id)
+          .single();
+        tenantData = fallback.data
+      }
+
+      setTenant(tenantData);
+      setEnterpriseDetails({
+        estimated_students: tenantData?.max_students ? String(tenantData.max_students) : '',
+        branch_count: tenantData?.branch_count ? String(tenantData.branch_count) : '',
+        billing_email: tenantData?.billing_email ?? '',
+        contact_phone: tenantData?.contact_phone ?? '',
+        custom_monthly_amount: tenantData?.custom_monthly_amount ? String(tenantData.custom_monthly_amount) : '',
+        custom_requirements: tenantData?.custom_requirements ?? '',
+      });
       setLoading(false);
     }
     load();
   }, [supabase]);
+
+  const updateEnterpriseDetail = (field: keyof EnterpriseBillingDetails, value: string) => {
+    setEnterpriseDetails((current) => ({ ...current, [field]: value }));
+  };
 
   const initializeRazorpay = (): Promise<boolean> =>
     new Promise((resolve) => {
@@ -40,8 +83,31 @@ export default function BillingPage() {
     });
 
   const handleSubscribe = async (plan: CommercialPlan) => {
-    if (plan.monthlyPriceInr === null) {
-      window.location.href = 'mailto:sales@nexschool.ai?subject=Enterprise Inquiry';
+    const isEnterprisePlan = plan.id === 'enterprise';
+    const enterpriseAmount = Number(enterpriseDetails.custom_monthly_amount);
+    const amount = isEnterprisePlan ? enterpriseAmount : plan.monthlyPriceInr;
+
+    if (isEnterprisePlan) {
+      if (!enterpriseDetails.estimated_students || Number(enterpriseDetails.estimated_students) < 1) {
+        showToast('Please enter the estimated student count for your custom plan.', false);
+        return;
+      }
+      if (!enterpriseDetails.branch_count || Number(enterpriseDetails.branch_count) < 1) {
+        showToast('Please enter how many branches or campuses need this rollout.', false);
+        return;
+      }
+      if (!enterpriseDetails.billing_email.trim()) {
+        showToast('Please enter the billing email for your custom plan.', false);
+        return;
+      }
+      if (!enterpriseAmount || enterpriseAmount < 1000) {
+        showToast('Please enter a custom monthly amount of at least Rs 1,000.', false);
+        return;
+      }
+    }
+
+    if (!amount) {
+      showToast('Could not determine the payable amount for this plan.', false);
       return;
     }
 
@@ -53,7 +119,18 @@ export default function BillingPage() {
       const res = await fetch('/api/razorpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: plan.monthlyPriceInr, plan: plan.id }),
+        body: JSON.stringify({
+          amount,
+          plan: plan.id,
+          customDetails: isEnterprisePlan ? {
+            estimated_students: Number(enterpriseDetails.estimated_students),
+            branch_count: Number(enterpriseDetails.branch_count),
+            billing_email: enterpriseDetails.billing_email.trim(),
+            contact_phone: enterpriseDetails.contact_phone.trim() || undefined,
+            custom_requirements: enterpriseDetails.custom_requirements.trim() || undefined,
+            custom_monthly_amount: enterpriseAmount,
+          } : undefined,
+        }),
       });
       const { order, error: orderError } = await res.json();
       if (orderError || !order) throw new Error(orderError || 'Failed to create order');
@@ -170,8 +247,8 @@ export default function BillingPage() {
               <p className="text-slate-500 text-sm mb-2">{plan.studentRangeLabel}</p>
               <p className="text-slate-400 text-sm mb-4">{plan.tagline}</p>
               <div className="mb-6">
-                <span className="text-3xl font-bold text-white">{plan.priceLabel}</span>
-                <span className="text-slate-400 text-sm">{plan.periodLabel}</span>
+                <span className="text-3xl font-bold text-white">{plan.id === 'enterprise' && enterpriseDetails.custom_monthly_amount ? `Rs ${Number(enterpriseDetails.custom_monthly_amount).toLocaleString('en-IN')}` : plan.priceLabel}</span>
+                <span className="text-slate-400 text-sm">{plan.id === 'enterprise' && enterpriseDetails.custom_monthly_amount ? '/month' : plan.periodLabel}</span>
               </div>
 
               <ul className="space-y-2 mb-8 flex-1">
@@ -184,6 +261,70 @@ export default function BillingPage() {
                   </li>
                 ))}
               </ul>
+
+              {plan.id === 'enterprise' && (
+                <div className="mb-6 space-y-3 border-t border-white/[0.08] pt-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Custom Plan Details</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Enter the campus scope and the amount this school should pay right now.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      className="erp-input !py-2.5 text-sm"
+                      placeholder="Estimated students"
+                      value={enterpriseDetails.estimated_students}
+                      onChange={(e) => updateEnterpriseDetail('estimated_students', e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      className="erp-input !py-2.5 text-sm"
+                      placeholder="Branches / campuses"
+                      value={enterpriseDetails.branch_count}
+                      onChange={(e) => updateEnterpriseDetail('branch_count', e.target.value)}
+                    />
+                  </div>
+
+                  <input
+                    type="email"
+                    className="erp-input !py-2.5 text-sm"
+                    placeholder="Billing email"
+                    value={enterpriseDetails.billing_email}
+                    onChange={(e) => updateEnterpriseDetail('billing_email', e.target.value)}
+                  />
+
+                  <input
+                    type="tel"
+                    className="erp-input !py-2.5 text-sm"
+                    placeholder="Contact phone"
+                    value={enterpriseDetails.contact_phone}
+                    onChange={(e) => updateEnterpriseDetail('contact_phone', e.target.value)}
+                  />
+
+                  <input
+                    type="number"
+                    min={1000}
+                    step={1}
+                    className="erp-input !py-2.5 text-sm"
+                    placeholder="Custom monthly amount (INR)"
+                    value={enterpriseDetails.custom_monthly_amount}
+                    onChange={(e) => updateEnterpriseDetail('custom_monthly_amount', e.target.value)}
+                  />
+
+                  <textarea
+                    rows={4}
+                    className="erp-input min-h-[120px] resize-y text-sm"
+                    placeholder="Custom requirements, integrations, rollout notes, or support expectations"
+                    value={enterpriseDetails.custom_requirements}
+                    onChange={(e) => updateEnterpriseDetail('custom_requirements', e.target.value)}
+                  />
+                </div>
+              )}
 
               <button
                 onClick={() => handleSubscribe(plan)}
@@ -205,7 +346,7 @@ export default function BillingPage() {
                     Initiating Payment…
                   </span>
                 ) : isActive && tenant?.subscription_tier === plan.id ? '✓ Current Plan' :
-                   plan.monthlyPriceInr === null ? 'Contact Sales' : `Subscribe — ${plan.priceLabel}${plan.periodLabel}`}
+                   plan.id === 'enterprise' ? 'Pay Custom Amount' : `Subscribe — ${plan.priceLabel}${plan.periodLabel}`}
               </button>
             </div>
           ))}

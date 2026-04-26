@@ -103,6 +103,6 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       'SLA Guarantee',
       'Custom Training',
     ],
-    ctaLabel: 'Talk to Sales',
+    ctaLabel: 'Build Custom Plan',
   },
 ]
