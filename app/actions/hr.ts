@@ -18,11 +18,6 @@ async function sendStaffWelcomeEmail(opts: {
   const resendKey = process.env.RESEND_API_KEY;
   const fromAddress = process.env.RESEND_FROM_EMAIL || 'noreply@nexschool.in';
 
-  if (!resendKey || resendKey.startsWith('re_')) {
-    // Only skip if key is the placeholder; real keys start with 're_'
-    // (Resend keys actually do start with 're_', so only skip if missing/empty)
-  }
-
   if (!resendKey) {
     logger.warn('[HR] RESEND_API_KEY not set — skipping staff welcome email', { to: opts.to });
     return;
@@ -138,6 +133,11 @@ export async function addStaff(formData: FormData) {
     logger.error('[HR] Auth user creation failed', authError, { email });
     return { success: false, error: authError?.message || 'Auth error' };
   }
+
+  // FIX S1: Update app_metadata to ensure RLS works
+  await supabaseAdmin.auth.admin.updateUserById(authData.user.id, {
+    app_metadata: { role, tenant_id: profile.tenant_id },
+  });
 
   // ── Sync profile ────────────────────────────────────────────────────────────
   const { error: profileError } = await supabaseAdmin.from('profiles').upsert({

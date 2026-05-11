@@ -222,7 +222,7 @@ export async function sendStaffInvites(data: { invites: { email: string; role: s
       }
 
       // Generate invite link via Supabase magic link (safest approach — no password transmitted)
-      const { error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+      const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email: invite.email,
         options: {
@@ -232,6 +232,13 @@ export async function sendStaffInvites(data: { invites: { email: string; role: s
       });
 
       if (linkErr) throw new Error(linkErr.message);
+
+      // FIX S1: Update app_metadata to ensure RLS works for invited staff
+      if (linkData?.user?.id) {
+        await supabaseAdmin.auth.admin.updateUserById(linkData.user.id, {
+          app_metadata: { role: invite.role, tenant_id: tenantId },
+        });
+      }
 
       results.push({ email: invite.email, status: 'sent' });
     } catch (err: any) {

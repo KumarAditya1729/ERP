@@ -36,7 +36,7 @@ export default function OnboardingWizardClient({
 
       <div className="max-w-4xl mx-auto px-4 py-10">
         {/* ── Step Progress ── */}
-        <div className="flex items-center justify-between mb-12 relative">
+        <div className="flex items-center justify-between mb-12 relative overflow-x-auto pb-2">
           {/* Connector line */}
           <div className="absolute top-5 left-0 right-0 h-px" style={{ background: 'rgba(255,255,255,0.08)', zIndex: 0 }} />
 

@@ -8,12 +8,14 @@ export const metadata: Metadata = {
   description: 'Complete your school setup to start using NexSchool AI.',
 };
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  params: { locale }
+}: { params: { locale: string } }) {
   const { step, completed } = await getOnboardingState();
 
   // If onboarding is already done, redirect to dashboard
   if (completed) {
-    redirect('/en/dashboard');
+    redirect(`/${locale}/dashboard`);
   }
 
   return <OnboardingWizardClient initialStep={step} />;
