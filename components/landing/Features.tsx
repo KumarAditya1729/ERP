@@ -75,7 +75,7 @@ const modules = [
 
 export default function Features() {
   return (
-    <section id="features" className="py-28 relative">
+    <section id="features" className="py-28 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-violet-700/8 blur-[120px] pointer-events-none" />
 

@@ -69,7 +69,7 @@ const plans = [
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-28 relative">
+    <section id="pricing" className="py-28 relative overflow-hidden">
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-cyan-700/10 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6">
