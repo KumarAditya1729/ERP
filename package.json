@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "seed": "node scripts/seed_tenant.js",
+    "seed:demo": "node scripts/seed_demo_users.js",
+    "seed:mock": "node scripts/seed_mock_users.js",
+    "db:run-sql": "node scripts/run_sql.js",
+    "fix:revalidate": "node scripts/fix_revalidate.js",
+    "load-test": "k6 run scripts/load-test.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.52",

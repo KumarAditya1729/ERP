@@ -1,0 +1,71 @@
+FAIL tests/integration/worker.test.ts
+  ● SMS Worker Integration Test › should deny unauthorized requests
+
+    `cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context
+
+       6 |
+       7 | export async function requireAuth(allowedRoles?: AllowedRole[]) {
+    >  8 |   const cookieStore = cookies()
+         |                              ^
+       9 |   const supabase = createServerClient(
+      10 |     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      11 |     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+
+      at getExpectedRequestStore (node_modules/next/src/client/components/request-async-storage.external.ts:28:9)
+      at cookies (node_modules/next/src/client/components/headers.ts:53:47)
+      at requireAuth (lib/auth-guard.ts:8:30)
+      at GET (app/api/workers/sms/route.ts:29:63)
+      at Object.GET (tests/integration/worker.test.ts:35:28)
+
+  ● SMS Worker Integration Test › should process queue items and call the notification dispatcher
+
+    `cookies` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context
+
+       6 |
+       7 | export async function requireAuth(allowedRoles?: AllowedRole[]) {
+    >  8 |   const cookieStore = cookies()
+         |                              ^
+       9 |   const supabase = createServerClient(
+      10 |     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      11 |     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+
+      at getExpectedRequestStore (node_modules/next/src/client/components/request-async-storage.external.ts:28:9)
+      at cookies (node_modules/next/src/client/components/headers.ts:53:47)
+      at requireAuth (lib/auth-guard.ts:8:30)
+      at GET (app/api/workers/sms/route.ts:29:63)
+      at Object.GET (tests/integration/worker.test.ts:56:28)
+
+PASS lib/algorithms.test.ts
+--------------------|---------|----------|---------|---------|-------------------
+File                | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+--------------------|---------|----------|---------|---------|-------------------
+All files           |   11.66 |    41.66 |   14.28 |   11.66 |                   
+ lib                |   14.86 |    48.38 |   18.75 |   14.86 |                   
+  algorithms.ts     |   56.52 |    93.33 |   66.66 |   56.52 | 32-91             
+  audit.ts          |       0 |        0 |       0 |       0 | 1-8               
+  auth-guard.ts     |   78.26 |       20 |      50 |   78.26 | 16-18,20-21       
+  dictionaries.ts   |       0 |        0 |       0 |       0 | 1-12              
+  email.ts          |       0 |        0 |       0 |       0 | 1-12              
+  notifications.ts  |       0 |        0 |       0 |       0 | 1-50              
+  pdfGenerator.ts   |       0 |        0 |       0 |       0 | 1-127             
+  plan.ts           |       0 |        0 |       0 |       0 | 1-160             
+  rate-limit.ts     |       0 |        0 |       0 |       0 | 1-12              
+  redis.ts          |       0 |        0 |       0 |       0 | 1-46              
+  supabaseClient.ts |       0 |        0 |       0 |       0 | 1-6               
+  tenant.ts         |       0 |        0 |       0 |       0 | 1-8               
+  validation.ts     |       0 |        0 |       0 |       0 | 1-44              
+ lib/services       |       0 |        0 |       0 |       0 |                   
+  twilio.ts         |       0 |        0 |       0 |       0 | 1-98              
+ lib/supabase       |       0 |        0 |       0 |       0 |                   
+  admin.ts          |       0 |        0 |       0 |       0 | 1-7               
+  client.ts         |       0 |        0 |       0 |       0 | 1-8               
+  server.ts         |       0 |        0 |       0 |       0 | 1-36              
+ lib/validations    |       0 |        0 |       0 |       0 |                   
+  schemas.ts        |       0 |        0 |       0 |       0 | 1-28              
+--------------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       2 failed, 11 passed, 13 total
+Snapshots:   0 total
+Time:        1.11 s
+Ran all test suites.

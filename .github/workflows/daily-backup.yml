@@ -1,0 +1,47 @@
+name: Daily Tenant Backup
+
+on:
+  schedule:
+    # Run at 01:30 UTC daily (07:00 IST) — low traffic window
+    - cron: '30 1 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  backup:
+    name: Export Critical Tables to Supabase Storage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # Optional: Cloudflare R2 if you migrate to R2 for backup storage
+      # R2_ACCOUNT_ID:   ${{ secrets.R2_ACCOUNT_ID }}
+      # R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      # R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # R2_BUCKET:       ${{ secrets.R2_BUCKET }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase JS client
+        run: npm install @supabase/supabase-js --no-save
+
+      - name: Run backup
+        id: backup
+        run: node scripts/backup.js
+        env:
+          BACKUP_DATE: ${{ github.run_id }}
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.setFailed('Daily backup FAILED. Check workflow logs immediately and verify Supabase service role key is valid.');

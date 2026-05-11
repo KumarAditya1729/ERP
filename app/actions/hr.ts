@@ -43,10 +43,13 @@ export async function addStaff(formData: FormData) {
 
   const { first_name, last_name, role, department, salary, email } = validationResult.data;
   
+  // Generate a secure random temporary password — staff must reset on first login
+  const tempPassword = require('crypto').randomBytes(12).toString('base64url');
+
   // Create user in Auth
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: email,
-    password: 'password123', // Initial generic password
+    password: tempPassword,
     email_confirm: true,
     user_metadata: { role, tenant_id: profile.tenant_id }
   });
