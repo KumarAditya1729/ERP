@@ -82,7 +82,6 @@ export async function middleware(req: NextRequest) {
     path.startsWith(`/${locale}/login`) ||
     path.startsWith(`/${locale}/signup`) ||
     path.startsWith(`/${locale}/register`) ||
-    path.startsWith(`/${locale}/portal`) ||
     path.startsWith(`/${locale}/unauthorized`);
 
   const supabaseEnv = getSupabasePublicEnv()
