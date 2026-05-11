@@ -176,6 +176,7 @@ export async function middleware(req: NextRequest) {
       `/${locale}/transport`,
       `/${locale}/hr`,
       `/${locale}/communication`,
+      `/${locale}/onboarding`,
     ],
     teacher: [
       `/${locale}/teacher`,
