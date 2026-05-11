@@ -19,13 +19,13 @@ const BulkImportSchema = z.object({
   students: z.array(StudentSchema).min(1, 'At least one student is required'),
 });
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(req: Request) {
   try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     // ── Session Authentication ───────────────────────────────────────────────────────
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
