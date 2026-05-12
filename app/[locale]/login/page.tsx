@@ -12,7 +12,7 @@ const DEMO_ACCOUNTS = [
   { role: 'staff' as const,   label: 'Staff',   icon: '👨‍💼', email: 'staff_v3@nexschool.com',   password: 'Admin1234!', color: 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300' },
 ] as const;
 
-const SHOW_DEMO_MODE = process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE !== 'false';
+const SHOW_DEMO_MODE = process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE === 'true';
 
 function LoginForm() {
   const searchParams = useSearchParams();

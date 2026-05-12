@@ -70,17 +70,10 @@ export default function AcademicsPage() {
         return;
       }
 
-      // Final fallback if no teachers in DB yet — demo dataset
-      setRequirements([
-        { id: '1', className: '10A', subject: 'Maths', teacherId: 't1', teacherName: 'Priya Sharma', hoursNeeded: 6 },
-        { id: '2', className: '10A', subject: 'Science', teacherId: 't2', teacherName: 'Vikram Singh', hoursNeeded: 5 },
-        { id: '3', className: '10A', subject: 'English', teacherId: 't3', teacherName: 'Sarah Jenkins', hoursNeeded: 5 },
-        { id: '4', className: '10B', subject: 'Maths', teacherId: 't1', teacherName: 'Priya Sharma', hoursNeeded: 6 },
-        { id: '5', className: '10B', subject: 'Science', teacherId: 't4', teacherName: 'Anita Rao', hoursNeeded: 5 },
-        { id: '6', className: '10C', subject: 'English', teacherId: 't3', teacherName: 'Sarah Jenkins', hoursNeeded: 4 },
-      ]);
+      // Final fallback if no teachers in DB yet — empty dataset
+      setRequirements([]);
     } catch {
-      // Silently use demo data if DB is unreachable
+      // Silently use empty data if DB is unreachable
       setRequirements([]);
     }
     setLoading(false);
