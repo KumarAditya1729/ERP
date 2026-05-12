@@ -5,28 +5,17 @@ import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 
-// ── Shared helper ─────────────────────────────────────────────────────────────
-async function getAdminClientAndTenant() {
-  const supabase = createClient();
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) throw new Error('Unauthorized');
-
-  const { data: profile } = await supabaseAdmin
-    .from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
-  if (!profile) throw new Error('Profile missing');
-
-  return { supabaseAdmin, tenantId: profile.tenant_id as string, userId: supabaseUser.id };
-}
+// Removed getAdminClientAndTenant() due to N+1 bottleneck
 
 // ── READ ──────────────────────────────────────────────────────────────────────
 export async function getTransportRoutes() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
-    const { data: routes, error } = await supabaseAdmin
+    const { data: routes, error } = await supabase
       .from('transport_routes')
       .select('*, transport_stops(*)')
       .eq('tenant_id', tenantId)
@@ -48,23 +37,23 @@ export async function getTransportRoutes() {
 
 export async function getParentTransportRoute(): Promise<{ success: boolean; data?: any; error?: string }> {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff', 'parent', 'student']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId || !user) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId, userId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
     // Try to find the student linked to this parent
-    const { data: parentLinks } = await supabaseAdmin
+    const { data: parentLinks } = await supabase
       .from('parent_links')
       .select('student_id')
-      .eq('parent_id', userId)
+      .eq('parent_id', user.id)
       .limit(1);
 
     let routeId: string | null = null;
 
     if (parentLinks && parentLinks.length > 0) {
       // Check if the student has a route_id assigned
-      const { data: student } = await supabaseAdmin
+      const { data: student } = await supabase
         .from('students')
         .select('route_id')
         .eq('id', parentLinks[0].student_id)
@@ -73,7 +62,7 @@ export async function getParentTransportRoute(): Promise<{ success: boolean; dat
     }
 
     // Build query — prefer the student's assigned route, else show the first active route in the tenant
-    const query = supabaseAdmin
+    const query = supabase
       .from('transport_routes')
       .select('*, transport_stops(*)')
       .eq('tenant_id', tenantId);
@@ -109,12 +98,12 @@ export async function addTransportRoute(payload: {
   stops?: { stop_name: string; scheduled_time: string }[];
 }) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
-    const { data: route, error } = await supabaseAdmin
+    const { data: route, error } = await supabase
       .from('transport_routes')
       .insert({
         tenant_id: tenantId,
@@ -139,7 +128,7 @@ export async function addTransportRoute(payload: {
         status: idx === 0 ? 'upcoming' : 'upcoming',
         sequence_order: idx + 1,
       }));
-      await supabaseAdmin.from('transport_stops').insert(stopsPayload);
+      await supabase.from('transport_stops').insert(stopsPayload);
     }
 
     revalidatePath('/', 'layout');
@@ -152,12 +141,12 @@ export async function addTransportRoute(payload: {
 // ── UPDATE ROUTE STATUS ───────────────────────────────────────────────────────
 export async function updateRouteStatus(routeId: string, status: 'on-route' | 'at-school' | 'delayed') {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('transport_routes')
       .update({ status })
       .eq('id', routeId)
@@ -174,12 +163,12 @@ export async function updateRouteStatus(routeId: string, status: 'on-route' | 'a
 // ── UPDATE STOP STATUS ────────────────────────────────────────────────────────
 export async function updateStopStatus(stopId: string, status: 'done' | 'current' | 'upcoming') {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('transport_stops')
       .update({ status })
       .eq('id', stopId)
@@ -196,13 +185,13 @@ export async function updateStopStatus(stopId: string, status: 'done' | 'current
 // ── UPDATE ENROLLED STUDENTS ──────────────────────────────────────────────────
 export async function updateEnrolledStudents(routeId: string, delta: number) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
     // Fetch current count first
-    const { data: current } = await supabaseAdmin
+    const { data: current } = await supabase
       .from('transport_routes')
       .select('enrolled_students, capacity')
       .eq('id', routeId)
@@ -212,7 +201,7 @@ export async function updateEnrolledStudents(routeId: string, delta: number) {
     if (!current) throw new Error('Route not found');
     const newCount = Math.max(0, Math.min(current.capacity, current.enrolled_students + delta));
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('transport_routes')
       .update({ enrolled_students: newCount })
       .eq('id', routeId)
@@ -229,13 +218,13 @@ export async function updateEnrolledStudents(routeId: string, delta: number) {
 // ── DELETE ────────────────────────────────────────────────────────────────────
 export async function deleteTransportRoute(routeId: string) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
     // Stops cascade delete via FK — just delete the route
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('transport_routes')
       .delete()
       .eq('id', routeId)
@@ -252,12 +241,12 @@ export async function deleteTransportRoute(routeId: string) {
 // ── SEED ──────────────────────────────────────────────────────────────────────
 export async function seedTransportDatabase() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
-    const { count } = await supabaseAdmin
+    const { count } = await supabase
       .from('transport_routes')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId);
@@ -271,7 +260,7 @@ export async function seedTransportDatabase() {
       { tenant_id: tenantId, name: 'Route 4 – West Zone',  driver_name: 'Prem Chand',   bus_number: 'DL-01-GA-3321', capacity: 38, enrolled_students: 29, status: 'delayed' },
     ];
 
-    const { data: insertedRoutes, error } = await supabaseAdmin
+    const { data: insertedRoutes, error } = await supabase
       .from('transport_routes').insert(routes).select();
     if (error) throw error;
 
@@ -293,7 +282,7 @@ export async function seedTransportDatabase() {
         { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Tilak Nagar',   scheduled_time: '08:45', status: 'current',  sequence_order: 3 },
         { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Janakpuri Stn', scheduled_time: '09:05', status: 'upcoming', sequence_order: 4 },
       ];
-      await supabaseAdmin.from('transport_stops').insert(stops);
+      await supabase.from('transport_stops').insert(stops);
     }
 
     revalidatePath('/', 'layout');
@@ -306,30 +295,30 @@ export async function seedTransportDatabase() {
 // ── ADVANCED FLEET ANALYTICS (Fuel, Maintenance, Safety) ──────────────
 export async function getFleetAnalytics() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
     // Use simple queries without FK joins to avoid PostgREST relationship errors
     // Then manually enrich with route data in JS
     const [incidentRes, fuelRes, maintRes, routesRes] = await Promise.allSettled([
-      supabaseAdmin
+      supabase
         .from('transport_incidents')
         .select('*')
         .eq('tenant_id', tenantId)
         .order('reported_at', { ascending: false })
         .limit(5),
-      supabaseAdmin
+      supabase
         .from('transport_fuel_logs')
         .select('*')
         .eq('tenant_id', tenantId),
-      supabaseAdmin
+      supabase
         .from('transport_maintenance')
         .select('*')
         .eq('tenant_id', tenantId)
         .order('next_due_date', { ascending: true }),
-      supabaseAdmin
+      supabase
         .from('transport_routes')
         .select('id, name, bus_number')
         .eq('tenant_id', tenantId),
@@ -385,7 +374,7 @@ const alertSchema = z.object({
 
 export async function broadcastTransportAlert(message: string) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   // Zod Validation
   const parsed = alertSchema.safeParse({ message });
@@ -394,7 +383,7 @@ export async function broadcastTransportAlert(message: string) {
   }
 
   // Rate Limiting
-  if (ratelimit) {
+  if (ratelimit && user) {
     const { success } = await ratelimit.limit(`sos_alert_${user.id}`);
     if (!success) {
       return { success: false, error: 'SOS rate limit exceeded. Please wait a minute.' };
@@ -402,10 +391,10 @@ export async function broadcastTransportAlert(message: string) {
   }
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
     
     // Save to DB
-    const { error } = await supabaseAdmin.from('notices').insert({
+    const { error } = await supabase.from('notices').insert({
       tenant_id: tenantId,
       title: 'Transport Alert 🚌',
       raw_content: parsed.data.message

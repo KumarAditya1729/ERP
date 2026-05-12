@@ -50,21 +50,15 @@ export async function saveAttendance(dateStr: string, records: any[]) {
   const supabase = createClient()
   
   try {
-    const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-    if (!supabaseUser) return { success: false, error: 'Unauthorized' };
-    
-    const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
-    if (!profile) return { success: false, error: 'Profile not found' };
-
     const dbRecords = validatedRecords.map(r => ({
-      tenant_id: profile.tenant_id,
+      tenant_id: tenantId,
       student_id: r.student_id,
       date: dateStr,
       status: r.status,
-      marked_by: supabaseUser.id
+      marked_by: user.id
     }));
 
-    const { error } = await supabaseAdmin.from('attendance').upsert(dbRecords, { onConflict: 'student_id,date' });
+    const { error } = await supabase.from('attendance').upsert(dbRecords, { onConflict: 'student_id,date' });
 
     if (error) {
       console.error("Save Attendance Error:", error);
@@ -84,7 +78,7 @@ export async function saveAttendance(dateStr: string, records: any[]) {
           body: {
             absentIds,
             dateStr,
-            tenantId: profile.tenant_id
+            tenantId: tenantId
           }
         });
       } else {

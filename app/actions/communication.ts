@@ -8,26 +8,17 @@ import { sendBulkSMS } from '@/lib/services/twilio'
 // using direct async execution instead of unstable_after due to Next 14
 import { CommunicationNoticeSchema } from '@/lib/validation'
 
-async function getAdminClientAndTenant() {
-  const supabase = createClient();
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) throw new Error('Unauthorized');
-
-  const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', supabaseUser.id).single();
-  if (!profile) throw new Error('Profile not found');
-
-  return { supabaseAdmin, user: supabaseUser, profile, tenantId: profile.tenant_id as string };
-}
+// Removed getAdminClientAndTenant() to fix N+1 query and RLS bypass
 
 export async function getTeacherNotices() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
     
     // Teachers should see notices meant for staff or all-staff or all
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('notices')
       .select('*')
       .eq('tenant_id', tenantId)
@@ -48,10 +39,10 @@ export async function sendNotice(formData: {
   channels: string[];
 }) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId || !user) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, user, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
     const parseResult = CommunicationNoticeSchema.safeParse(formData);
     if (!parseResult.success) {
@@ -63,16 +54,16 @@ export async function sendNotice(formData: {
     // Get real recipient count from DB
     let recipientCount = 0;
     if (validData.target === 'all-parents' || validData.target === 'all-students') {
-      const { count } = await supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'active');
+      const { count } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'active');
       recipientCount = count || 0;
     } else if (validData.target === 'all-staff') {
-      const { count } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('role', ['staff', 'teacher', 'admin']);
+      const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('role', ['staff', 'teacher', 'admin']);
       recipientCount = count || 0;
     } else {
       recipientCount = 0;
     }
 
-    const { error: insertError } = await supabaseAdmin.from('notices').insert([{
+    const { error: insertError } = await supabase.from('notices').insert([{
       tenant_id: tenantId,
       title: validData.title.trim(),
       raw_content: validData.body.trim(),
@@ -89,7 +80,7 @@ export async function sendNotice(formData: {
 
     // If SMS channel selected — dispatch real SMS via Twilio
       if (validData.channels.includes('SMS')) {
-        const { data: students } = await supabaseAdmin
+        const { data: students } = await supabase
           .from('students')
           .select('guardian_phone, guardian_name')
           .eq('tenant_id', tenantId)

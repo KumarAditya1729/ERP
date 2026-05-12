@@ -83,19 +83,8 @@ async function sendStaffWelcomeEmail(opts: {
 // ── Server Action: addStaff ────────────────────────────────────────────────────
 
 export async function addStaff(formData: FormData) {
-  const { error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
-
-  const supabase = createClient();
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', supabaseUser.id)
-    .single();
-  if (!profile) return { success: false, error: 'Profile not found' };
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   const rawData = {
     first_name: formData.get('first_name') as string,
@@ -126,7 +115,7 @@ export async function addStaff(formData: FormData) {
     email,
     password: tempPassword, // temp — user will use magic link from email
     email_confirm: true,
-    user_metadata: { role, tenant_id: profile.tenant_id, first_name, last_name },
+    user_metadata: { role, tenant_id: tenantId, first_name, last_name },
   });
 
   if (authError || !authData.user) {
@@ -136,13 +125,13 @@ export async function addStaff(formData: FormData) {
 
   // FIX S1: Update app_metadata to ensure RLS works
   await supabaseAdmin.auth.admin.updateUserById(authData.user.id, {
-    app_metadata: { role, tenant_id: profile.tenant_id },
+    app_metadata: { role, tenant_id: tenantId },
   });
 
   // ── Sync profile ────────────────────────────────────────────────────────────
   const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
     id: authData.user.id,
-    tenant_id: profile.tenant_id,
+    tenant_id: tenantId,
     first_name,
     last_name,
     role,
@@ -164,7 +153,7 @@ export async function addStaff(formData: FormData) {
     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://nexschool.in',
   });
 
-  logger.info('[HR] Staff member added', { email, role, tenantId: profile.tenant_id });
+  logger.info('[HR] Staff member added', { email, role, tenantId });
   revalidatePath('/', 'layout');
   return { success: true };
 }

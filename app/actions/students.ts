@@ -8,20 +8,15 @@ import { StudentSchema } from '@/lib/validation';
 
 export async function getTeacherStudents(classGrade: string) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   const supabase = createClient();
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
-  
-  const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
-  if (!profile) return { success: false, error: 'Profile not found' };
 
   try {
-    let query = supabaseAdmin
+    let query = supabase
       .from('students')
       .select('*')
-      .eq('tenant_id', profile.tenant_id)
+      .eq('tenant_id', tenantId)
       .order('first_name', { ascending: true });
       
     if (classGrade && classGrade !== 'all') {
@@ -41,21 +36,9 @@ import { studentSchema } from '@/lib/validations/schemas';
 
 export async function addStudent(formData: FormData) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
-  const supabase = createClient()
-  
-  // Get current user and tenant
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
-
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', supabaseUser.id)
-    .single();
-
-  if (!profile) return { success: false, error: 'Profile not found' };
+  const supabase = createClient();
 
   const rawData = {
     first_name: formData.get('first_name') as string,
@@ -78,7 +61,7 @@ export async function addStudent(formData: FormData) {
 
   const newStudent = {
     ...validationResult.data,
-    tenant_id: profile.tenant_id,
+    tenant_id: tenantId,
     guardian_email: (formData.get('guardian_email') as string) || null,
     address: (formData.get('address') as string) || null,
     blood_group: (formData.get('blood_group') as string) || null,
@@ -98,19 +81,14 @@ export async function addStudent(formData: FormData) {
 
 export async function updateStudent(id: string, formData: FormData) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   const supabase = createClient()
 
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) throw new Error("Unauthorized");
-  
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
-  if (!profile) throw new Error("Profile not found");
-
   // SECURITY: Verify the student belongs to this tenant before updating (prevents cross-tenant mutation)
+  // And relies on Supabase client RLS for safety
   const { data: existing } = await supabase.from('students').select('tenant_id').eq('id', id).single();
-  if (!existing || existing.tenant_id !== profile.tenant_id) {
+  if (!existing || existing.tenant_id !== tenantId) {
     return { success: false, error: 'Forbidden: student not found in your organization' };
   }
   
@@ -133,7 +111,7 @@ export async function updateStudent(id: string, formData: FormData) {
     status: formData.get('status')
   };
 
-  const { error } = await supabase.from('students').update(updates).eq('id', id).eq('tenant_id', profile.tenant_id);
+  const { error } = await supabase.from('students').update(updates).eq('id', id).eq('tenant_id', tenantId);
 
   if (error) {
     console.error("Update Student Error:", error);
@@ -146,16 +124,11 @@ export async function updateStudent(id: string, formData: FormData) {
 
 export async function deleteStudent(id: string) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   const supabase = createClient();
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) return { success: false, error: 'Unauthorized' };
 
-  const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
-  if (!profile) return { success: false, error: 'Profile not found' };
-
-  const { error } = await supabase.from('students').delete().eq('id', id).eq('tenant_id', profile.tenant_id);
+  const { error } = await supabase.from('students').delete().eq('id', id).eq('tenant_id', tenantId);
   if (error) {
     return { success: false, error: error.message };
   }

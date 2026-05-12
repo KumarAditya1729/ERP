@@ -5,32 +5,18 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache'
 
-async function getAdminClientAndTenant() {
-  const supabase = createClient();
-  const { data: { user: supabaseUser } } = await supabase.auth.getUser();
-  if (!supabaseUser) throw new Error('Unauthorized');
-
-  const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  
-  const { data: profile } = await supabaseAdmin.from('profiles').select('tenant_id').eq('id', supabaseUser.id).single();
-  if (!profile) throw new Error('Profile not found');
-
-  return { supabaseAdmin, user: supabaseUser, profile, tenantId: profile.tenant_id as string };
-}
+// Removed getAdminClientAndTenant to fix N+1 query and RLS bypass
 
 export async function getOperationsStats() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
     
     const [{ count: routeCount }, { count: roomCount }] = await Promise.all([
-      supabaseAdmin.from('transport_routes').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabaseAdmin.from('hostel_rooms').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('transport_routes').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('hostel_rooms').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     ]);
 
     return { 
@@ -47,12 +33,12 @@ export async function getOperationsStats() {
 
 export async function getHostelRooms() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
     
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from('hostel_rooms')
       .select('*')
       .eq('tenant_id', tenantId)
@@ -67,13 +53,13 @@ export async function getHostelRooms() {
 
 export async function seedHostelDatabase() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
     
     // Check if rooms already exist
-    const { count } = await supabaseAdmin
+    const { count } = await supabase
       .from('hostel_rooms')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId);
@@ -89,7 +75,7 @@ export async function seedHostelDatabase() {
       { tenant_id: tenantId, room_number: '203', block_name: 'Block B', room_type: 'Premium', capacity: 1, floor_level: 2, occupied: 0, status: 'vacant' }
     ];
 
-    const { error } = await supabaseAdmin.from('hostel_rooms').insert(demoRooms);
+    const { error } = await supabase.from('hostel_rooms').insert(demoRooms);
     if (error) throw error;
     
     revalidatePath('/', 'layout');
@@ -102,12 +88,12 @@ export async function seedHostelDatabase() {
 
 export async function addHostelRoom(payload: { room_number: string; block_name: string; room_type: string; capacity: number; floor_level: number }) {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr) throw new Error('Unauthorized');
+  if (authErr || !tenantId) throw new Error('Unauthorized');
 
   try {
-    const { supabaseAdmin, tenantId } = await getAdminClientAndTenant();
+    const supabase = createClient();
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from('hostel_rooms')
       .insert({
         tenant_id: tenantId,
@@ -158,7 +144,7 @@ export async function issueGatePass(payload: { student_id: string; reason: strin
   }
 
   // Rate Limiting
-  if (ratelimit) {
+  if (ratelimit && user) {
     const { success } = await ratelimit.limit(`gatepass_${user.id}`);
     if (!success) {
       return { success: false, error: 'Gate pass rate limit exceeded. Please wait a minute.' };
@@ -166,7 +152,7 @@ export async function issueGatePass(payload: { student_id: string; reason: strin
   }
 
   try {
-    const { supabaseAdmin, tenantId: currentTenant } = await getAdminClientAndTenant();
+    const supabase = createClient();
     
     // Instead of a dedicated table for now, we save it as a highly critical notice or log
     // In phase 2, we can insert into a `gate_passes` table if it exists.
@@ -183,7 +169,7 @@ export async function issueGatePass(payload: { student_id: string; reason: strin
         url: `${baseUrl}/api/jobs/send-gatepass-otp`,
         body: {
           studentId: parsed.data.student_id,
-          tenantId: currentTenant,
+          tenantId: tenantId,
           gatePassCode,
           reason: parsed.data.reason
         }
