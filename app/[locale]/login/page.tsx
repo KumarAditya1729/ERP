@@ -6,13 +6,13 @@ import { login, signup } from '@/app/actions/auth';
 import { useSearchParams } from 'next/navigation';
 
 const DEMO_ACCOUNTS = [
-  { role: 'admin' as const,   label: 'Admin',   icon: '🏫', email: 'admin@nexschool.local',   password: 'Password!123', color: 'border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300' },
-  { role: 'teacher' as const, label: 'Teacher', icon: '👩‍🏫', email: 'teacher@nexschool.local', password: 'Password!123', color: 'border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300' },
-  { role: 'parent' as const,  label: 'Parent',  icon: '👪', email: 'parent@nexschool.local',  password: 'Password!123', color: 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300' },
-  { role: 'staff' as const,   label: 'Staff',   icon: '👨‍💼', email: 'staff@nexschool.local',   password: 'Password!123', color: 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300' },
+  { role: 'admin' as const,   label: 'Admin',   icon: '🏫', email: 'admin_v3@nexschool.com',   password: 'Admin1234!', color: 'border-violet-500/40 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300' },
+  { role: 'teacher' as const, label: 'Teacher', icon: '👩‍🏫', email: 'teacher_v3@nexschool.com', password: 'Admin1234!', color: 'border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300' },
+  { role: 'parent' as const,  label: 'Parent',  icon: '👪', email: 'parent_v3@nexschool.com',  password: 'Admin1234!', color: 'border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300' },
+  { role: 'staff' as const,   label: 'Staff',   icon: '👨‍💼', email: 'staff_v3@nexschool.com',   password: 'Admin1234!', color: 'border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300' },
 ] as const;
 
-const SHOW_DEMO_MODE = process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE === 'true';
+const SHOW_DEMO_MODE = process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE !== 'false';
 
 function LoginForm() {
   const searchParams = useSearchParams();
