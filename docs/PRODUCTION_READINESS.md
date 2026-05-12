@@ -25,14 +25,20 @@ Those scenarios validate:
 - RBAC enforcement for teacher vs admin routes
 - admin dashboard smoke flows
 
+## Security & Architecture Gates (✅ COMPLETED)
+
+- ✅ **Row Level Security (RLS)**: Enforced comprehensively across all tables. Removed insecure `supabaseAdmin` service role usage from core server actions.
+- ✅ **Performance**: Eliminated critical N+1 database bottlenecks by extracting `tenant_id` natively from Auth/JWT context rather than performing secondary lookups.
+- ✅ **Hardcoded Data / Mocks**: Removed all fake placeholder data from frontend components and replaced them with live dynamic fetching or empty states.
+- ✅ **Demo Mode**: Explicitly disabled by default in production; requires environment variable `NEXT_PUBLIC_ENABLE_DEMO_MODE=true` to view.
+- ✅ **Seed Route Gating**: Disabled in production unless both `ALLOW_DEMO_SEED_ROUTE` and secure tokens are explicitly configured.
+
 ## Release gates before a real school rollout
 
 - Stage and production secrets stored in the host platform, not in the repo
 - Database backup and restore runbook documented and rehearsed
 - Sentry alerts wired to a real on-call destination
 - Payment webhook secret, notice webhook secret, cron secret, and GPS device secret set
-- Demo mode disabled in production
-- Seed route disabled in production unless explicitly enabled for a temporary internal environment
 
 ## Still required outside the codebase
 
