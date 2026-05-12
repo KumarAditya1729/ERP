@@ -48,10 +48,10 @@ export async function addStudent(formData: FormData) {
     roll_number: formData.get('roll_number') as string,
     guardian_name: formData.get('guardian_name') as string,
     guardian_phone: formData.get('guardian_phone') as string,
-    dob: formData.get('dob') as string,
+    email: formData.get('email') as string,
   };
 
-  const validationResult = studentSchema.safeParse(rawData);
+  const validationResult = StudentSchema.safeParse(rawData);
   if (!validationResult.success) {
     return { 
       success: false, 
@@ -62,9 +62,6 @@ export async function addStudent(formData: FormData) {
   const newStudent = {
     ...validationResult.data,
     tenant_id: tenantId,
-    guardian_email: (formData.get('guardian_email') as string) || null,
-    address: (formData.get('address') as string) || null,
-    blood_group: (formData.get('blood_group') as string) || null,
     status: 'active',
   };
 
@@ -100,6 +97,7 @@ export async function updateStudent(id: string, formData: FormData) {
     roll_number: formData.get('roll_number') || undefined,
     guardian_name: formData.get('guardian_name') || undefined,
     guardian_phone: formData.get('guardian_phone') || undefined,
+    email: formData.get('email') || undefined,
   });
 
   if (!parseResult.success) {

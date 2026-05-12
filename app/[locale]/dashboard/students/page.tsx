@@ -34,7 +34,15 @@ export default function StudentsPage() {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('students').select('*').order('created_at', { ascending: false });
+      const { data: { user } } = await supabase.auth.getUser();
+      const tenantId = user?.app_metadata?.tenant_id;
+      if (!tenantId) return;
+
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       if (data) setStudents(data);
     } catch (err: any) {
@@ -49,8 +57,16 @@ export default function StudentsPage() {
   }, [fetchStudents]);
 
   const openLinkModal = async (student: any) => {
-    // Load all parent-role profiles
-    const { data } = await supabase.from('profiles').select('id, first_name, last_name, email').eq('role', 'parent');
+    // Load all parent-role profiles for this tenant
+    const { data: { user } } = await supabase.auth.getUser();
+    const tenantId = user?.app_metadata?.tenant_id;
+    if (!tenantId) return;
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email')
+      .eq('tenant_id', tenantId)
+      .eq('role', 'parent');
     setParents(data || []);
     setSelectedParentId('');
     setLinkModal({ student });
@@ -106,8 +122,8 @@ export default function StudentsPage() {
         {[
           { label: 'Total Enrolled', value: loading ? '...' : students.length, icon: '🎓', badge: 'badge-purple' },
           { label: 'Active Status', value: loading ? '...' : students.filter(s=>s.status === 'active').length, icon: '✨', badge: 'badge-green' },
-          { label: 'Absent Today', value: '0', icon: '⚠️', badge: 'badge-red' },
-          { label: 'Transport Users', value: '0', icon: '🚌', badge: 'badge-blue' },
+          { label: 'Absent Today', value: '0', icon: '⚠️', badge: 'badge-red' }, // Requires daily attendance join
+          { label: 'Transport Users', value: loading ? '...' : students.filter(s => s.route_id).length.toString(), icon: '🚌', badge: 'badge-blue' },
         ].map((s) => (
           <div key={s.label} className="glass border border-white/[0.08] rounded-2xl p-4 card-hover">
             <span className="text-2xl">{s.icon}</span>

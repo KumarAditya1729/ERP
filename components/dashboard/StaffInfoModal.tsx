@@ -18,8 +18,17 @@ export default function StaffInfoModal({ isOpen, onClose }: { isOpen: boolean; o
     if (!isOpen) return;
     async function fetchStaff() {
       setLoading(true);
-      const { data } = await supabase.from('profiles').select('*').in('role', ['staff', 'admin']);
-      if (data) setStaff(data);
+      const { data: { user } } = await supabase.auth.getUser();
+      const tenantId = user?.app_metadata?.tenant_id;
+      
+      if (tenantId) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .in('role', ['staff', 'admin']);
+        if (data) setStaff(data);
+      }
       setLoading(false);
     }
     fetchStaff();

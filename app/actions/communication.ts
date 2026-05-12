@@ -78,34 +78,85 @@ export async function sendNotice(formData: {
       return { success: false, error: insertError.message };
     }
 
-    // If SMS channel selected — dispatch real SMS via Twilio
+    // 5. Dispatch multi-channel notifications
+    const { data: students } = await supabase
+      .from('students')
+      .select('guardian_phone, guardian_name, email')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'active');
+
+    if (students && students.length > 0) {
+      // SMS Channel
       if (validData.channels.includes('SMS')) {
-        const { data: students } = await supabase
-          .from('students')
-          .select('guardian_phone, guardian_name')
-          .eq('tenant_id', tenantId)
-          .eq('status', 'active');
+        const smsPayloads = students
+          .filter(s => s.guardian_phone && s.guardian_phone.length >= 10)
+          .map(s => ({
+            to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[^\d]/g, '')}`,
+            message: `[${validData.title}] ${validData.body.substring(0, 120)} — NexSchool`
+          }));
 
-        if (students && students.length > 0) {
-            const smsPayloads = students
-              .filter(s => s.guardian_phone && s.guardian_phone.length >= 10)
-              .map(s => ({
-                to: s.guardian_phone.startsWith('+') ? s.guardian_phone : `+91${s.guardian_phone.replace(/[^\d]/g, '')}`,
-                message: `[${validData.title}] ${validData.body.substring(0, 120)} — NexSchool`
-              }));
-
-            // Fire-and-forget background processing
-            (async () => {
-              const chunkSize = 100;
-              for (let i = 0; i < smsPayloads.length; i += chunkSize) {
-                const chunk = smsPayloads.slice(i, i + chunkSize);
-                await sendBulkSMS(chunk).catch(err => console.error('[Notice SMS] Bulk SMS chunk error:', err));
-                // Prevent Twilio API rate limiting
-                await new Promise(resolve => setTimeout(resolve, 500));
-              }
-            })();
-        }
+        (async () => {
+          const chunkSize = 50;
+          for (let i = 0; i < smsPayloads.length; i += chunkSize) {
+            const chunk = smsPayloads.slice(i, i + chunkSize);
+            await sendBulkSMS(chunk).catch(err => console.error('[Notice SMS] Bulk SMS chunk error:', err));
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        })();
       }
+
+      // EMAIL Channel
+      if (validData.channels.includes('Email')) {
+        const { sendEmail } = await import('@/lib/services/email');
+        (async () => {
+          for (const s of students) {
+            if (s.email && s.email.includes('@')) {
+              await sendEmail({
+                to: s.email,
+                subject: `School Notice: ${validData.title}`,
+                body: `
+                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #7C3AED;">NexSchool AI Notice</h2>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p>Dear Parent/Student,</p>
+                    <p style="font-size: 16px; line-height: 1.5;">${validData.body}</p>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+                      This is an automated notification from NexSchool AI ERP.
+                    </div>
+                  </div>
+                `
+              }).catch(err => console.error('[Notice Email] Send error:', err));
+            }
+          }
+        })();
+      }
+
+      // IN-APP Notification Channel
+      if (validData.channels.includes('In-App')) {
+         (async () => {
+           // 1. Get all relevant profile IDs based on target
+           let targetProfiles: any[] = [];
+           if (validData.target === 'all-parents' || validData.target === 'all-students') {
+              const { data } = await supabase.from('profiles').select('id').eq('tenant_id', tenantId).in('role', ['parent', 'student']);
+              targetProfiles = data || [];
+           } else if (validData.target === 'all-staff') {
+              const { data } = await supabase.from('profiles').select('id').eq('tenant_id', tenantId).in('role', ['staff', 'teacher', 'admin']);
+              targetProfiles = data || [];
+           }
+
+           if (targetProfiles.length > 0) {
+              const notificationRecords = targetProfiles.map(p => ({
+                tenant_id: tenantId,
+                user_id: p.id,
+                title: validData.title,
+                body: validData.body.substring(0, 200),
+                type: 'info'
+              }));
+              await supabase.from('notifications').insert(notificationRecords);
+           }
+         })();
+      }
+    }
 
     revalidatePath('/', 'layout');
     return { success: true, recipientCount };

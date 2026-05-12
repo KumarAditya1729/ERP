@@ -26,17 +26,7 @@ export default function ReportsPage() {
     );
   }
 
-  // Check if DB is completely empty for demo purposes
-  const isEmptyDB = (data?.totalStudents || 0) === 0 && (data?.fees?.collected || 0) === 0;
-
-  // Provide impressive demo data if DB is empty
-  const displayData = isEmptyDB ? {
-    fees: { collected: 4500000, pending: 850000 },
-    totalStudents: 1245,
-    admissions: { Applied: 450, Verified: 380, Interviewed: 290, Offered: 210, Enrolled: 185 },
-    attendanceTrend: [92, 94, 91, 95, 96, 93, 95]
-  } : data;
-
+  const displayData = data;
   const funnel = displayData?.admissions || {};
   const maxAdmissions = Math.max(funnel.Applied || 1, 1);
 

@@ -24,6 +24,7 @@ export default function StudentModal({ isOpen, onClose, student }: StudentModalP
       (form.elements.namedItem('roll_number') as HTMLInputElement).value = student.roll_number || '';
       (form.elements.namedItem('guardian_name') as HTMLInputElement).value = student.guardian_name || '';
       (form.elements.namedItem('guardian_phone') as HTMLInputElement).value = student.guardian_phone || '';
+      (form.elements.namedItem('email') as HTMLInputElement).value = student.email || '';
       (form.elements.namedItem('status') as HTMLSelectElement).value = student.status || 'active';
     } else if (isOpen && formRef.current && !student) {
       formRef.current.reset();
@@ -117,6 +118,11 @@ export default function StudentModal({ isOpen, onClose, student }: StudentModalP
               <label className="block text-xs font-semibold tracking-wider text-slate-400 uppercase mb-1.5">Phone Number</label>
               <input name="guardian_phone" required className="erp-input w-full text-sm" placeholder="98100-XXXXX" />
             </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/[0.04]">
+            <label className="block text-xs font-semibold tracking-wider text-slate-400 uppercase mb-1.5">Email Address</label>
+            <input name="email" type="email" className="erp-input w-full text-sm" placeholder="guardian@example.com" />
           </div>
 
           <div className="pt-2">

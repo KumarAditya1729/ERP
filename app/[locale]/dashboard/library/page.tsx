@@ -24,18 +24,9 @@ export default function LibraryPage() {
 
   useEffect(() => {
     async function fetchBooks() {
-      // Fetch library books from DB — fall back to sample data if table is empty
       const { data, error } = await supabase.from('library_books').select('*');
-      if (data && data.length > 0) {
+      if (data) {
         setBooks(data);
-      } else {
-        // Fallback to sample data for demo purposes if DB is empty
-        setBooks([
-          { id: '1', title: 'Concepts of Physics (Vol 1)', author: 'H.C. Verma', category: 'Science', total_copies: 10, available_copies: 4, location_rack: 'Sci-Rack-A', isbn: '978-8177091878' },
-          { id: '2', title: 'Mathematics Grade 10', author: 'R.D. Sharma', category: 'Math', total_copies: 15, available_copies: 15, location_rack: 'Math-Rack-C', isbn: '978-9383182054' },
-          { id: '3', title: 'The Merchant of Venice', author: 'William Shakespeare', category: 'Literature', total_copies: 5, available_copies: 1, location_rack: 'Lit-Rack-1', isbn: '978-0198328674' },
-          { id: '4', title: 'Macroeconomics', author: 'Sandeep Garg', category: 'Commerce', total_copies: 8, available_copies: 0, location_rack: 'Comm-Rack-B', isbn: '978-9388836467' },
-        ]);
       }
       setLoading(false);
     }
@@ -190,7 +181,7 @@ export default function LibraryPage() {
                   { label: 'Total Volume', value: totalBooks, color: 'text-white' },
                   { label: 'Available on Shelf', value: booksAvailable, color: 'text-emerald-400' },
                   { label: 'Currently Issued', value: booksIssued, color: 'text-blue-400' },
-                  { label: 'Overdue Books', value: '2', color: 'text-red-400' },
+                  { label: 'Overdue Books', value: '0', color: 'text-red-400' }, // Requires a join on issue_logs
                 ].map(k => (
                   <div key={k.label} className="glass border border-white/[0.08] rounded-2xl p-4 card-hover">
                     <p className={`text-3xl font-bold ${k.color}`}>{k.value}</p>

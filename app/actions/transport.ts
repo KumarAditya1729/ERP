@@ -238,59 +238,8 @@ export async function deleteTransportRoute(routeId: string) {
   }
 }
 
-// ── SEED ──────────────────────────────────────────────────────────────────────
-export async function seedTransportDatabase() {
-  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
-  if (authErr || !tenantId) throw new Error('Unauthorized');
-
-  try {
-    const supabase = createClient();
-
-    const { count } = await supabase
-      .from('transport_routes')
-      .select('*', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId);
-
-    if (count && count > 0) return { success: true, msg: 'Already seeded' };
-
-    const routes = [
-      { tenant_id: tenantId, name: 'Route 1 – North Zone', driver_name: 'Ramesh Kumar', bus_number: 'DL-01-GA-2234', capacity: 45, enrolled_students: 42, status: 'on-route' },
-      { tenant_id: tenantId, name: 'Route 2 – South Zone', driver_name: 'Sunil Yadav',  bus_number: 'DL-01-GA-2198', capacity: 40, enrolled_students: 37, status: 'at-school' },
-      { tenant_id: tenantId, name: 'Route 3 – East Zone',  driver_name: 'Manoj Singh',  bus_number: 'DL-01-GA-1876', capacity: 50, enrolled_students: 48, status: 'on-route' },
-      { tenant_id: tenantId, name: 'Route 4 – West Zone',  driver_name: 'Prem Chand',   bus_number: 'DL-01-GA-3321', capacity: 38, enrolled_students: 29, status: 'delayed' },
-    ];
-
-    const { data: insertedRoutes, error } = await supabase
-      .from('transport_routes').insert(routes).select();
-    if (error) throw error;
-
-    if (insertedRoutes && insertedRoutes.length > 0) {
-      const stops = [
-        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'School Gate',       scheduled_time: '08:05', status: 'done',     sequence_order: 1 },
-        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'Sector 14 Stop',    scheduled_time: '08:22', status: 'done',     sequence_order: 2 },
-        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'Rajpur Crossing',   scheduled_time: '08:38', status: 'current',  sequence_order: 3 },
-        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'Green Park Colony', scheduled_time: '08:51', status: 'upcoming', sequence_order: 4 },
-        { route_id: insertedRoutes[0].id, tenant_id: tenantId, stop_name: 'MG Road Junction',  scheduled_time: '09:04', status: 'upcoming', sequence_order: 5 },
-
-        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'School Gate',     scheduled_time: '07:55', status: 'done',     sequence_order: 1 },
-        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'Saket Metro',     scheduled_time: '08:10', status: 'done',     sequence_order: 2 },
-        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'Malviya Nagar',   scheduled_time: '08:25', status: 'done',     sequence_order: 3 },
-        { route_id: insertedRoutes[1].id, tenant_id: tenantId, stop_name: 'Hauz Khas',       scheduled_time: '08:40', status: 'upcoming', sequence_order: 4 },
-
-        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'School Gate',   scheduled_time: '08:00', status: 'done',     sequence_order: 1 },
-        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Patel Nagar',   scheduled_time: '08:20', status: 'done',     sequence_order: 2 },
-        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Tilak Nagar',   scheduled_time: '08:45', status: 'current',  sequence_order: 3 },
-        { route_id: insertedRoutes[3].id, tenant_id: tenantId, stop_name: 'Janakpuri Stn', scheduled_time: '09:05', status: 'upcoming', sequence_order: 4 },
-      ];
-      await supabase.from('transport_stops').insert(stops);
-    }
-
-    revalidatePath('/', 'layout');
-    return { success: true, msg: 'Seeded' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-}
+// ── SEED (DEPRECATED - REMOVED FOR PRODUCTION) ─────────────────────────────
+// Seed logic removed to ensure production integrity.
 
 // ── ADVANCED FLEET ANALYTICS (Fuel, Maintenance, Safety) ──────────────
 export async function getFleetAnalytics() {
@@ -344,7 +293,7 @@ export async function getFleetAnalytics() {
       success: true,
       data: {
         totalFuelSpent: fuelLogs.reduce((a: number, b: any) => a + (b.total_cost || 0), 0),
-        averageKMPL: 4.8,
+        averageKMPL: fuelLogs.length > 0 ? (fuelLogs.reduce((a: number, b: any) => a + (b.distance_km / (b.fuel_liters || 1)), 0) / fuelLogs.length).toFixed(1) : '—',
         activeAlerts: incidents.length + maintenance.length,
         incidents: enrichedIncidents,
         maintenance: enrichedMaintenance,

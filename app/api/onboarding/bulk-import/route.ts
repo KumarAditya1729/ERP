@@ -11,6 +11,7 @@ const StudentSchema = z.object({
   section: z.string().optional(),
   guardian_name: z.string().optional(),
   emergency_contact: z.string().optional(),
+  email: z.string().email('Invalid email format').optional().or(z.literal('')),
   admission_number: z.string().optional(),
   roll_number: z.string().optional(),
 });
@@ -137,6 +138,7 @@ export async function POST(req: Request) {
         section: s.section?.trim() || 'A',
         guardian_name: s.guardian_name?.trim() || 'Guardian',
         guardian_phone: s.emergency_contact?.trim() || '0000000000',
+        email: s.email?.trim() || null,
         status: 'active',
         roll_number: rollNumber,
         created_by: user.id,

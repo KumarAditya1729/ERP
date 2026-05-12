@@ -29,17 +29,6 @@ export default function StaffHostelPage() {
     setLoading(false);
   }, []);
 
-  const handleSeed = async () => {
-    setLoading(true);
-    const res = await seedHostelDatabase();
-    if (res.success) {
-      showToast('✅ Development data generated!');
-      fetchRooms();
-    } else {
-      showToast('❌ Failed: ' + res.error, false);
-      setLoading(false);
-    }
-  };
 
   const handleAddRoom = async () => {
     if (!form.room_number) {
@@ -83,11 +72,6 @@ export default function StaffHostelPage() {
           <p className="text-slate-400 text-sm mt-1">Monitor bed allocations, room vacancies, and student assignments</p>
         </div>
         <div className="relative z-10 flex gap-3">
-          {rooms.length === 0 && !loading && (
-            <button onClick={handleSeed} className="btn-secondary text-sm py-2 px-4 shadow-lg shadow-black/20">
-              🌱 Load Demo Rooms
-            </button>
-          )}
           <button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-lg shadow-pink-500/20">
             + Add Room
           </button>
@@ -128,13 +112,10 @@ export default function StaffHostelPage() {
               🏨
             </div>
             <p className="text-2xl font-bold text-white mb-2">No rooms configured</p>
-            <p className="text-slate-400 text-sm max-w-sm leading-relaxed mb-8">Your hostel matrix is currently empty. You can add rooms manually or generate demo data to get started.</p>
+            <p className="text-slate-400 text-sm max-w-sm leading-relaxed mb-8">Your hostel matrix is currently empty. Add rooms manually to get started.</p>
             <div className="flex gap-4">
               <button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all shadow-lg shadow-pink-500/20">
                 Add Room Manually
-              </button>
-              <button onClick={handleSeed} className="btn-secondary py-2.5 px-6 text-sm">
-                Generate Demo
               </button>
             </div>
           </div>

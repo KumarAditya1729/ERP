@@ -5,12 +5,6 @@ import { calculateCompoundLateFees } from '@/lib/algorithms';
 import { sendFeeReminders } from '@/app/actions/fees';
 import InvoiceModal from '@/components/dashboard/InvoiceModal';
 
-const feeStructure = [
-  { class: 'Class 6–8', tuition: 7500, transport: 1800, activity: 500, hostel: 4000 },
-  { class: 'Class 9–10', tuition: 9500, transport: 1800, activity: 700, hostel: 4500 },
-  { class: 'Class 11–12', tuition: 11500, transport: 1800, activity: 600, hostel: 5000 },
-];
-
 const statusCfg = {
   paid:    { badge: 'badge-green', label: 'Paid' },
   pending: { badge: 'badge-yellow', label: 'Pending' },
@@ -30,6 +24,24 @@ export default function FeesPage() {
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   
   const supabase = createClient();
+
+  const [feeStructure, setFeeStructure] = useState<any[]>([]);
+  const [loadingStructure, setLoadingStructure] = useState(true);
+
+  const fetchFeeStructure = useCallback(async () => {
+    setLoadingStructure(true);
+    const { data } = await supabase.from('fee_structures').select('*');
+    if (data && data.length > 0) {
+      setFeeStructure(data.map(f => ({
+        class: f.class_group,
+        tuition: Number(f.tuition_fee),
+        transport: Number(f.transport_fee),
+        activity: Number(f.activity_fee),
+        hostel: Number(f.hostel_fee)
+      })));
+    }
+    setLoadingStructure(false);
+  }, [supabase]);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
@@ -51,6 +63,7 @@ export default function FeesPage() {
 
   useEffect(() => {
     fetchFees();
+    fetchFeeStructure();
 
     // Supabase Realtime subscription for live fee updates
     const channel = supabase.channel('live_fees_ledger')

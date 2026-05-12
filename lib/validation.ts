@@ -26,7 +26,8 @@ export const StudentSchema = z.object({
   class_grade: z.string().min(1, 'Class grade is required'),
   section: z.string().min(1, 'Section is required'),
   guardian_name: z.string().optional(),
-  guardian_phone: z.string().regex(/^\+?[0-9\s-]{10,}$/, 'Invalid phone number').optional()
+  guardian_phone: z.string().regex(/^\+?[0-9\s-]{10,}$/, 'Invalid phone number').optional(),
+  email: z.string().email('Invalid email address').optional().or(z.literal(''))
 });
 
 export const FeeInvoiceSchema = z.object({
@@ -40,5 +41,5 @@ export const CommunicationNoticeSchema = z.object({
   title: z.string().min(3, 'Title is required'),
   body: z.string().min(10, 'Message body is too short'),
   target: z.enum(['all-parents', 'all-students', 'all-staff']),
-  channels: z.array(z.enum(['SMS', 'Email', 'App Push'])).min(1, 'Select at least one channel')
+  channels: z.array(z.string()).min(1, 'Select at least one channel')
 });

@@ -71,13 +71,6 @@ export default function StaffTransportPage() {
 
   useEffect(() => { fetchRoutes(); }, [fetchRoutes]);
 
-  const handleSeed = async () => {
-    setSeeding(true);
-    const res = await seedTransportDatabase();
-    if (res.success) { showToast('✅ Demo routes loaded!'); fetchRoutes(); }
-    else showToast('❌ ' + res.error, false);
-    setSeeding(false);
-  };
 
   const handleStatusChange = async (routeId: string, status: Route['status']) => {
     setRoutes(prev => prev.map(r => r.id === routeId ? { ...r, status } : r));
@@ -142,11 +135,6 @@ export default function StaffTransportPage() {
           <p className="text-slate-400 text-sm">Live route tracking, driver management & stop progress</p>
         </div>
         <div className="flex gap-3">
-          {routes.length === 0 && !loading && (
-            <button onClick={handleSeed} disabled={seeding} className="btn-secondary text-sm py-2 px-4">
-              {seeding ? 'Loading…' : '🌱 Load Demo Data'}
-            </button>
-          )}
           <button onClick={() => setShowAddModal(true)} className="btn-primary text-sm py-2 px-4">
             + Add Route
           </button>
@@ -181,7 +169,7 @@ export default function StaffTransportPage() {
         <div className="glass border border-white/[0.08] rounded-2xl p-14 text-center">
           <p className="text-5xl mb-4">🚌</p>
           <p className="text-white font-semibold text-lg">No routes yet</p>
-          <p className="text-slate-400 text-sm mt-1">Add a route manually or load demo data.</p>
+          <p className="text-slate-400 text-sm mt-1">Add a route manually to get started.</p>
         </div>
       ) : (
         <div className="grid gap-4">

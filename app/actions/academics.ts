@@ -193,7 +193,11 @@ export async function getParentAcademics() {
     // 4. Fetch real attendance % for this student
     let attendancePct = 0;
     let assignmentsCompleted = 0;
+    let pendingFees = 0;
+    let examAverage = 0;
+
     if (childStudentId) {
+      // Attendance
       const { data: attRows } = await supabase
         .from('attendance')
         .select('status')
@@ -206,12 +210,32 @@ export async function getParentAcademics() {
         attendancePct = Math.round((present / attRows.length) * 100);
       }
 
+      // Homework Submissions
       const { count } = await supabase
         .from('homework_submissions')
         .select('id', { count: 'exact', head: true })
         .eq('student_id', childStudentId)
         .eq('status', 'submitted');
       assignmentsCompleted = count ?? 0;
+
+      // Fees
+      const { data: feeData } = await supabase
+        .from('fees')
+        .select('amount')
+        .eq('student_id', childStudentId)
+        .eq('status', 'pending');
+      pendingFees = feeData?.reduce((sum, f) => sum + Number(f.amount), 0) || 0;
+
+      // Exams
+      const { data: examData } = await supabase
+        .from('exams_data')
+        .select('marks_obtained, max_marks')
+        .eq('student_id', childStudentId);
+      if (examData && examData.length > 0) {
+        const totalObtained = examData.reduce((sum, e) => sum + Number(e.marks_obtained), 0);
+        const totalMax = examData.reduce((sum, e) => sum + Number(e.max_marks), 0);
+        examAverage = Math.round((totalObtained / totalMax) * 100);
+      }
     }
 
     return {
@@ -221,6 +245,8 @@ export async function getParentAcademics() {
         timetable: timetableSlots || [],
         attendance: attendancePct,
         assignmentsCompleted,
+        pendingFees,
+        examAverage,
       }
     };
   } catch (err: any) {

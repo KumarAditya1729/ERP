@@ -27,8 +27,16 @@ async function seedMockUsers() {
       email: acc.email,
       password: acc.password,
       email_confirm: true,
-      user_metadata: { first_name: acc.firstName, last_name: acc.lastName, role: acc.role },
-      app_metadata: { role: acc.role } // Highly specific RBAC metadata
+      user_metadata: { 
+        first_name: acc.firstName, 
+        last_name: acc.lastName, 
+        role: acc.role,
+        tenant_id: TENANT_ID 
+      },
+      app_metadata: { 
+        role: acc.role,
+        tenant_id: TENANT_ID
+      }
     });
 
     if (authError) {

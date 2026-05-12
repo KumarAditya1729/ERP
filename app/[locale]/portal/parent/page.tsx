@@ -70,60 +70,69 @@ export default function ParentProactiveDashboard() {
         </div>
       </div>
 
-      {/* 3. Proactive Alerts Zone (THE CORE PILLAR) */}
+      {/* 3. Proactive Alerts Zone */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-white tracking-tight">Proactive Alerts</h3>
-
-        {/* Action Item: Absent */}
-        <div className="rounded-3xl border border-red-500/30 bg-red-950/40 p-5 backdrop-blur-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-wider text-sm">
-                <AlertTriangle className="w-5 h-5 fill-red-500 border-red-500 text-red-950" />
-                <span>Absent Attendance</span>
+        {(academics?.attendance || 100) < 85 && (
+          <div className="rounded-3xl border border-red-500/30 bg-red-950/40 p-5 backdrop-blur-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-red-500 font-bold uppercase tracking-wider text-sm">
+                  <AlertTriangle className="w-5 h-5 fill-red-500 border-red-500 text-red-950" />
+                  <span>Attendance Alert</span>
+                </div>
+                <div className="w-6 h-6 rounded-full bg-red-500 text-red-950 flex items-center justify-center font-bold text-sm">!</div>
               </div>
-              <div className="w-6 h-6 rounded-full bg-red-500 text-red-950 flex items-center justify-center font-bold text-sm">!</div>
+              <p className="text-slate-300 text-sm mb-4">Current Attendance is {academics.attendance}%. Minimum requirement is 85%.</p>
+              <div className="flex gap-3">
+                <button className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-semibold py-2.5 rounded-xl border border-red-500/30 transition-colors">
+                  View History
+                </button>
+                <button className="flex-1 bg-transparent hover:bg-white/5 text-slate-300 text-sm font-semibold py-2.5 rounded-xl border border-white/10 transition-colors">
+                  Contact School
+                </button>
+              </div>
             </div>
-            <p className="text-slate-300 text-sm mb-4">Today, 10:15 AM - Math Class</p>
-            <div className="flex gap-3">
-              <button className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-semibold py-2.5 rounded-xl border border-red-500/30 transition-colors">
-                Report Absence
-              </button>
-              <button className="flex-1 bg-transparent hover:bg-white/5 text-slate-300 text-sm font-semibold py-2.5 rounded-xl border border-white/10 transition-colors">
-                Contact School
+          </div>
+        )}
+
+        {(academics?.pendingFees || 0) > 0 && (
+          <div className="rounded-3xl border border-amber-500/30 bg-amber-950/40 p-5 backdrop-blur-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-amber-500 font-bold uppercase tracking-wider text-sm">
+                  <BellRing className="w-5 h-5 fill-amber-500 text-amber-950" />
+                  <span>Fee Warning</span>
+                </div>
+                <div className="w-6 h-6 rounded-full bg-amber-500 text-amber-950 flex items-center justify-center font-bold text-sm">!</div>
+              </div>
+              <p className="text-slate-300 text-sm mb-4">Pending Fee Payment: ₹{academics.pendingFees.toLocaleString()}</p>
+              <button className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-sm font-bold py-2.5 px-6 rounded-xl border border-amber-500/50 transition-colors flex items-center gap-2 w-max">
+                Pay Now <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Action Item: Fee Due */}
-        <div className="rounded-3xl border border-amber-500/30 bg-amber-950/40 p-5 backdrop-blur-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-amber-500 font-bold uppercase tracking-wider text-sm">
-                <BellRing className="w-5 h-5 fill-amber-500 text-amber-950" />
-                <span>Fee Warning</span>
+        {!academics?.pendingFees && academics?.attendance >= 85 && (
+           <div className="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 p-5 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                 <CheckCircle2 className="text-emerald-500 w-6 h-6" />
               </div>
-              <div className="w-6 h-6 rounded-full bg-amber-500 text-amber-950 flex items-center justify-center font-bold text-sm">!</div>
-            </div>
-            <p className="text-slate-300 text-sm mb-4">Tuition Fee Due: Oct 15th (5 Days Left)</p>
-            <button className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-sm font-bold py-2.5 px-6 rounded-xl border border-amber-500/50 transition-colors flex items-center gap-2 w-max">
-              Pay Now: $1,250 <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+              <p className="text-white font-bold text-sm">All Clear!</p>
+              <p className="text-slate-400 text-xs">No pending actions or critical alerts for your child.</p>
+           </div>
+        )}
       </section>
 
-      {/* 4. Reward / Dopamine Loop (Demo Line Chart) */}
       <section className="rounded-3xl border border-emerald-500/30 bg-emerald-950/30 p-5 backdrop-blur-sm relative overflow-hidden">
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-emerald-500/10 to-transparent pointer-events-none" />
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Math Performance</h3>
-          <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full px-2 py-0.5 text-xs font-bold">88%</span>
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Exam Performance</h3>
+          <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full px-2 py-0.5 text-xs font-bold">{loading ? '--' : (academics?.examAverage || 0)}%</span>
         </div>
-        <p className="text-emerald-400 text-sm mb-4">Last Test: 88% (Exceeding!)</p>
+        <p className="text-emerald-400 text-sm mb-4">Average score across all assessments.</p>
         
         {/* Rendering the neon SVG graph line from the mockup */}
         <div className="w-full h-24 mt-2 relative">
@@ -172,9 +181,11 @@ export default function ParentProactiveDashboard() {
             <span className="text-xl font-bold text-white line-clamp-1">{loading ? '--' : (academics?.assignmentsCompleted || 0)}</span>
           </div>
           
-          <div className="col-span-1 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex flex-col items-center justify-center text-center">
-            <span className="text-[10px] text-amber-400 font-medium mb-1 line-clamp-1">Fees</span>
-            <span className="text-xs font-bold text-amber-500 leading-tight">Paid</span>
+          <div className={`col-span-1 rounded-2xl p-3 flex flex-col items-center justify-center text-center ${ (academics?.pendingFees || 0) > 0 ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-emerald-500/10 border border-emerald-500/30'}`}>
+            <span className={`text-[10px] font-medium mb-1 line-clamp-1 ${ (academics?.pendingFees || 0) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>Fees</span>
+            <span className={`text-xs font-bold leading-tight ${ (academics?.pendingFees || 0) > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+               { (academics?.pendingFees || 0) > 0 ? `₹${academics.pendingFees}` : 'Paid' }
+            </span>
           </div>
 
           <div className="col-span-1 rounded-2xl bg-white/[0.03] border border-white/10 p-3 flex flex-col items-center justify-center text-center">

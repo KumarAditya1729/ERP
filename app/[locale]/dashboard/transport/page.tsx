@@ -24,10 +24,6 @@ export default function TransportPage() {
   const [showRouteForm, setShowRouteForm] = useState(false);
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
   
-  // demos
-  const [showSOS, setShowSOS] = useState(false);
-  const [showSpeedLog, setShowSpeedLog] = useState(false);
-  const [showGeo, setShowGeo] = useState(false);
   const [demoProgress, setdemoProgress] = useState(0);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,10 +33,6 @@ export default function TransportPage() {
 
   useEffect(() => {
     async function init() {
-      const seedRes = await seedTransportDatabase(); // Auto-seed demo data locally for demo if empty
-      if (seedRes && !seedRes.success) {
-        setLoadError(seedRes.error || 'Seed failed');
-      }
       
       const [res, analyticsRes] = await Promise.all([
         getTransportRoutes(),
@@ -110,30 +102,8 @@ export default function TransportPage() {
     setIsSubmitting(false);
   };
 
-  const selectedRoute = routes.find((r) => r.id === selected) || null;
+  const selectedRoute = routes.find((r) => r.id === selected) || routes[0] || null;
   const stops = selectedRoute?.transport_stops || [];
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin glow-violet"></div>
-        <p className="text-slate-400 font-semibold tracking-wider animate-pulse">CONNECTING TO FLEET...</p>
-      </div>
-    );
-  }
-
-  if (!selectedRoute) {
-    return (
-      <div className="p-8 text-center text-white bg-red-500/10 border border-red-500/20 rounded-xl mt-6 max-w-2xl mx-auto">
-        <h2 className="text-xl font-bold mb-2">No fleet data found</h2>
-        {loadError && (
-          <div className="mt-4 p-4 bg-black/40 rounded-lg text-left overflow-auto text-sm text-red-300 font-mono">
-            {loadError}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 animate-fade-in relative z-10">
@@ -384,20 +354,22 @@ export default function TransportPage() {
           <div className="grid sm:grid-cols-2 gap-4">
              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 group hover:border-white/10 transition-colors">
                <p className="text-xs text-slate-400 mb-1">Monthly Fuel Exp.</p>
-               <p className="text-2xl font-bold text-white">₹{(fleetDocs?.totalFuelSpent || 24800).toLocaleString()}</p>
-               <p className="text-[10px] text-emerald-400 mt-1">Avg KMPL: {fleetDocs?.averageKMPL || 8.4} km/l</p>
+               <p className="text-2xl font-bold text-white">
+                 {fleetDocs?.totalFuelSpent > 0 ? `₹${fleetDocs.totalFuelSpent.toLocaleString()}` : '₹0'}
+               </p>
+               <p className="text-[10px] text-emerald-400 mt-1">Avg KMPL: {fleetDocs?.averageKMPL || '—'} km/l</p>
                <div className="mt-3 pt-3 border-t border-white/[0.04]">
                  <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-                   <span>Budget Utilization</span><span className="text-white">68%</span>
+                   <span>Budget Utilization</span><span className="text-white">{fleetDocs?.totalFuelSpent > 0 ? 'Dynamic' : '0%'}</span>
                  </div>
                  <div className="w-full h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-                   <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full" style={{width: '68%'}}></div>
+                   <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full" style={{width: fleetDocs?.totalFuelSpent > 0 ? '20%' : '0%'}}></div>
                  </div>
                </div>
              </div>
              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4">
                 <p className="text-xs text-slate-400 mb-3">Upcoming Services (Next 15 Days)</p>
-                {(fleetDocs?.maintenance?.length > 0) ? (
+                {fleetDocs?.maintenance?.length > 0 ? (
                   <div className="space-y-2">
                      {fleetDocs.maintenance.map((m: any) => (
                        <div key={m.id} className="flex justify-between items-center text-xs">
@@ -408,17 +380,8 @@ export default function TransportPage() {
                      ))}
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {[
-                      { bus: 'DL-01-GA-2234', type: 'Oil Change', due: '28 Apr' },
-                      { bus: 'DL-01-GA-1876', type: 'Tyre Check', due: '02 May' },
-                    ].map((m, i) => (
-                      <div key={i} className="flex justify-between items-center text-xs">
-                        <span className="text-white font-medium">{m.bus}</span>
-                        <span className="text-slate-400">{m.type}</span>
-                        <span className="text-amber-400">Due: {m.due}</span>
-                      </div>
-                    ))}
+                  <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                    <p className="text-[10px] text-slate-500">No scheduled services</p>
                   </div>
                 )}
              </div>
@@ -433,7 +396,7 @@ export default function TransportPage() {
                {fleetDocs?.activeAlerts || 0} Alerts
              </span>
            </div>
-           {(fleetDocs?.incidents?.length > 0) ? (
+           {fleetDocs?.incidents?.length > 0 ? (
              <div className="space-y-3">
                {fleetDocs.incidents.map((inc: any) => (
                  <div key={inc.id} className="text-xs bg-red-500/10 border border-red-500/20 rounded-xl p-3">
@@ -464,7 +427,7 @@ export default function TransportPage() {
             <h2 className="text-sm font-bold text-white">Fleet Status</h2>
           </div>
           <div className="divide-y divide-white/[0.04]">
-            {routes.map((r) => {
+            {routes.length > 0 ? routes.map((r) => {
               const cfg = statusCfg[r.status];
               return (
                 <button
@@ -484,14 +447,13 @@ export default function TransportPage() {
                       <p className="text-[10px] text-slate-400 mt-1">{r.enrolled_students}/{r.capacity} seats</p>
                     </div>
                   </div>
-                  {r.status === 'on-route' && (
-                    <div className="mt-2 flex items-center gap-1.5">
-                      <span className="text-[10px] text-amber-400">ETA school: 08:45 AM</span>
-                    </div>
-                  )}
                 </button>
               );
-            })}
+            }) : (
+              <div className="p-8 text-center">
+                <p className="text-xs text-slate-500">No active routes. Click '+ Add Route' to begin.</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -518,26 +480,34 @@ export default function TransportPage() {
               {/* Bus route path */}
               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 280">
                 <path d="M 800 229 Q 600 190 400 140 Q 280 110 150 80" stroke="#7C3AED" strokeWidth="3" fill="none" strokeDasharray="8 4" strokeLinecap="round"/>
-                {/* Stops */}
-                {[
-                  { x: 750, y: 220, done: true },
-                  { x: 560, y: 180, done: true },
-                  { x: 400, y: 140, done: false, current: true },
-                  { x: 260, y: 110, done: false },
-                  { x: 140, y: 78, done: false },
-                ].map((s, i) => (
-                  <g key={i}>
-                    <circle cx={s.x} cy={s.y} r="8" fill={s.current ? '#F59E0B' : s.done ? '#10B981' : '#374151'} stroke="white" strokeWidth="2"/>
-                    {s.current && <circle cx={s.x} cy={s.y} r="14" fill="none" stroke="#F59E0B" strokeWidth="1.5" opacity="0.6"><animate attributeName="r" from="10" to="20" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite"/></circle>}
-                  </g>
-                ))}
-                {/* Bus icon */}
-                <rect x="387" y="127" width="26" height="18" rx="4" fill="#7C3AED"/>
-                <text x="398" y="140" textAnchor="middle" fill="white" fontSize="10">🚌</text>
+                 {/* Stops from DB */}
+                 {stops.map((s: any, i: number) => {
+                    const x = 750 - (i * 150);
+                    const y = 220 - (i * 40);
+                    return (
+                      <g key={i}>
+                        <circle cx={x} cy={y} r="8" fill={s.status === 'current' ? '#F59E0B' : s.status === 'done' ? '#10B981' : '#374151'} stroke="white" strokeWidth="2"/>
+                        {s.status === 'current' && <circle cx={x} cy={y} r="14" fill="none" stroke="#F59E0B" strokeWidth="1.5" opacity="0.6"><animate attributeName="r" from="10" to="20" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite"/></circle>}
+                      </g>
+                    );
+                 })}
+                 {/* Bus icon (dynamic position) */}
+                 {(() => {
+                   const currentIdx = stops.findIndex((s: any) => s.status === 'current');
+                   const busIdx = currentIdx !== -1 ? currentIdx : 0;
+                   const x = 750 - (busIdx * 150) - 13;
+                   const y = 220 - (busIdx * 40) - 13;
+                   return (
+                    <>
+                      <rect x={x} y={y} width="26" height="18" rx="4" fill="#7C3AED"/>
+                      <text x={x+11} y={y+13} textAnchor="middle" fill="white" fontSize="10">🚌</text>
+                    </>
+                   );
+                 })()}
               </svg>
               {/* Legend */}
               <div className="absolute bottom-3 left-3 glass rounded-xl px-3 py-2">
-                <p className="text-[10px] font-bold text-white mb-1">Route 1 – North Zone</p>
+                <p className="text-[10px] font-bold text-white mb-1">{selectedRoute?.name || 'Live Tracker'}</p>
                 <div className="flex gap-3">
                   <span className="flex items-center gap-1 text-[9px] text-emerald-400">● Done</span>
                   <span className="flex items-center gap-1 text-[9px] text-amber-400">● Current</span>
@@ -553,11 +523,11 @@ export default function TransportPage() {
           {/* Route stop timeline */}
           <div className="glass border border-white/[0.08] rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-white">{selectedRoute.name} — Stop Timeline</h2>
-              <span className={`badge ${statusCfg[selectedRoute.status]?.badge || 'badge-blue'}`}>{statusCfg[selectedRoute.status]?.label || selectedRoute.status}</span>
+              <h2 className="text-sm font-bold text-white">{selectedRoute?.name || 'Fleet'} — Stop Timeline</h2>
+              <span className={`badge ${statusCfg[selectedRoute?.status || 'at-school']?.badge || 'badge-blue'}`}>{statusCfg[selectedRoute?.status || 'at-school']?.label || 'Ready'}</span>
             </div>
             <div className="space-y-0">
-              {stops.map((s: any, i: number) => (
+              {stops.length > 0 ? stops.map((s: any, i: number) => (
                 <div key={i} className="flex items-start gap-4">
                   <div className="flex flex-col items-center">
                     <div className={`w-3 h-3 rounded-full shrink-0 mt-1 ${stopCfg[s.status]} ${s.status === 'current' ? 'ring-2 ring-amber-400/40' : ''}`} />
@@ -573,115 +543,70 @@ export default function TransportPage() {
                     <p className={`text-xs ${s.status === 'done' ? 'text-emerald-400' : s.status === 'current' ? 'text-amber-400' : 'text-slate-600'}`}>{s.scheduled_time}</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="py-8 text-center border border-dashed border-white/5 rounded-xl">
+                  <p className="text-xs text-slate-500">No stops configured for this route.</p>
+                </div>
+              )}
             </div>
 
             {/* Driver + Bus info */}
-            <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 gap-4">
-               <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Driver</p>
-                <p className="text-sm font-semibold text-white">{selectedRoute.driver_name}</p>
-                <p className="text-xs text-slate-400">License: DL-****-2019</p>
+            {selectedRoute && (
+              <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Driver</p>
+                  <p className="text-sm font-semibold text-white">{selectedRoute?.driver_name || 'Unassigned'}</p>
+                  <p className="text-xs text-slate-400">License: {selectedRoute?.driver_name ? 'Verified' : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Bus</p>
+                  <p className="text-sm font-semibold text-white">{selectedRoute?.bus_number || '—'}</p>
+                  <p className="text-xs text-slate-400">{selectedRoute?.enrolled_students || 0}/{selectedRoute?.capacity || 0} students</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Bus</p>
-                <p className="text-sm font-semibold text-white">{selectedRoute.bus_number}</p>
-                <p className="text-xs text-slate-400">{selectedRoute.enrolled_students}/{selectedRoute.capacity} students</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* SOS / Safety panel */}
-      <div className="glass border border-red-500/20 bg-gradient-to-br from-red-600/5 to-red-900/5 rounded-2xl p-5">
+      <div className="glass border border-white/[0.08] bg-gradient-to-br from-violet-600/5 to-indigo-900/5 rounded-2xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-bold text-white">🛡️ Safety Controls</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Emergency tools for transport safety management</p>
+            <h2 className="text-sm font-bold text-white">🛰️ GPS & Fleet Simulation</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Control live vehicle telemetry and route progression</p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <button id="sos-btn" onClick={handleSOS} className="text-xs text-red-400 font-bold glass border border-red-500/30 rounded-xl px-4 py-2 hover:bg-red-500/10 transition-colors">🆘 Trigger SOS Alert</button>
-            <button id="overspeed-btn" onClick={() => setShowSpeedLog(true)} className="text-xs text-amber-400 font-bold glass border border-amber-500/30 rounded-xl px-4 py-2 hover:bg-amber-500/10 transition-colors">⚡ Speed Alerts Log</button>
-            <button id="geofence-btn" onClick={() => setShowGeo(true)} className="text-xs text-violet-400 font-bold glass border border-violet-500/30 rounded-xl px-4 py-2 hover:bg-violet-500/10 transition-colors">📍 Geofence Settings</button>
+            <div className="flex items-center gap-2 glass px-3 py-1.5 rounded-xl border border-white/5">
+               <span className="text-[10px] text-slate-500 font-bold uppercase">Speed</span>
+               <span className="text-sm font-bold text-emerald-400">{selectedRoute?.status === 'on-route' ? '42' : '0'} <span className="text-[10px] text-slate-500">km/h</span></span>
+            </div>
+            <button 
+              onClick={async () => {
+                const currentIdx = stops.findIndex((s: any) => s.status === 'current');
+                const nextIdx = currentIdx === -1 ? 0 : currentIdx + 1;
+                if (nextIdx < stops.length) {
+                   if (currentIdx !== -1) await updateStopStatus(stops[currentIdx].id, 'done');
+                   await updateStopStatus(stops[nextIdx].id, 'current');
+                   if (selectedRoute?.status !== 'on-route') await updateRouteStatus(selectedRoute!.id, 'on-route');
+                   showToast(`Bus advanced to ${stops[nextIdx].stop_name}`);
+                   // Refresh locally
+                   setRoutes(prev => prev.map(r => r.id === selected ? { ...r, status: 'on-route', transport_stops: r.transport_stops.map((s: any, idx: number) => idx === nextIdx ? { ...s, status: 'current' } : idx === currentIdx ? { ...s, status: 'done' } : s) } : r));
+                } else {
+                   showToast('Bus has reached the final stop.');
+                   await updateRouteStatus(selectedRoute!.id, 'at-school');
+                   setRoutes(prev => prev.map(r => r.id === selected ? { ...r, status: 'at-school' } : r));
+                }
+              }}
+              className="text-xs text-violet-400 font-bold glass border border-violet-500/30 rounded-xl px-4 py-2 hover:bg-violet-500/10 transition-colors"
+            >
+              ⏭️ Advance to Next Stop
+            </button>
+            <button id="sos-btn" onClick={handleSOS} className="text-xs text-red-400 font-bold glass border border-red-500/30 rounded-xl px-4 py-2 hover:bg-red-500/10 transition-colors">🆘 SOS Alert</button>
           </div>
         </div>
       </div>
 
-      {/* Deep demo: SOS Trigger */}
-      {showSOS && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/90 backdrop-blur-md animate-fade-in">
-          <div className="glass border border-red-500/50 rounded-3xl p-8 max-w-sm w-full text-center relative overflow-hidden bg-red-900/20">
-            <h2 className="text-3xl font-extrabold text-red-500 mb-2">{demoProgress >= 100 ? 'SOS Dispatched!' : 'Initiating SOS Alert'}</h2>
-            {demoProgress < 100 ? (
-              <div className="space-y-4 mt-6">
-                <p className="text-sm text-red-300">Triangulating last active GPS coordinates and mapping emergency numbers...</p>
-                <div className="w-full bg-red-950 rounded-full h-3 mb-2 border border-red-900">
-                  <div className="bg-red-500 h-3 rounded-full transition-all duration-300" style={{ width: `${demoProgress}%` }} />
-                </div>
-              </div>
-            ) : (
-               <div className="mt-6">
-                 <p className="text-red-300 text-sm mb-5">Command verified. Emergency broadcast deployed via SMS to school admins and parents of Route participants.</p>
-                 <button onClick={() => setShowSOS(false)} className="bg-red-500 hover:bg-red-600 text-white w-full py-3 rounded-xl font-bold">Acknowledge</button>
-               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Deep demo: Speed Alerts Log */}
-      {showSpeedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/80 backdrop-blur-md animate-fade-in">
-          <div className="glass border border-amber-500/30 rounded-2xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-bold text-white mb-4">⚡ Driver Speed Telemetry Logs</h2>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-               {[
-                 { vehicle: 'DL-01-GA-1876', date: 'Today, 08:42 AM', speed: '68 km/h', limit: '50 km/h', zone: 'School Zone 1' },
-                 { vehicle: 'DL-01-GA-3321', date: 'Yesterday, 14:15 PM', speed: '72 km/h', limit: '60 km/h', zone: 'Highway Link' }
-               ].map((log, i) => (
-                 <div key={i} className="p-3 border border-amber-500/20 bg-amber-500/5 rounded-xl flex justify-between items-center">
-                    <div>
-                       <p className="text-sm font-bold text-amber-400">{log.vehicle}</p>
-                       <p className="text-xs text-slate-400">Exceeded {log.limit} limit in {log.zone}</p>
-                    </div>
-                    <div className="text-right">
-                       <p className="text-lg font-mono text-red-400">{log.speed}</p>
-                       <p className="text-[10px] text-slate-500">{log.date}</p>
-                    </div>
-                 </div>
-               ))}
-               <div className="p-4 text-center border border-dashed border-white/10 rounded-xl text-slate-500 text-sm">No other speed protocol breaches recorded.</div>
-            </div>
-            <button onClick={() => setShowSpeedLog(false)} className="btn-secondary w-full py-2 mt-4 text-sm">Close Telemetry</button>
-          </div>
-        </div>
-      )}
-
-      {/* Deep demo: Geofence Builder */}
-      {showGeo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#080C1A]/80 backdrop-blur-md animate-fade-in">
-          <div className="glass border border-violet-500/30 rounded-2xl w-full max-w-xl overflow-hidden">
-             <div className="h-48 bg-slate-800 relative flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }} />
-                <div className="w-32 h-32 rounded-full border-2 border-violet-400 bg-violet-500/20 absolute animate-pulse"></div>
-                <p className="z-10 text-violet-300 font-mono text-sm">[ Map Interface Rendered ]</p>
-             </div>
-             <div className="p-6">
-                <h2 className="text-lg font-bold text-white mb-2">📍 Sector 14 Boundary Configuration</h2>
-                <p className="text-sm text-slate-400 mb-4">Adjust the radius to trigger alerts when fleet vehicles enter or exit the designated school zone perimeter.</p>
-                <div className="mb-6">
-                   <label className="text-xs text-slate-400 mb-1 flex justify-between"><span>Alert Radius</span> <span className="text-violet-400">1.5 km</span></label>
-                   <input type="range" min="1" max="10" defaultValue="1.5" className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
-                </div>
-                <div className="flex gap-3">
-                   <button onClick={() => { setShowGeo(false); showToast('Geofence constraints synced with vehicle modems.'); }} className="btn-primary flex-1 py-2 text-sm">Save Geofence</button>
-                   <button onClick={() => setShowGeo(false)} className="btn-secondary flex-1 py-2 text-sm">Cancel</button>
-                </div>
-             </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast Notification */}
       {toast && (

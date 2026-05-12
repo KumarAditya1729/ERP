@@ -31,7 +31,15 @@ export default function CommunicationPage() {
   const fetchNotices = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('notices').select('*').order('created_at', { ascending: false });
+      const { data: { user } } = await supabase.auth.getUser();
+      const tenantId = user?.app_metadata?.tenant_id;
+      if (!tenantId) return;
+
+      const { data, error } = await supabase
+        .from('notices')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       if (data) setNotices(data);
     } catch (err: any) {
@@ -45,9 +53,13 @@ export default function CommunicationPage() {
     fetchNotices();
     // Fetch real audience counts
     async function loadCounts() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const tenantId = user?.app_metadata?.tenant_id;
+      if (!tenantId) return;
+
       const [studentsRes, staffRes] = await Promise.all([
-        supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['staff', 'teacher', 'admin']),
+        supabase.from('students').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'active'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('role', ['staff', 'teacher', 'admin']),
       ]);
       setAudienceCounts({
         students: studentsRes.count || 0,
