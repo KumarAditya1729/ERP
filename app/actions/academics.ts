@@ -45,6 +45,12 @@ export async function createHomeworkAssignment(formData: any) {
     const { supabaseAdmin, profile, tenantId } = await getAdminClientAndTenant();
     const { title, subject, class_name, due_date, instructions } = formData;
 
+    const { count } = await supabaseAdmin
+      .from('students')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('class_name', class_name);
+
     const { data, error } = await supabaseAdmin.from('homework_assignments').insert({
       tenant_id: tenantId,
       title,
@@ -54,13 +60,10 @@ export async function createHomeworkAssignment(formData: any) {
       due_date,
       instructions,
       status: 'active',
-      total_students: 30 // MVP default
+      total_students: count || 0
     }).select().single();
 
     if (error) throw error;
-
-    // Removed mock data insertion for production safety
-    // In production, real students would be fetched and submissions initialized directly or populated lazily.
 
     revalidatePath('/', 'layout');
     revalidatePath('/', 'layout');

@@ -18,12 +18,11 @@ export default function SaaSLayout({ children }: { children: React.ReactNode }) 
         router.push('/login');
         return;
       }
-      // Hardcoded Super Admin security check
-      if (user.email !== 'aditya@nexschool.com' && user.email !== 'founder@nexschool.com') {
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (!prof || prof.role !== 'superadmin') {
          router.push('/dashboard');
          return;
       }
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setProfile(prof);
     }
     loadUser();

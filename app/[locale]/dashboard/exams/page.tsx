@@ -131,7 +131,6 @@ export default function ExamsPage() {
     if (!selectedExam) return;
     setSaving(true);
     const toInsert = marksData.flatMap((s) => {
-      if (s.student_id.startsWith('mock')) return [];
       return ['Math', 'Science', 'English', 'Hindi', 'Social'].map((subj) => ({
         student_id: s.student_id,
         exam_id: selectedExam,

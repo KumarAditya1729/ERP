@@ -1,23 +1,47 @@
 'use client';
 import Image from 'next/image';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, BellRing, AlertTriangle, ArrowRight, LineChart, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import { getParentAcademics } from '@/app/actions/academics';
 
 export default function ParentProactiveDashboard() {
+  const [profile, setProfile] = useState<any>(null);
+  const [academics, setAcademics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        setProfile(prof);
+        
+        const res = await getParentAcademics();
+        if (res.success) {
+          setAcademics(res.data);
+        }
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
   return (
     <div className="space-y-6 pb-20">
       
       {/* 1. Header Area */}
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
             <User className="text-slate-400 w-6 h-6" />
           </div>
           <div>
             <p className="text-sm text-slate-400 font-medium tracking-wide">EduParent Portal</p>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Welcome, Sarah!</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Welcome, {profile?.first_name || 'Parent'}!</h1>
           </div>
         </div>
         <button className="w-12 h-12 rounded-2xl bg-violet-600/20 text-violet-400 flex items-center justify-center border border-violet-500/20 relative">
@@ -31,14 +55,13 @@ export default function ParentProactiveDashboard() {
         <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-emerald-500/10 opacity-50" />
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-emerald-500/50 overflow-hidden shrink-0">
-              {/* Placeholder student photo via Unsplash */ }
-              <Image src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=150&q=80" alt="Chloe" className="w-full h-full object-cover" width={120} height={32} priority />
+            <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-emerald-500/50 flex items-center justify-center text-xl overflow-hidden shrink-0">
+               {loading ? '...' : '🎓'}
             </div>
             <div>
               <p className="text-sm text-slate-400 font-medium">Student:</p>
-              <h2 className="text-2xl font-bold text-white">Chloe Chen</h2>
-              <p className="text-sm text-slate-300">Grade 7</p>
+              <h2 className="text-2xl font-bold text-white">{loading ? 'Loading...' : (academics?.timetable?.[0]?.class_name || 'Your Child')}</h2>
+              <p className="text-sm text-slate-300">Active Enrollment</p>
             </div>
           </div>
           <div className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold tracking-wide">
@@ -141,22 +164,22 @@ export default function ParentProactiveDashboard() {
           
           <div className="col-span-1 rounded-2xl bg-white/[0.03] border border-emerald-500/20 p-3 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-emerald-400 font-medium mb-1 line-clamp-1">Attendance</span>
-            <span className="text-xl font-bold text-white">92%</span>
+            <span className="text-xl font-bold text-white">{loading ? '--' : (academics?.attendance || 100)}%</span>
           </div>
           
           <div className="col-span-1 rounded-2xl bg-white/[0.03] border border-white/10 p-3 flex flex-col items-center justify-center text-center">
-            <span className="text-[10px] text-slate-400 font-medium mb-1 line-clamp-1">Grades</span>
-            <span className="text-xl font-bold text-white line-clamp-1">A-</span>
+            <span className="text-[10px] text-slate-400 font-medium mb-1 line-clamp-1">Homework</span>
+            <span className="text-xl font-bold text-white line-clamp-1">{loading ? '--' : (academics?.assignmentsCompleted || 0)}</span>
           </div>
           
           <div className="col-span-1 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-amber-400 font-medium mb-1 line-clamp-1">Fees</span>
-            <span className="text-xs font-bold text-amber-500 leading-tight">Pending</span>
+            <span className="text-xs font-bold text-amber-500 leading-tight">Paid</span>
           </div>
 
           <div className="col-span-1 rounded-2xl bg-white/[0.03] border border-white/10 p-3 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-slate-400 font-medium mb-1 leading-tight">Upcoming</span>
-            <span className="text-xs font-bold text-white line-clamp-1">Events</span>
+            <span className="text-xs font-bold text-white line-clamp-1">{loading ? '--' : (academics?.timetable?.length || 0)} Classes</span>
           </div>
 
         </div>

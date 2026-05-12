@@ -60,7 +60,7 @@ export default function Footer() {
               <ul className="space-y-2.5">
                 {items.map((item) => (
                   <li key={item}>
-                    <a href="#" className="text-sm text-slate-500 hover:text-white transition-colors duration-150">
+                    <a href="/" className="text-sm text-slate-500 hover:text-white transition-colors duration-150">
                       {item}
                     </a>
                   </li>
@@ -77,7 +77,7 @@ export default function Footer() {
           </p>
           <div className="flex gap-6">
             {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((t) => (
-              <a key={t} href="#" className="text-xs text-slate-600 hover:text-slate-300 transition-colors">
+              <a key={t} href="/" className="text-xs text-slate-600 hover:text-slate-300 transition-colors">
                 {t}
               </a>
             ))}
