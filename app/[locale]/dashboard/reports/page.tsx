@@ -29,6 +29,7 @@ export default function ReportsPage() {
   const displayData = data;
   const funnel = displayData?.admissions || {};
   const maxAdmissions = Math.max(funnel.Applied || 1, 1);
+  const isEmptyDB = process.env.NEXT_PUBLIC_ENABLE_DEMO_MODE === 'true';
 
   const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 

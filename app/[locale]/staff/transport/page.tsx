@@ -7,7 +7,6 @@ import {
   updateStopStatus,
   updateEnrolledStudents,
   deleteTransportRoute,
-  seedTransportDatabase,
 } from '@/app/actions/transport';
 
 type Stop = {
@@ -44,7 +43,6 @@ const STOP_STATUS = {
 export default function StaffTransportPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
   const [expandedRoute, setExpandedRoute] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);

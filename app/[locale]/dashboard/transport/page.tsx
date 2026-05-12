@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getTransportRoutes, seedTransportDatabase, getFleetAnalytics, addTransportRoute, broadcastTransportAlert } from '@/app/actions/transport';
+import { getTransportRoutes, getFleetAnalytics, addTransportRoute, broadcastTransportAlert, updateRouteStatus, updateStopStatus } from '@/app/actions/transport';
 
 const statusCfg: Record<string, { badge: string; dot: string; label: string }> = {
   'on-route': { badge: 'badge-green', dot: 'bg-emerald-400', label: 'On Route' },
@@ -23,6 +23,7 @@ export default function TransportPage() {
 
   const [showRouteForm, setShowRouteForm] = useState(false);
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
+  const [showSOS, setShowSOS] = useState(false);
   
   const [demoProgress, setdemoProgress] = useState(0);
 
@@ -451,7 +452,7 @@ export default function TransportPage() {
               );
             }) : (
               <div className="p-8 text-center">
-                <p className="text-xs text-slate-500">No active routes. Click '+ Add Route' to begin.</p>
+                <p className="text-xs text-slate-500">No active routes. Click &apos;+ Add Route&apos; to begin.</p>
               </div>
             )}
           </div>

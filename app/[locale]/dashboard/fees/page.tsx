@@ -77,7 +77,7 @@ export default function FeesPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchFees, supabase]);
+  }, [fetchFees, fetchFeeStructure, supabase]);
 
   const handleBulkRemind = async () => {
      setIsReminding(true);
