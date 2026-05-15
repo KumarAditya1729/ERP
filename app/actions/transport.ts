@@ -292,6 +292,7 @@ export async function getFleetAnalytics() {
     return {
       success: true,
       data: {
+        tenantId,
         totalFuelSpent: fuelLogs.reduce((a: number, b: any) => a + (b.total_cost || 0), 0),
         averageKMPL: fuelLogs.length > 0 ? (fuelLogs.reduce((a: number, b: any) => a + (b.distance_km / (b.fuel_liters || 1)), 0) / fuelLogs.length).toFixed(1) : '—',
         activeAlerts: incidents.length + maintenance.length,

@@ -12,6 +12,8 @@ interface Submission {
   status: string; // 'pending' | 'missing' | 'graded'
   score: string | null;
   submitted_at: string | null;
+  homework_submission_files?: { id: string; file_name: string; file_url: string; uploaded_at: string }[];
+  homework_comments?: { id: string | number; author_role: string; comment_text: string; created_at: string }[];
 }
 
 interface Assignment {
@@ -59,6 +61,10 @@ export default function HomeworkPage() {
   // Grade form tracking
   const [gradingSubId, setGradingSubId] = useState<string | null>(null);
   const [gradeInput, setGradeInput] = useState('');
+  
+  // View submission tracking
+  const [viewingSub, setViewingSub] = useState<any>(null);
+  const [commentInput, setCommentInput] = useState('');
 
   // ─── Show toast helper ────────────────────────────────────────────────────
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -92,7 +98,7 @@ export default function HomeworkPage() {
       if (!selected) return;
       const { data } = await supabase
         .from('homework_submissions')
-        .select('*')
+        .select('*, homework_submission_files(*), homework_comments(*)')
         .eq('assignment_id', selected)
         .order('student_name', { ascending: true });
       if (data) setSubmissions(data);
@@ -144,6 +150,28 @@ export default function HomeworkPage() {
     if (res.success) {
       showToast(`Review State changed to ${status}`);
       setAssignments(prev => prev.map(a => a.id === selected ? { ...a, status } : a));
+    }
+  };
+
+  const handleTeacherComment = async (subId: string) => {
+    if (!commentInput.trim()) return;
+    const { error } = await supabase.from('homework_comments').insert({
+      tenant_id: (assignments[0] as any)?.tenant_id || '', // fallback
+      submission_id: subId,
+      author_id: (await supabase.auth.getUser()).data.user?.id,
+      author_role: 'teacher',
+      comment_text: commentInput
+    });
+    if (!error) {
+       showToast('Comment sent');
+       setCommentInput('');
+       // Update locally
+       setSubmissions(prev => prev.map(s => s.id === subId ? { ...s, homework_comments: [...(s.homework_comments || []), { id: Date.now(), comment_text: commentInput, author_role: 'teacher', created_at: new Date().toISOString() }] } : s));
+       if (viewingSub && viewingSub.id === subId) {
+          setViewingSub((prev: any) => ({ ...prev, homework_comments: [...(prev.homework_comments || []), { id: Date.now(), comment_text: commentInput, author_role: 'teacher', created_at: new Date().toISOString() }] }));
+       }
+    } else {
+       showToast('Error sending comment', 'error');
     }
   };
 
@@ -362,7 +390,10 @@ export default function HomeworkPage() {
                                 </div>
                               )}
                               {s.status === 'graded' && (
-                                <button className="text-xs text-slate-400 hover:text-white font-medium">👁 View</button>
+                                <button onClick={() => setViewingSub(s)} className="text-xs text-slate-400 hover:text-white font-medium">👁 View</button>
+                              )}
+                              {s.status === 'pending' && !isGrading && (s.homework_submission_files?.length ?? 0) > 0 && (
+                                <button onClick={() => setViewingSub(s)} className="text-xs text-cyan-400 hover:text-cyan-300 font-medium">📂 Files ({s.homework_submission_files?.length ?? 0})</button>
                               )}
                               {s.status === 'missing' && (
                                 <button onClick={() => showToast('Reminder Sent!', 'success')} className="text-xs text-amber-400 hover:text-amber-300 font-medium">📤 Remind</button>
@@ -377,6 +408,71 @@ export default function HomeworkPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* View Submission Modal */}
+      {viewingSub && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="glass-strong border border-white/10 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-slate-900/50">
+              <div>
+                <h3 className="text-lg font-bold text-white">{viewingSub.student_name}&apos;s Submission</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Submitted: {new Date(viewingSub.submitted_at).toLocaleString()}</p>
+              </div>
+              <button onClick={() => setViewingSub(null)} className="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              {/* Files */}
+              <div>
+                <h4 className="text-sm font-bold text-white mb-3">Attached Files</h4>
+                {viewingSub.homework_submission_files?.length === 0 ? (
+                   <p className="text-xs text-slate-500 italic">No files attached.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {viewingSub.homework_submission_files?.map((f: any) => (
+                      <div key={f.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">📄</span>
+                          <span className="text-sm text-white font-medium">{f.file_name}</span>
+                        </div>
+                        <a href={f.file_url} target="_blank" rel="noreferrer" className="text-xs text-cyan-400 hover:text-white px-3 py-1.5 bg-cyan-500/10 rounded-lg transition-colors">Download</a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Comments */}
+              <div>
+                <h4 className="text-sm font-bold text-white mb-3">Feedback & Comments</h4>
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 h-64 flex flex-col">
+                  <div className="flex-1 overflow-y-auto space-y-3 mb-4">
+                    {viewingSub.homework_comments?.map((c: any) => (
+                      <div key={c.id} className={`flex flex-col ${c.author_role === 'teacher' ? 'items-end' : 'items-start'}`}>
+                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${c.author_role === 'teacher' ? 'bg-violet-600 text-white rounded-tr-sm' : 'bg-white/10 text-slate-200 rounded-tl-sm'}`}>
+                          {c.comment_text}
+                        </div>
+                        <span className="text-[10px] text-slate-500 mt-1">{c.author_role.toUpperCase()} &middot; {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={commentInput}
+                      onChange={e => setCommentInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleTeacherComment(viewingSub.id)}
+                      placeholder="Type feedback here..."
+                      className="erp-input flex-1"
+                    />
+                    <button onClick={() => handleTeacherComment(viewingSub.id)} className="btn-primary px-4 py-2 text-sm">Send</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

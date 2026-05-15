@@ -3,16 +3,15 @@ import { useEffect, useState, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
 interface VehiclePosition {
-  vehicle_id: string
-  latitude: number
-  longitude: number
-  speed_kmh: number
-  heading: number
-  ignition_on: boolean
-  updated_at: string
-  vehicle_number?: string
-  driver_name?: string
-  route_name?: string
+  id: string
+  vehicle_model?: string
+  registration_number: string
+  last_latitude: number
+  last_longitude: number
+  last_speed: number
+  last_heading: number
+  last_battery?: number
+  last_ping_at: string
 }
 
 export function LiveTransportMap({ tenantId }: { tenantId: string }) {
@@ -40,13 +39,13 @@ export function LiveTransportMap({ tenantId }: { tenantId: string }) {
         {
           event: '*',
           schema: 'public',
-          table: 'gps_vehicle_latest',
+          table: 'transport_vehicles',
           filter: `tenant_id=eq.${tenantId}`
         },
         (payload) => {
           const updated = payload.new as VehiclePosition
           setVehicles(prev =>
-            prev.map(v => v.vehicle_id === updated.vehicle_id ? { ...v, ...updated } : v)
+            prev.map(v => v.id === updated.id ? { ...v, ...updated } : v)
           )
         }
       )
@@ -69,7 +68,7 @@ export function LiveTransportMap({ tenantId }: { tenantId: string }) {
     const mapEl = document.getElementById('transport-map')
     if (!mapEl) return
 
-    const center = { lat: vehicles[0].latitude, lng: vehicles[0].longitude }
+    const center = { lat: vehicles[0].last_latitude, lng: vehicles[0].last_longitude }
     const map = new (window as any).google.maps.Map(mapEl, {
       zoom: 13,
       center,
@@ -77,23 +76,21 @@ export function LiveTransportMap({ tenantId }: { tenantId: string }) {
     })
 
     vehicles.forEach(v => {
-      if (!v.latitude) return
+      if (!v.last_latitude) return
       const marker = new (window as any).google.maps.Marker({
-        position: { lat: v.latitude, lng: v.longitude },
+        position: { lat: v.last_latitude, lng: v.last_longitude },
         map,
-        title: v.vehicle_number ?? v.vehicle_id,
-        icon: { url: v.ignition_on ? '/bus-active.svg' : '/bus-parked.svg', scaledSize: new (window as any).google.maps.Size(40, 40) }
+        title: v.registration_number,
+        icon: { url: v.last_speed > 0 ? '/bus-active.svg' : '/bus-parked.svg', scaledSize: new (window as any).google.maps.Size(40, 40) }
       })
 
       const infoWindow = new (window as any).google.maps.InfoWindow({
         content: `
           <div style="padding:8px;color:black">
-            <strong>${v.vehicle_number ?? 'Bus'}</strong><br/>
-            Driver: ${v.driver_name ?? 'N/A'}<br/>
-            Route: ${v.route_name ?? 'N/A'}<br/>
-            Speed: ${Math.round(v.speed_kmh ?? 0)} km/h<br/>
-            ${v.ignition_on ? '🟢 Running' : '🔴 Stopped'}<br/>
-            Updated: ${new Date(v.updated_at).toLocaleTimeString()}
+            <strong>${v.registration_number}</strong><br/>
+            Speed: ${Math.round(v.last_speed ?? 0)} km/h<br/>
+            ${v.last_speed > 0 ? '🟢 Moving' : '🔴 Stopped'}<br/>
+            Updated: ${new Date(v.last_ping_at).toLocaleTimeString()}
           </div>
         `
       })
@@ -106,14 +103,14 @@ export function LiveTransportMap({ tenantId }: { tenantId: string }) {
     <div className="space-y-4">
       <div className="flex gap-3 overflow-x-auto pb-2">
         {vehicles.map(v => (
-          <div key={v.vehicle_id} className="flex-shrink-0 bg-white border rounded-lg p-3 min-w-[180px]">
+          <div key={v.id} className="flex-shrink-0 bg-white border rounded-lg p-3 min-w-[180px]">
             <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${v.ignition_on ? 'bg-green-500' : 'bg-gray-400'}`} />
-              <span className="font-semibold text-sm text-black">{v.vehicle_number}</span>
+              <span className={`w-2 h-2 rounded-full ${v.last_speed > 0 ? 'bg-green-500' : 'bg-gray-400'}`} />
+              <span className="font-semibold text-sm text-black">{v.registration_number}</span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">{v.route_name}</p>
-            <p className="text-xs text-gray-500">{Math.round(v.speed_kmh ?? 0)} km/h</p>
-            <p className="text-xs text-gray-400">{new Date(v.updated_at).toLocaleTimeString()}</p>
+            <p className="text-xs text-gray-500 mt-1">{v.vehicle_model || 'Bus'}</p>
+            <p className="text-xs text-gray-500">{Math.round(v.last_speed ?? 0)} km/h</p>
+            <p className="text-xs text-gray-400">{new Date(v.last_ping_at).toLocaleTimeString()}</p>
           </div>
         ))}
       </div>

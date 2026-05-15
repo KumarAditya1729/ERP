@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import BulkUploader from '@/components/BulkUploader';
 import StudentModal from '@/components/dashboard/StudentModal';
@@ -7,6 +8,7 @@ import StudentModal from '@/components/dashboard/StudentModal';
 const avatarColors = ['from-violet-600 to-purple-700', 'from-cyan-600 to-teal-700', 'from-emerald-600 to-green-700', 'from-amber-600 to-orange-700', 'from-pink-600 to-rose-700', 'from-blue-600 to-indigo-700'];
 
 export default function StudentsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState('all');
   const [students, setStudents] = useState<any[]>([]);
@@ -218,7 +220,7 @@ export default function StudentsPage() {
                     </td>
                      <td>
                        <div className="flex gap-2">
-                         <button className="text-xs text-violet-400 hover:text-violet-300 font-medium">View</button>
+                          <button onClick={() => router.push(`/dashboard/students/${s.id}`)} className="text-xs text-violet-400 hover:text-violet-300 font-medium">View 360°</button>
                          <button onClick={() => { setEditingStudent(s); setIsModalOpen(true); }} className="text-xs text-slate-400 hover:text-white">Edit</button>
                          <button onClick={() => openLinkModal(s)} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">Link Parent</button>
                        </div>

@@ -1,6 +1,6 @@
 -- 1. Create fee_structures table
 CREATE TABLE IF NOT EXISTS public.fee_structures (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
     class_group TEXT NOT NULL,
     tuition_fee NUMERIC DEFAULT 0,

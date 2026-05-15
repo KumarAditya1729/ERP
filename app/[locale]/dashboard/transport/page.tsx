@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getTransportRoutes, getFleetAnalytics, addTransportRoute, broadcastTransportAlert, updateRouteStatus, updateStopStatus } from '@/app/actions/transport';
+import { LiveTransportMap } from './LiveMap';
 
 const statusCfg: Record<string, { badge: string; dot: string; label: string }> = {
   'on-route': { badge: 'badge-green', dot: 'bg-emerald-400', label: 'On Route' },
@@ -472,65 +473,15 @@ export default function TransportPage() {
 
         {/* Map Placeholder + Route Detail */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Map demoup */}
-          <div className="glass border border-white/[0.08] rounded-2xl overflow-hidden" style={{ height: '280px' }}>
-            <div className="relative w-full h-full bg-gradient-to-br from-[#0f1f3d] to-[#0a1628] flex items-center justify-center overflow-hidden">
-              {/* Grid lines */}
-              <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#7C3AED" strokeWidth="0.5"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-              </svg>
-              {/* Road lines */}
-              <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 800 280">
-                <path d="M 0 140 Q 200 100 400 140 Q 600 180 800 140" stroke="#4B5563" strokeWidth="8" fill="none" strokeLinecap="round"/>
-                <path d="M 200 0 Q 280 100 320 140 Q 360 180 380 280" stroke="#4B5563" strokeWidth="6" fill="none" strokeLinecap="round"/>
-                <path d="M 500 0 Q 520 80 480 140 Q 440 200 460 280" stroke="#374151" strokeWidth="5" fill="none" strokeLinecap="round"/>
-              </svg>
-              {/* Bus route path */}
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 280">
-                <path d="M 800 229 Q 600 190 400 140 Q 280 110 150 80" stroke="#7C3AED" strokeWidth="3" fill="none" strokeDasharray="8 4" strokeLinecap="round"/>
-                 {/* Stops from DB */}
-                 {stops.map((s: any, i: number) => {
-                    const x = 750 - (i * 150);
-                    const y = 220 - (i * 40);
-                    return (
-                      <g key={i}>
-                        <circle cx={x} cy={y} r="8" fill={s.status === 'current' ? '#F59E0B' : s.status === 'done' ? '#10B981' : '#374151'} stroke="white" strokeWidth="2"/>
-                        {s.status === 'current' && <circle cx={x} cy={y} r="14" fill="none" stroke="#F59E0B" strokeWidth="1.5" opacity="0.6"><animate attributeName="r" from="10" to="20" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite"/></circle>}
-                      </g>
-                    );
-                 })}
-                 {/* Bus icon (dynamic position) */}
-                 {(() => {
-                   const currentIdx = stops.findIndex((s: any) => s.status === 'current');
-                   const busIdx = currentIdx !== -1 ? currentIdx : 0;
-                   const x = 750 - (busIdx * 150) - 13;
-                   const y = 220 - (busIdx * 40) - 13;
-                   return (
-                    <>
-                      <rect x={x} y={y} width="26" height="18" rx="4" fill="#7C3AED"/>
-                      <text x={x+11} y={y+13} textAnchor="middle" fill="white" fontSize="10">🚌</text>
-                    </>
-                   );
-                 })()}
-              </svg>
-              {/* Legend */}
-              <div className="absolute bottom-3 left-3 glass rounded-xl px-3 py-2">
-                <p className="text-[10px] font-bold text-white mb-1">{selectedRoute?.name || 'Live Tracker'}</p>
-                <div className="flex gap-3">
-                  <span className="flex items-center gap-1 text-[9px] text-emerald-400">● Done</span>
-                  <span className="flex items-center gap-1 text-[9px] text-amber-400">● Current</span>
-                  <span className="flex items-center gap-1 text-[9px] text-slate-400">● Upcoming</span>
-                </div>
+          {/* Real Live Map */}
+          <div className="glass border border-white/[0.08] rounded-2xl overflow-hidden p-1">
+            {fleetDocs?.tenantId ? (
+              <LiveTransportMap tenantId={fleetDocs.tenantId} />
+            ) : (
+              <div className="h-[280px] flex items-center justify-center text-slate-500">
+                Loading live map...
               </div>
-              <div className="absolute top-3 right-3 glass rounded-xl px-3 py-1.5">
-                <span className="text-[10px] text-emerald-400 font-bold">● LIVE</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Route stop timeline */}
@@ -582,43 +533,7 @@ export default function TransportPage() {
         </div>
       </div>
 
-      {/* SOS / Safety panel */}
-      <div className="glass border border-white/[0.08] bg-gradient-to-br from-violet-600/5 to-indigo-900/5 rounded-2xl p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-bold text-white">🛰️ GPS & Fleet Simulation</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Control live vehicle telemetry and route progression</p>
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <div className="flex items-center gap-2 glass px-3 py-1.5 rounded-xl border border-white/5">
-               <span className="text-[10px] text-slate-500 font-bold uppercase">Speed</span>
-               <span className="text-sm font-bold text-emerald-400">{selectedRoute?.status === 'on-route' ? '42' : '0'} <span className="text-[10px] text-slate-500">km/h</span></span>
-            </div>
-            <button 
-              onClick={async () => {
-                const currentIdx = stops.findIndex((s: any) => s.status === 'current');
-                const nextIdx = currentIdx === -1 ? 0 : currentIdx + 1;
-                if (nextIdx < stops.length) {
-                   if (currentIdx !== -1) await updateStopStatus(stops[currentIdx].id, 'done');
-                   await updateStopStatus(stops[nextIdx].id, 'current');
-                   if (selectedRoute?.status !== 'on-route') await updateRouteStatus(selectedRoute!.id, 'on-route');
-                   showToast(`Bus advanced to ${stops[nextIdx].stop_name}`);
-                   // Refresh locally
-                   setRoutes(prev => prev.map(r => r.id === selected ? { ...r, status: 'on-route', transport_stops: r.transport_stops.map((s: any, idx: number) => idx === nextIdx ? { ...s, status: 'current' } : idx === currentIdx ? { ...s, status: 'done' } : s) } : r));
-                } else {
-                   showToast('Bus has reached the final stop.');
-                   await updateRouteStatus(selectedRoute!.id, 'at-school');
-                   setRoutes(prev => prev.map(r => r.id === selected ? { ...r, status: 'at-school' } : r));
-                }
-              }}
-              className="text-xs text-violet-400 font-bold glass border border-violet-500/30 rounded-xl px-4 py-2 hover:bg-violet-500/10 transition-colors"
-            >
-              ⏭️ Advance to Next Stop
-            </button>
-            <button id="sos-btn" onClick={handleSOS} className="text-xs text-red-400 font-bold glass border border-red-500/30 rounded-xl px-4 py-2 hover:bg-red-500/10 transition-colors">🆘 SOS Alert</button>
-          </div>
-        </div>
-      </div>
+
 
 
       {/* Toast Notification */}

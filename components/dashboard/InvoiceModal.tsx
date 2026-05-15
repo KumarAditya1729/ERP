@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { createInvoice } from '@/app/actions/fees';
+import { generateMonthlyInvoiceForStudent } from '@/app/actions/fees';
 
 type InvoiceModalProps = {
   isOpen: boolean;
@@ -30,8 +30,9 @@ export default function InvoiceModal({ isOpen, onClose }: InvoiceModalProps) {
     setLoading(true);
     setErrorText('');
     
-    const formData = new FormData(e.currentTarget);
-    const res = await createInvoice(formData);
+    const studentId = (e.currentTarget.querySelector('[name="student_id"]') as HTMLSelectElement)?.value;
+    if (!studentId) { setErrorText('Please select a student.'); setLoading(false); return; }
+    const res = await generateMonthlyInvoiceForStudent(studentId);
 
     setLoading(false);
 

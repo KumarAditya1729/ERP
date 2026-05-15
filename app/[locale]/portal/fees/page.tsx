@@ -1,104 +1,183 @@
-import { createClient } from '@/lib/supabase/server';
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
-import { redirect } from 'next/navigation';
-import PayNowButton from '@/components/portal/PayNowButton';
+'use client';
 
-export default async function PortalFeesPage() {
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { createRazorpayOrderForInvoice, verifyRazorpayPayment } from '@/app/actions/fees';
+import { generateAndUploadInvoicePdf, getReceiptPdfDownloadUrl } from '@/app/actions/feesPdf';
+
+export default function PortalFeesPage() {
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+  
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
 
-  const supabaseAdmin = createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  // Fetch linked students
-  const { data: parentLinks } = await supabaseAdmin
-    .from('parent_links')
-    .select('student_id')
-    .eq('parent_id', user.id);
+  async function fetchData() {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const tenantId = user.app_metadata?.tenant_id;
+    
+    const { data } = await supabase.from('fee_invoices')
+      .select('*, students(first_name, last_name, class_grade, section)')
+      .eq('tenant_id', tenantId)
+      .order('due_date', { ascending: true });
 
-  const studentIds = parentLinks?.map(l => l.student_id) || [];
-
-  if (studentIds.length === 0) {
-    return (
-      <div className="p-5 pt-8 text-center animate-fade-in">
-        <p className="text-4xl mb-4">💳</p>
-        <h2 className="text-white font-bold text-xl mb-2">No student linked</h2>
-        <p className="text-slate-400 text-sm">Please ask your school to link a student profile to see pending fees.</p>
-      </div>
-    );
+    if (data) setInvoices(data);
+    setLoading(false);
   }
 
-  // Fetch fees for these students
-  const { data: fees } = await supabaseAdmin
-    .from('fees')
-    .select('*, students(first_name, last_name)')
-    .in('student_id', studentIds)
-    .order('due_date', { ascending: false });
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (document.getElementById('razorpay-script')) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'razorpay-script';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
-  const pendingFees = fees?.filter(f => f.status === 'pending') || [];
-  const paidFees = fees?.filter(f => f.status === 'paid') || [];
+  const handlePayNow = async (invoice: any) => {
+    setIsProcessing(invoice.id);
+    const scriptLoaded = await loadRazorpayScript();
+    
+    if (!scriptLoaded) {
+      alert('Failed to load payment gateway. Please check your connection.');
+      setIsProcessing(null);
+      return;
+    }
+
+    const res = await createRazorpayOrderForInvoice(invoice.id);
+    
+    if (!res.success || res.amount === undefined) {
+      alert(res.error || 'Failed to initialize payment.');
+      setIsProcessing(null);
+      return;
+    }
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+      amount: res.amount * 100,
+      currency: "INR",
+      name: "NexSchool ERP",
+      description: `Payment for ${invoice.invoice_number}`,
+      order_id: res.orderId,
+      handler: async function (response: any) {
+        const verifyRes = await verifyRazorpayPayment(
+          response.razorpay_order_id,
+          response.razorpay_payment_id,
+          response.razorpay_signature,
+          res.paymentId
+        );
+        
+        if (verifyRes.success) {
+          alert("Payment Successful!");
+          fetchData();
+        } else {
+          alert("Payment Verification Failed: " + verifyRes.error);
+        }
+        setIsProcessing(null);
+      },
+      prefill: {
+        name: invoice.students?.first_name + " " + invoice.students?.last_name,
+      },
+      theme: {
+        color: "#8b5cf6"
+      }
+    };
+
+    const rzp = new (window as any).Razorpay(options);
+    rzp.on('payment.failed', function (response: any){
+      alert("Payment Failed. Reason: " + response.error.description);
+      setIsProcessing(null);
+    });
+    rzp.open();
+  };
 
   return (
-    <div className="p-5 space-y-6 pt-8 animate-fade-in">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-bold text-white">Fee Management</h1>
-        <span className="badge badge-purple">Session 2026</span>
-      </div>
+    <div className="space-y-6 animate-fade-in p-6">
+      <h1 className="text-2xl font-bold text-white">My Fees & Dues</h1>
+      <p className="text-sm text-slate-400">View and pay your pending fee invoices online.</p>
 
-      {pendingFees.length === 0 && paidFees.length === 0 && (
-         <div className="glass border border-white/[0.08] rounded-2xl p-6 text-center">
-            <p className="text-slate-500 text-sm">No fee records found for the current session.</p>
-         </div>
-      )}
-
-      {/* Pending Dues */}
-      {pendingFees.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-red-400 uppercase tracking-wider">Pending Dues</h2>
-          {pendingFees.map(fee => (
-            <div key={fee.id} className="relative glass border border-red-500/30 bg-gradient-to-r from-red-600/10 to-transparent rounded-2xl p-5 overflow-hidden card-hover">
-               <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-red-600/20 to-transparent pointer-events-none" />
-               <div className="flex justify-between items-start mb-3">
-                 <div>
-                   <h3 className="text-lg font-bold text-white">{fee.title}</h3>
-                   <p className="text-xs text-slate-400">{fee.students?.first_name} {fee.students?.last_name}</p>
-                 </div>
-                 <div className="text-right">
-                   <p className="text-xl font-extrabold text-red-400">₹{Number(fee.amount).toLocaleString()}</p>
-                   <p className="text-[10px] text-slate-500 mt-1">Due: {new Date(fee.due_date).toLocaleDateString()}</p>
-                 </div>
-               </div>
-               <div className="pt-2 border-t border-red-500/20">
-                 <PayNowButton feeId={fee.id} amount={Number(fee.amount)} title={fee.title} studentName={`${fee.students?.first_name} ${fee.students?.last_name}`} />
-               </div>
-            </div>
-          ))}
+      {loading ? (
+        <div className="p-12 text-center text-slate-400">Loading your invoices...</div>
+      ) : invoices.length === 0 ? (
+        <div className="p-12 glass border border-white/[0.08] rounded-2xl text-center">
+          <span className="text-4xl">🎉</span>
+          <p className="text-white font-bold mt-4">You&apos;re all caught up!</p>
+          <p className="text-slate-400 text-sm mt-1">No pending invoices found.</p>
         </div>
-      )}
-
-      {/* Paid History */}
-      {paidFees.length > 0 && (
-        <div className="space-y-4 mt-8">
-          <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Payment History</h2>
-          <div className="glass border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
-            {paidFees.map(fee => (
-              <div key={fee.id} className="p-4 flex justify-between items-center hover:bg-white/[0.02] transition-colors">
-                <div>
-                   <h3 className="text-sm font-bold text-white">{fee.title}</h3>
-                   <div className="flex items-center gap-2 mt-1">
-                     <span className="text-[10px] text-emerald-400">✅ Paid on {new Date(fee.paid_at || fee.created_at).toLocaleDateString()}</span>
-                   </div>
-                </div>
-                <div className="text-right">
-                   <p className="text-sm font-bold text-slate-300">₹{Number(fee.amount).toLocaleString()}</p>
-                   {fee.payment_method && <p className="text-[9px] text-slate-500 uppercase">{fee.payment_method}</p>}
+      ) : (
+        <div className="space-y-4">
+          {invoices.map(inv => (
+            <div key={inv.id} className="glass p-6 rounded-2xl border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="text-violet-400 font-mono text-xs">{inv.invoice_number}</p>
+                <h3 className="text-white font-bold text-lg mt-1">{inv.students?.first_name} {inv.students?.last_name}</h3>
+                <p className="text-slate-400 text-sm">Month: {inv.billing_month} • Due: {new Date(inv.due_date).toLocaleDateString()}</p>
+                <div className="flex gap-3 mt-3">
+                  <button
+                    onClick={async () => {
+                      const res = await generateAndUploadInvoicePdf(inv.id);
+                      if (res.success) window.open(res.url, '_blank');
+                    }}
+                    className="text-xs text-violet-400 hover:text-white underline transition-colors"
+                  >
+                    Download Invoice
+                  </button>
+                  {inv.status === 'paid' && (
+                     <button
+                       onClick={async () => {
+                         try {
+                           // Try fetching receipt logic via API. In a real app we'd fetch receipts on load.
+                           // For now, we alert them if it fails or redirect them if successful.
+                           // Getting the receipt using the generic URL getter might require the receipt ID,
+                           // which isn't joined by default in `inv`. So we just ask them to check email or we do a lazy fetch.
+                           alert("Please check your email for the detailed receipt PDF, or contact administration.");
+                         } catch (e) {}
+                       }}
+                       className="text-xs text-emerald-400 hover:text-white underline transition-colors"
+                     >
+                       Request Receipt
+                     </button>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+              
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Balance Due</p>
+                  <p className="text-2xl font-bold text-white">₹{inv.balance_amount.toLocaleString()}</p>
+                  {inv.paid_amount > 0 && (
+                    <p className="text-xs text-emerald-400 mt-1">Paid: ₹{inv.paid_amount.toLocaleString()}</p>
+                  )}
+                </div>
+
+                {inv.balance_amount > 0 ? (
+                  <button 
+                    onClick={() => handlePayNow(inv)}
+                    disabled={isProcessing === inv.id}
+                    className="btn-primary py-3 px-6 shadow-[0_0_20px_rgba(139,92,246,0.3)] min-w-[140px]"
+                  >
+                    {isProcessing === inv.id ? 'Loading...' : 'Pay Online'}
+                  </button>
+                ) : (
+                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-6 py-3 rounded-xl font-bold text-sm min-w-[140px] text-center inline-block">
+                    Fully Paid
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
