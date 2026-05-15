@@ -18,26 +18,26 @@ export default function ConfigureSyllabusModal({ isOpen, onClose, onRefresh, req
   const supabase = createClient();
 
   useEffect(() => {
+    async function fetchTeachers() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const tenantId = user?.app_metadata?.tenant_id;
+      if (!tenantId) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .eq('tenant_id', tenantId)
+        .eq('role', 'teacher');
+      
+      if (data) {
+        setTeachers(data);
+      }
+    }
+
     if (isOpen) {
       fetchTeachers();
     }
-  }, [isOpen]);
-
-  async function fetchTeachers() {
-    const { data: { user } } = await supabase.auth.getUser();
-    const tenantId = user?.app_metadata?.tenant_id;
-    if (!tenantId) return;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name')
-      .eq('tenant_id', tenantId)
-      .eq('role', 'teacher');
-    
-    if (data) {
-      setTeachers(data);
-    }
-  }
+  }, [isOpen, supabase]);
 
   if (!isOpen) return null;
 

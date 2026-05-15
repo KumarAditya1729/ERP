@@ -287,7 +287,7 @@ export async function getParentAcademics() {
 // --- SYLLABUS / TIMETABLE ACTIONS ---
 
 export async function addSyllabusRequirement(formData: FormData) {
-  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'superadmin', 'staff']);
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'staff']);
   if (authErr || !tenantId) return { success: false, error: 'Unauthorized' };
 
   try {
@@ -314,7 +314,7 @@ export async function addSyllabusRequirement(formData: FormData) {
 }
 
 export async function deleteSyllabusRequirement(id: string) {
-  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'superadmin', 'staff']);
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'staff']);
   if (authErr || !tenantId) return { success: false, error: 'Unauthorized' };
 
   try {
