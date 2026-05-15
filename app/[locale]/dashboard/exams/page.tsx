@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { submitExamGrades } from '@/app/actions/academics';
 import BulkUploader from '@/components/BulkUploader';
 import { generateReportCardPDF } from '@/lib/pdfGenerator';
+import ScheduleExamModal from '@/components/dashboard/ScheduleExamModal';
 
 const supabase = createClient();
 
@@ -46,6 +47,7 @@ export default function ExamsPage() {
   const [loadingExams, setLoadingExams] = useState(true);
   const [loadingMarks, setLoadingMarks] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const showToast = (msg: string, ok = true) => {
@@ -160,7 +162,7 @@ export default function ExamsPage() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => showToast('Exam scheduling requires calendar integration. Coming soon.', false)}
+            onClick={() => setIsModalOpen(true)}
             className="btn-secondary text-sm py-2 px-4"
           >
             📅 Schedule Exam
@@ -225,7 +227,7 @@ export default function ExamsPage() {
                     Your assessment calendar is currently empty. Start by scheduling a new examination period and defining the subjects.
                   </p>
                   <button 
-                    onClick={() => showToast('Calendar integration module required to schedule live exams. Coming soon.', false)}
+                    onClick={() => setIsModalOpen(true)}
                     className="px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-slate-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] flex items-center gap-2"
                   >
                     📅 Schedule First Exam
@@ -362,6 +364,12 @@ export default function ExamsPage() {
           {toast.msg}
         </div>
       )}
+
+      <ScheduleExamModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onRefresh={fetchExams}
+      />
     </div>
   );
 }

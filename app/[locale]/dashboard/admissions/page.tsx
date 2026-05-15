@@ -71,6 +71,7 @@ export default function AdmissionsPage() {
     category: 'General', guardian_name: '', guardian_phone: '',
     guardian_email: '', previous_school: '', previous_grade: '',
     docs: { birth: false, marks: false, transfer: false, photo: false, aadhar: false },
+    docFiles: {} as Record<string, File>,
   });
 
   // ─── Show toast helper ────────────────────────────────────────────────────
@@ -125,9 +126,24 @@ export default function AdmissionsPage() {
     if (!res.success) {
       showToast('Failed to submit: ' + res.error, 'error');
     } else {
+      const appId = res.id;
+      const filesToUpload = Object.entries(form.docFiles);
+      if (appId && filesToUpload.length > 0) {
+         showToast('Application created. Uploading documents...', 'success');
+         const { updateDocFile } = await import('@/app/actions/admissions');
+         for (const [docKey, file] of filesToUpload) {
+            const fileExt = (file as File).name.split('.').pop();
+            const fileName = `${appId}/${docKey}_${Date.now()}.${fileExt}`;
+            const { error: uploadErr } = await supabase.storage.from('admissions').upload(fileName, file as File);
+            if (!uploadErr) {
+               await updateDocFile(appId, docKey, fileName);
+            }
+         }
+      }
+
       showToast('✅ Application submitted successfully!');
       setShowForm(false);
-      setForm({ student_name: '', date_of_birth: '', applying_class: 'Class 6', category: 'General', guardian_name: '', guardian_phone: '', guardian_email: '', previous_school: '', previous_grade: '', docs: { birth: false, marks: false, transfer: false, photo: false, aadhar: false } });
+      setForm({ student_name: '', date_of_birth: '', applying_class: 'Class 6', category: 'General', guardian_name: '', guardian_phone: '', guardian_email: '', previous_school: '', previous_grade: '', docs: { birth: false, marks: false, transfer: false, photo: false, aadhar: false }, docFiles: {} });
       fetchApplications();
     }
     setSaving(false);
@@ -288,16 +304,32 @@ export default function AdmissionsPage() {
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-xs text-slate-400 mb-2">Documents Received</p>
-            <div className="flex gap-5 flex-wrap">
-              {(Object.keys(form.docs) as (keyof typeof form.docs)[]).map(key => (
-                <label key={key} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer capitalize">
-                  <input type="checkbox" className="w-3.5 h-3.5 accent-violet-600"
-                    checked={form.docs[key]}
-                    onChange={() => setForm(p => ({ ...p, docs: { ...p.docs, [key]: !p.docs[key] } }))} />
-                  {key === 'birth' ? 'Birth Cert.' : key === 'marks' ? 'Marksheet' : key === 'transfer' ? 'Transfer Cert.' : key === 'photo' ? 'Photo' : 'Aadhar'}
-                </label>
-              ))}
+            <p className="text-xs text-slate-400 mb-2">Documents Received & Upload</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {(Object.keys(form.docs) as (keyof typeof form.docs)[]).map(key => {
+                const label = key === 'birth' ? 'Birth Cert.' : key === 'marks' ? 'Marksheet' : key === 'transfer' ? 'Transfer Cert.' : key === 'photo' ? 'Photo' : 'Aadhar';
+                return (
+                <div key={key} className="flex flex-col gap-1.5 p-2 border border-white/5 rounded-lg bg-white/[0.02]">
+                  <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer capitalize">
+                    <input type="checkbox" className="w-3.5 h-3.5 accent-violet-600"
+                      checked={form.docs[key]}
+                      onChange={() => setForm(p => ({ ...p, docs: { ...p.docs, [key]: !p.docs[key] } }))} />
+                    {label}
+                  </label>
+                  <input type="file" className="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:bg-violet-500/20 file:text-violet-300 hover:file:bg-violet-500/30" accept=".pdf,image/*" 
+                    onChange={(e) => {
+                       const file = e.target.files?.[0];
+                       if (file) {
+                          setForm(p => ({ 
+                            ...p, 
+                            docs: { ...p.docs, [key]: true }, 
+                            docFiles: { ...p.docFiles, [key]: file } 
+                          }));
+                       }
+                    }}
+                  />
+                </div>
+              )})}
             </div>
           </div>
           <div className="flex gap-3 mt-5">

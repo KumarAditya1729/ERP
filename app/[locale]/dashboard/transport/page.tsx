@@ -29,6 +29,7 @@ export default function TransportPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rForm, setRForm] = useState({ name: '', driver_name: '', bus_number: '', capacity: 40 });
+  const [docFiles, setDocFiles] = useState<Record<string, File>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [bForm, setBForm] = useState({ message: '' });
 
@@ -71,6 +72,7 @@ export default function TransportPage() {
       setRoutes([...routes, res.data]);
       setShowRouteForm(false);
       setRForm({ name: '', driver_name: '', bus_number: '', capacity: 40 });
+      setDocFiles({});
     }
     setIsSubmitting(false);
   };
@@ -233,13 +235,23 @@ export default function TransportPage() {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {['RC Book', 'Insurance', 'PUC Cert', 'Driver License'].map((doc) => (
-                      <div key={doc} className="relative group cursor-pointer border border-white/[0.08] border-dashed rounded-xl p-4 bg-white/[0.01] hover:bg-white/[0.03] hover:border-violet-500/50 transition-all text-center">
-                        <div className="w-8 h-8 mx-auto rounded-full bg-white/[0.05] group-hover:bg-violet-500/20 flex items-center justify-center text-slate-400 group-hover:text-violet-400 transition-colors mb-2">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                      <label key={doc} className={`relative group cursor-pointer border border-dashed rounded-xl p-4 transition-all text-center ${docFiles[doc] ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] hover:border-violet-500/50'}`}>
+                        <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center transition-colors mb-2 ${docFiles[doc] ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/[0.05] group-hover:bg-violet-500/20 text-slate-400 group-hover:text-violet-400'}`}>
+                          {docFiles[doc] ? (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-300 font-medium">{doc}</p>
-                        <p className="text-[9px] text-slate-500 mt-0.5">Upload PDF/JPG</p>
-                      </div>
+                        <p className={`text-xs font-medium ${docFiles[doc] ? 'text-emerald-400' : 'text-slate-300'}`}>{doc}</p>
+                        <p className="text-[9px] text-slate-500 mt-0.5">{docFiles[doc] ? 'Uploaded' : 'Upload PDF/JPG'}</p>
+                        <input type="file" className="hidden" accept=".pdf,image/*" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setDocFiles(p => ({ ...p, [doc]: file }));
+                          }
+                        }} />
+                      </label>
                     ))}
                   </div>
                 </div>

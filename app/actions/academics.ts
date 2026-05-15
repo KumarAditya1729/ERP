@@ -108,6 +108,36 @@ export async function updateAssignmentStatus(assignmentId: string, status: strin
 
 // --- EXAM ACTIONS ---
 
+export async function createExam(formData: FormData) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
+  if (authErr || !tenantId) throw new Error('Unauthorized');
+
+  try {
+    const supabase = createClient();
+    const name = formData.get('name') as string;
+    const classes = formData.get('classes') as string;
+    const start_date = formData.get('start_date') as string;
+    const end_date = formData.get('end_date') as string;
+    const subject_count = Number(formData.get('subject_count') || 5);
+
+    const { data, error } = await supabase.from('exams').insert({
+      tenant_id: tenantId,
+      name,
+      classes,
+      start_date,
+      end_date,
+      subject_count,
+      status: 'upcoming'
+    }).select().single();
+
+    if (error) throw error;
+    revalidatePath('/', 'layout');
+    return { success: true, data };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 export async function getTeacherExams() {
   const { user, tenantId, error: authErr } = await requireAuth(['admin', 'teacher', 'staff']);
   if (authErr || !tenantId) throw new Error('Unauthorized');
@@ -249,6 +279,50 @@ export async function getParentAcademics() {
         examAverage,
       }
     };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+// --- SYLLABUS / TIMETABLE ACTIONS ---
+
+export async function addSyllabusRequirement(formData: FormData) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'superadmin', 'staff']);
+  if (authErr || !tenantId) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const supabase = createClient();
+    const class_name = formData.get('class_name') as string;
+    const subject = formData.get('subject') as string;
+    const teacher_id = formData.get('teacher_id') as string;
+    const hours_per_week = Number(formData.get('hours_per_week'));
+
+    const { error } = await supabase.from('timetable_requirements').insert({
+      tenant_id: tenantId,
+      class_name,
+      subject,
+      teacher_id,
+      hours_per_week,
+    });
+
+    if (error) throw error;
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteSyllabusRequirement(id: string) {
+  const { user, tenantId, error: authErr } = await requireAuth(['admin', 'superadmin', 'staff']);
+  if (authErr || !tenantId) return { success: false, error: 'Unauthorized' };
+
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.from('timetable_requirements').delete().eq('id', id).eq('tenant_id', tenantId);
+    if (error) throw error;
+    revalidatePath('/', 'layout');
+    return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
   }

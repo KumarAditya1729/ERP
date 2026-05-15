@@ -65,11 +65,11 @@ export async function createApplication(formData: FormData, docsStatus: any) {
     docs_status: docsStatus
   };
 
-  const { error } = await supabase.from('admission_applications').insert(newApp);
+  const { data, error } = await supabase.from('admission_applications').insert(newApp).select('id').single();
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/', 'layout');
-  return { success: true };
+  return { success: true, id: data.id };
 }
 
 export async function advanceStage(appId: string, nextStage: string) {

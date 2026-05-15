@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { generateTimetable } from '@/lib/algorithms';
 import { createClient } from '@/lib/supabase/client';
+import ConfigureSyllabusModal from '@/components/dashboard/ConfigureSyllabusModal';
 
 const supabase = createClient();
 
@@ -21,6 +22,7 @@ export default function AcademicsPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -129,7 +131,10 @@ export default function AcademicsPage() {
           <h1 className="text-2xl font-bold text-white">Academics & Timetable Engine</h1>
           <p className="text-slate-400 text-sm mt-0.5">Automated class scheduling powered by collision-free greedy algorithms.</p>
         </div>
-        <button className="bg-white/5 hover:bg-white/10 text-white font-semibold text-sm py-2 px-4 rounded-lg transition-colors border border-white/10">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-white/5 hover:bg-white/10 text-white font-semibold text-sm py-2 px-4 rounded-lg transition-colors border border-white/10"
+        >
            Configure Syllabus
         </button>
       </div>
@@ -250,6 +255,13 @@ export default function AcademicsPage() {
             </div>
          </div>
       </div>
+
+      <ConfigureSyllabusModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onRefresh={fetchRequirements}
+        requirements={requirements}
+      />
     </div>
   );
 }
